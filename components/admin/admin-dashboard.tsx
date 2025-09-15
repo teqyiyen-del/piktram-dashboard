@@ -131,9 +131,9 @@ export default function AdminDashboard({ users = [], projects = [], tasks = [], 
 
       {/* 📊 İstatistikler */}
       <section className="grid gap-6 md:grid-cols-3">
-        <StatTile title="Toplam Kullanıcı" value={stats.users} description="Aktif hesap sayısı" />
-        <StatTile title="Projeler" value={stats.projects} description="Çalışma alanındaki projeler" />
-        <StatTile title="Görevler" value={stats.tasks} description="Yönetilen tüm görevler" />
+        <StatTile title="Toplam Kullanıcı" value={stats?.users} description="Aktif hesap sayısı" />
+        <StatTile title="Projeler" value={stats?.projects} description="Çalışma alanındaki projeler" />
+        <StatTile title="Görevler" value={stats?.tasks} description="Yönetilen tüm görevler" />
       </section>
 
       {/* 👤 Kullanıcılar */}
