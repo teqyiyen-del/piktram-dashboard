@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import { useState, useEffect } from 'react'
 import { formatDate } from '@/lib/utils'
-import { getAdminStats } from '@/lib/getAdminStats'
+//import { getAdminStats } from '@/lib/getAdminStats'
 
 type UserRecord = {
   id: string
