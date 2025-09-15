@@ -49,31 +49,33 @@ export function ProjectForm({ initialData, onSuccess }: ProjectFormProps) {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <div>
-        <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Proje Başlığı</label>
-        <input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Örn. Mobil Uygulama Yenileme" required />
-      </div>
-      <div>
-        <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Açıklama</label>
-        <textarea
-          value={description ?? ''}
-          onChange={(e) => setDescription(e.target.value)}
-          rows={3}
-          placeholder="Projenin kısa açıklaması"
-        ></textarea>
-      </div>
-      <div className="grid grid-cols-2 gap-4">
+    <form onSubmit={handleSubmit} className="space-y-6">
+      <div className="space-y-4">
         <div>
-          <label className="text-sm font-medium text-gray-700 dark:text-gray-300">İlerleme (%)</label>
-          <input type="number" min={0} max={100} value={progress} onChange={(e) => setProgress(Number(e.target.value))} />
+          <label>Proje Başlığı</label>
+          <input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Örn. Mobil Uygulama Yenileme" required />
         </div>
         <div>
-          <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Teslim Tarihi</label>
-          <input type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} />
+          <label>Açıklama</label>
+          <textarea
+            value={description ?? ''}
+            onChange={(e) => setDescription(e.target.value)}
+            rows={4}
+            placeholder="Projenin kısa açıklaması"
+          ></textarea>
+        </div>
+        <div className="grid gap-4 sm:grid-cols-2">
+          <div>
+            <label>İlerleme (%)</label>
+            <input type="number" min={0} max={100} value={progress} onChange={(e) => setProgress(Number(e.target.value))} />
+          </div>
+          <div>
+            <label>Teslim Tarihi</label>
+            <input type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} />
+          </div>
         </div>
       </div>
-      {error && <p className="text-sm text-red-500 dark:text-red-400">{error}</p>}
+      {error && <p className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600 dark:border-red-500/30 dark:bg-red-500/10 dark:text-red-200">{error}</p>}
       <Button type="submit" className="w-full" disabled={loading}>
         {loading ? 'Kaydediliyor...' : initialData ? 'Projeyi Güncelle' : 'Proje Oluştur'}
       </Button>

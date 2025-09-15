@@ -111,8 +111,11 @@ export function KanbanBoard({ initialTasks, projects }: KanbanBoardProps) {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Görev Panosu</h2>
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Görev Panosu</h2>
+          <p className="text-sm text-gray-500 dark:text-gray-400">Görevleri sürükleyerek durumunu anında güncelleyin.</p>
+        </div>
         <Button
           onClick={() => {
             setEditingTask(null)
@@ -135,15 +138,15 @@ export function KanbanBoard({ initialTasks, projects }: KanbanBoardProps) {
                 <div
                   ref={provided.innerRef}
                   {...provided.droppableProps}
-                  className={`flex min-h-[420px] flex-col gap-4 rounded-2xl border border-dashed border-transparent bg-gray-100/80 p-4 transition-colors duration-300 dark:bg-gray-800/60 ${
-                    snapshot.isDraggingOver ? 'border-accent/40 bg-accent/10' : 'border-gray-200/40'
+                  className={`flex min-h-[420px] flex-col gap-4 rounded-3xl border border-gray-100 bg-white/70 p-5 shadow-sm transition-colors duration-300 dark:border-gray-700 dark:bg-surface-dark/80 ${
+                    snapshot.isDraggingOver ? 'ring-2 ring-accent/40' : ''
                   }`}
                 >
                   <div className="flex items-center justify-between">
-                    <h3 className="text-sm font-semibold uppercase tracking-wide text-gray-600 dark:text-gray-300">
+                    <h3 className="text-xs font-semibold uppercase tracking-[0.2em] text-gray-500 dark:text-gray-300">
                       {columnTitles[column]}
                     </h3>
-                    <span className="text-xs text-gray-500 dark:text-gray-400">{groupedTasks[column].length} görev</span>
+                    <span className="pill text-gray-500 dark:text-gray-400">{groupedTasks[column].length} görev</span>
                   </div>
                   {groupedTasks[column].map((task, index) => (
                     <Draggable draggableId={task.id} index={index} key={task.id}>
@@ -151,9 +154,9 @@ export function KanbanBoard({ initialTasks, projects }: KanbanBoardProps) {
                         const style = {
                           ...dragProvided.draggableProps.style,
                           transition: dragSnapshot.isDragging
-                            ? 'transform 0.2s ease, box-shadow 0.2s ease'
+                            ? 'transform 0.18s ease, box-shadow 0.18s ease'
                             : 'transform 0.35s ease',
-                          boxShadow: dragSnapshot.isDragging ? '0 20px 25px -15px rgba(17, 24, 39, 0.35)' : undefined
+                          boxShadow: dragSnapshot.isDragging ? '0 24px 30px -18px rgba(17, 24, 39, 0.35)' : undefined
                         }
                         return (
                           <div

@@ -1,4 +1,7 @@
--- Piktram Supabase şeması ve örnek verileri
+create extension if not exists "pgcrypto";
+
+create type if not exists user_role as enum ('user', 'admin');
+
 create table if not exists profiles (
   id uuid primary key references auth.users(id) on delete cascade,
   full_name text,
@@ -8,18 +11,52 @@ create table if not exists profiles (
   email_notifications boolean default true,
   push_notifications boolean default false,
   weekly_summary boolean default true,
-  role text default 'user',
+  role user_role default 'user',
   created_at timestamp with time zone default timezone('utc'::text, now())
 );
+
+alter table profiles
+  alter column role type user_role using role::user_role;
 
 alter table profiles enable row level security;
 drop policy if exists "profiles_policy" on profiles;
 drop policy if exists "profiles_select" on profiles;
 drop policy if exists "profiles_modify" on profiles;
+drop policy if exists "profiles_insert" on profiles;
+drop policy if exists "profiles_update" on profiles;
+
 create policy "profiles_select" on profiles for select using (
   auth.uid() = id or exists(select 1 from profiles as p where p.id = auth.uid() and p.role = 'admin')
 );
-create policy "profiles_modify" on profiles for all using (auth.uid() = id) with check (auth.uid() = id);
+
+create policy "profiles_insert" on profiles for insert with check (auth.uid() = id);
+
+create policy "profiles_update" on profiles for update using (
+  auth.uid() = id or exists(select 1 from profiles as p where p.id = auth.uid() and p.role = 'admin')
+) with check (
+  auth.uid() = id or exists(select 1 from profiles as p where p.id = auth.uid() and p.role = 'admin')
+);
+
+create or replace function public.handle_new_user()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  insert into public.profiles (id, full_name, email, role)
+  values (new.id, coalesce(new.raw_user_meta_data->>'full_name', new.raw_user_meta_data->>'name'), new.email, 'user')
+  on conflict (id) do update set
+    full_name = coalesce(excluded.full_name, public.profiles.full_name),
+    email = excluded.email;
+  return new;
+end;
+$$;
+
+drop trigger if exists on_auth_user_created on auth.users;
+create trigger on_auth_user_created
+  after insert on auth.users
+  for each row execute procedure public.handle_new_user();
 
 create table if not exists projects (
   id uuid primary key default gen_random_uuid(),

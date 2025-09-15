@@ -1,5 +1,6 @@
 'use client'
 
+import Link from 'next/link'
 import { useSupabaseClient } from '@supabase/auth-helpers-react'
 import { useRouter } from 'next/navigation'
 import { Bell, LogOut, Search } from 'lucide-react'
@@ -9,9 +10,18 @@ import { Button } from '@/components/ui/button'
 interface TopbarProps {
   fullName: string | null
   email: string
+  role: 'admin' | 'user'
 }
 
-export default function Topbar({ fullName, email }: TopbarProps) {
+const navItems = [
+  { name: 'Gösterge Paneli', href: '/dashboard' },
+  { name: 'Projeler', href: '/projects' },
+  { name: 'Görevler', href: '/tasks' },
+  { name: 'Takvim', href: '/calendar' },
+  { name: 'Ayarlar', href: '/settings' }
+]
+
+export default function Topbar({ fullName, email, role }: TopbarProps) {
   const supabase = useSupabaseClient()
   const router = useRouter()
 
@@ -20,37 +30,59 @@ export default function Topbar({ fullName, email }: TopbarProps) {
     router.replace('/auth/login')
   }
 
+  const items = role === 'admin' ? [...navItems.slice(0, 4), { name: 'Admin Paneli', href: '/admin' }, navItems[4]] : navItems
+
   return (
-    <header className="flex items-center justify-between border-b border-gray-200 bg-surface px-8 py-4 transition-colors duration-300 dark:border-gray-800 dark:bg-surface-dark">
-      <div className="relative w-full max-w-md">
-        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400 dark:text-gray-500" />
-        <input
-          className="w-full rounded-full border border-gray-200 bg-gray-50 py-2 pl-10 pr-4 text-sm focus:border-accent dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100"
-          placeholder="Ara..."
-        />
-      </div>
-      <div className="flex items-center gap-4">
-        <button className="relative rounded-full bg-gray-100 p-2 text-gray-500 transition hover:text-accent dark:bg-gray-800 dark:text-gray-300 dark:hover:text-accent">
-          <Bell className="h-5 w-5" />
-          <span className="absolute right-1 top-1 block h-2 w-2 rounded-full bg-accent"></span>
-        </button>
-        <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-accent/20 text-sm font-semibold text-accent">
+    <header className="border-b border-gray-200/70 bg-white/70 px-6 py-5 shadow-sm backdrop-blur transition-colors duration-300 dark:border-gray-800/70 dark:bg-surface-dark/80">
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+        <div className="flex w-full flex-1 flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="relative w-full max-w-lg">
+            <Search className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" />
+            <input className="w-full rounded-full border border-gray-200 bg-white py-3 pl-12 pr-4 text-sm shadow-sm dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100" placeholder="Ara..." />
+          </div>
+          <div className="flex items-center gap-3 sm:justify-end">
+            <button className="relative flex h-11 w-11 items-center justify-center rounded-full bg-gray-100 text-gray-500 transition hover:text-accent dark:bg-gray-800 dark:text-gray-300 dark:hover:text-accent">
+              <Bell className="h-5 w-5" />
+              <span className="absolute right-2 top-2 block h-2.5 w-2.5 rounded-full bg-accent"></span>
+            </button>
+            <div className="hidden min-w-[200px] items-center gap-3 rounded-2xl border border-gray-200 bg-white px-4 py-2 shadow-sm dark:border-gray-700 dark:bg-gray-900 lg:flex">
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-accent/15 text-sm font-semibold text-accent">
+                {getInitials(fullName)}
+              </div>
+              <div className="text-sm">
+                <p className="font-semibold text-gray-900 dark:text-white">{fullName ?? 'Takım Üyesi'}</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400">{email}</p>
+              </div>
+            </div>
+            <Button variant="secondary" onClick={handleLogout} className="hidden gap-2 lg:inline-flex">
+              <LogOut className="h-4 w-4" /> Çıkış Yap
+            </Button>
+          </div>
+        </div>
+        <div className="flex items-center gap-3 lg:hidden">
+          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-accent/15 text-sm font-semibold text-accent">
             {getInitials(fullName)}
           </div>
           <div className="text-sm">
             <p className="font-semibold text-gray-900 dark:text-white">{fullName ?? 'Takım Üyesi'}</p>
             <p className="text-xs text-gray-500 dark:text-gray-400">{email}</p>
           </div>
+          <Button variant="ghost" onClick={handleLogout} className="gap-2">
+            <LogOut className="h-4 w-4" />
+          </Button>
         </div>
-        <Button
-          variant="secondary"
-          onClick={handleLogout}
-          className="gap-2 dark:border dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100"
-        >
-          <LogOut className="h-4 w-4" /> Çıkış Yap
-        </Button>
       </div>
+      <nav className="mt-4 flex gap-2 overflow-x-auto pb-1 lg:hidden">
+        {items.map((item) => (
+          <Link
+            key={item.href}
+            href={item.href}
+            className="pill whitespace-nowrap border border-transparent transition hover:border-accent hover:text-accent"
+          >
+            {item.name}
+          </Link>
+        ))}
+      </nav>
     </header>
   )
 }

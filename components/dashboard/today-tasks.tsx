@@ -15,7 +15,7 @@ const priorityLabels: Record<Task['priority'], { label: string; color: 'orange' 
 export function TodayTasks({ tasks }: TodayTasksProps) {
   if (tasks.length === 0) {
     return (
-      <div className="rounded-2xl border border-dashed border-gray-300 bg-surface p-6 text-center text-sm text-gray-500 transition-colors duration-300 dark:border-gray-700 dark:bg-surface-dark dark:text-gray-400">
+      <div className="rounded-3xl border border-dashed border-gray-300 bg-white p-8 text-center text-sm text-gray-500 shadow-sm transition-colors duration-300 dark:border-gray-700 dark:bg-surface-dark dark:text-gray-400">
         Bugün için planlanmış görev bulunmuyor.
       </div>
     )
@@ -26,7 +26,7 @@ export function TodayTasks({ tasks }: TodayTasksProps) {
       {tasks.map((task) => (
         <div
           key={task.id}
-          className="flex items-center justify-between rounded-2xl border border-gray-200 bg-surface p-4 transition-colors duration-300 dark:border-gray-700 dark:bg-surface-dark"
+          className="flex flex-col gap-3 rounded-3xl border border-gray-100 bg-white p-5 shadow-sm transition-colors duration-300 dark:border-gray-700 dark:bg-surface-dark md:flex-row md:items-center md:justify-between"
         >
           <div>
             <p className="text-sm font-semibold text-gray-900 dark:text-white">

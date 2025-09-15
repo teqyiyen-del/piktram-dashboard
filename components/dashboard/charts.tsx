@@ -16,9 +16,9 @@ interface ProgressChartProps {
 
 export function WeeklyCompletionChart({ data }: WeeklyChartProps) {
   return (
-    <div className="rounded-2xl border border-gray-200 bg-surface p-6 shadow-sm transition-colors duration-300 dark:border-gray-700 dark:bg-surface-dark">
+    <div className="card-section">
       <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Haftalık Görev Tamamlama</h3>
-      <div className="mt-4">
+      <div className="mt-6">
         <Bar
           data={{
             labels: data.map((item) => item.label),
@@ -26,7 +26,7 @@ export function WeeklyCompletionChart({ data }: WeeklyChartProps) {
               {
                 label: 'Tamamlanan Görevler',
                 data: data.map((item) => item.value),
-                backgroundColor: '#FF6B35',
+                backgroundColor: '#FF5E4A',
                 borderRadius: 12
               }
             ]
@@ -55,16 +55,16 @@ export function WeeklyCompletionChart({ data }: WeeklyChartProps) {
 
 export function ProjectProgressDonut({ completed, remaining }: ProgressChartProps) {
   return (
-    <div className="rounded-2xl border border-gray-200 bg-surface p-6 shadow-sm transition-colors duration-300 dark:border-gray-700 dark:bg-surface-dark">
+    <div className="card-section">
       <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Proje İlerleme Durumu</h3>
-      <div className="mt-4">
+      <div className="mt-6">
         <Doughnut
           data={{
             labels: ['Tamamlanan', 'Devam Eden'],
             datasets: [
               {
                 data: [completed, remaining],
-                backgroundColor: ['#FF6B35', '#E5E7EB'],
+                backgroundColor: ['#FF5E4A', '#E9EBF0'],
                 borderWidth: 0
               }
             ]

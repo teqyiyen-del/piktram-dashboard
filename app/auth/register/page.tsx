@@ -14,13 +14,5 @@ export default async function RegisterPage() {
     redirect('/dashboard')
   }
 
-  return (
-    <div className="space-y-6">
-      <div className="space-y-1">
-        <h2 className="text-xl font-semibold text-gray-900">Yeni hesap oluştur</h2>
-        <p className="text-sm text-gray-500">Piktram ile projelerinizi kolayca planlayın.</p>
-      </div>
-      <RegisterForm />
-    </div>
-  )
+  return <RegisterForm />
 }
