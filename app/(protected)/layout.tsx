@@ -12,12 +12,12 @@ export default async function ProtectedLayout({ children }: { children: ReactNod
   } = await supabase.auth.getSession()
 
   if (!session) {
-    redirect('/auth/login')
+    redirect('/login')
   }
 
   const { data: profile } = await supabase
     .from('profiles')
-    .select('full_name, email, theme')
+    .select('full_name, email, theme, role')
     .eq('id', session.user.id)
     .single()
 
@@ -27,7 +27,8 @@ export default async function ProtectedLayout({ children }: { children: ReactNod
     <DashboardShell
       user={{
         full_name: profile?.full_name ?? metadata?.full_name ?? session.user.email!,
-        email: profile?.email ?? session.user.email!
+        email: profile?.email ?? session.user.email!,
+        role: (profile?.role as 'admin' | 'user' | null) ?? 'user'
       }}
     >
       {children}

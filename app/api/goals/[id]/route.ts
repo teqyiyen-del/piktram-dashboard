@@ -6,7 +6,6 @@ import { Database } from '@/lib/supabase-types'
 export async function PUT(request: Request, { params }: { params: { id: string } }) {
   const supabase = createRouteHandlerClient<Database>({ cookies })
   const body = await request.json()
-
   const {
     data: { session }
   } = await supabase.auth.getSession()
@@ -15,14 +14,14 @@ export async function PUT(request: Request, { params }: { params: { id: string }
     return NextResponse.json({ error: 'Yetkisiz erişim' }, { status: 401 })
   }
 
-  const updatePayload: Database['public']['Tables']['projects']['Update'] = {}
+  const updatePayload: Database['public']['Tables']['goals']['Update'] = {}
+
   if ('title' in body) updatePayload.title = body.title
   if ('description' in body) updatePayload.description = body.description
-  if ('progress' in body) updatePayload.progress = body.progress
-  if ('due_date' in body) updatePayload.due_date = body.due_date ? body.due_date : null
+  if ('is_completed' in body) updatePayload.is_completed = body.is_completed
 
   const { data, error } = await supabase
-    .from('projects')
+    .from('goals')
     .update(updatePayload)
     .eq('id', params.id)
     .eq('user_id', session.user.id)
@@ -46,7 +45,7 @@ export async function DELETE(_: Request, { params }: { params: { id: string } })
     return NextResponse.json({ error: 'Yetkisiz erişim' }, { status: 401 })
   }
 
-  const { error } = await supabase.from('projects').delete().eq('id', params.id).eq('user_id', session.user.id)
+  const { error } = await supabase.from('goals').delete().eq('id', params.id).eq('user_id', session.user.id)
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 })

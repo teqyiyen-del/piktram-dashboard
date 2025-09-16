@@ -27,7 +27,8 @@ export default async function SettingsPage() {
     theme: (profile?.theme as 'light' | 'dark' | null) ?? 'light',
     email_notifications: profile?.email_notifications ?? true,
     push_notifications: profile?.push_notifications ?? false,
-    weekly_summary: profile?.weekly_summary ?? true
+    weekly_summary: profile?.weekly_summary ?? true,
+    role: (profile?.role as 'admin' | 'user' | null) ?? 'user'
   }
 
   return <SettingsClient profile={mergedProfile} />

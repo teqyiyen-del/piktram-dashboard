@@ -3,10 +3,8 @@ import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
 import { cookies } from 'next/headers'
 import { Database } from '@/lib/supabase-types'
 
-export async function PUT(request: Request, { params }: { params: { id: string } }) {
+export async function GET() {
   const supabase = createRouteHandlerClient<Database>({ cookies })
-  const body = await request.json()
-
   const {
     data: { session }
   } = await supabase.auth.getSession()
@@ -15,17 +13,42 @@ export async function PUT(request: Request, { params }: { params: { id: string }
     return NextResponse.json({ error: 'Yetkisiz erişim' }, { status: 401 })
   }
 
-  const updatePayload: Database['public']['Tables']['projects']['Update'] = {}
-  if ('title' in body) updatePayload.title = body.title
-  if ('description' in body) updatePayload.description = body.description
-  if ('progress' in body) updatePayload.progress = body.progress
-  if ('due_date' in body) updatePayload.due_date = body.due_date ? body.due_date : null
+  const { data, error } = await supabase
+    .from('goals')
+    .select('*')
+    .eq('user_id', session.user.id)
+    .order('created_at', { ascending: true })
+
+  if (error) {
+    return NextResponse.json({ error: error.message }, { status: 500 })
+  }
+
+  return NextResponse.json(data ?? [])
+}
+
+export async function POST(request: Request) {
+  const supabase = createRouteHandlerClient<Database>({ cookies })
+  const body = await request.json()
+  const {
+    data: { session }
+  } = await supabase.auth.getSession()
+
+  if (!session) {
+    return NextResponse.json({ error: 'Yetkisiz erişim' }, { status: 401 })
+  }
+
+  if (!body.title) {
+    return NextResponse.json({ error: 'Hedef başlığı gerekli.' }, { status: 400 })
+  }
 
   const { data, error } = await supabase
-    .from('projects')
-    .update(updatePayload)
-    .eq('id', params.id)
-    .eq('user_id', session.user.id)
+    .from('goals')
+    .insert({
+      title: body.title,
+      description: body.description,
+      is_completed: body.is_completed ?? false,
+      user_id: session.user.id
+    })
     .select('*')
     .single()
 
@@ -33,24 +56,5 @@ export async function PUT(request: Request, { params }: { params: { id: string }
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 
-  return NextResponse.json(data)
-}
-
-export async function DELETE(_: Request, { params }: { params: { id: string } }) {
-  const supabase = createRouteHandlerClient<Database>({ cookies })
-  const {
-    data: { session }
-  } = await supabase.auth.getSession()
-
-  if (!session) {
-    return NextResponse.json({ error: 'Yetkisiz erişim' }, { status: 401 })
-  }
-
-  const { error } = await supabase.from('projects').delete().eq('id', params.id).eq('user_id', session.user.id)
-
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 })
-  }
-
-  return NextResponse.json({ success: true })
+  return NextResponse.json(data, { status: 201 })
 }

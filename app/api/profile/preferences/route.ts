@@ -14,11 +14,23 @@ export async function PUT(request: Request) {
     return NextResponse.json({ error: 'Yetkisiz erişim' }, { status: 401 })
   }
 
-  const updatePayload = {
-    email_notifications: body.email_notifications,
-    push_notifications: body.push_notifications,
-    weekly_summary: body.weekly_summary,
-    theme: body.theme
+  const updatePayload: Database['public']['Tables']['profiles']['Update'] = {}
+
+  if ('email_notifications' in body) {
+    updatePayload.email_notifications = body.email_notifications
+  }
+  if ('push_notifications' in body) {
+    updatePayload.push_notifications = body.push_notifications
+  }
+  if ('weekly_summary' in body) {
+    updatePayload.weekly_summary = body.weekly_summary
+  }
+  if ('theme' in body) {
+    updatePayload.theme = body.theme
+  }
+
+  if (Object.keys(updatePayload).length === 0) {
+    return NextResponse.json({ error: 'Güncellenecek alan belirtilmedi.' }, { status: 400 })
   }
 
   const { error } = await supabase

@@ -14,6 +14,7 @@ export type Database = {
           push_notifications: boolean | null
           weekly_summary: boolean | null
           created_at: string
+          role: 'admin' | 'user' | null
         }
         Insert: {
           id: string
@@ -24,6 +25,7 @@ export type Database = {
           email_notifications?: boolean | null
           push_notifications?: boolean | null
           weekly_summary?: boolean | null
+          role?: 'admin' | 'user' | null
         }
         Update: Partial<Database['public']['Tables']['profiles']['Insert']>
       }
@@ -52,7 +54,7 @@ export type Database = {
           id: string
           title: string
           description: string | null
-          status: 'todo' | 'in_progress' | 'done'
+          status: 'todo' | 'in_progress' | 'in_review' | 'revision' | 'approved' | 'published' | 'done'
           priority: 'low' | 'medium' | 'high'
           due_date: string | null
           project_id: string | null
@@ -63,13 +65,68 @@ export type Database = {
           id?: string
           title: string
           description?: string | null
-          status?: 'todo' | 'in_progress' | 'done'
+          status?: 'todo' | 'in_progress' | 'in_review' | 'revision' | 'approved' | 'published' | 'done'
           priority?: 'low' | 'medium' | 'high'
           due_date?: string | null
           project_id?: string | null
           user_id: string
         }
         Update: Partial<Database['public']['Tables']['tasks']['Insert']>
+      }
+      comments: {
+        Row: {
+          id: string
+          task_id: string
+          user_id: string
+          content: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          task_id: string
+          user_id: string
+          content: string
+          created_at?: string
+        }
+        Update: Partial<Database['public']['Tables']['comments']['Insert']>
+      }
+      revisions: {
+        Row: {
+          id: string
+          task_id: string
+          user_id: string
+          comment_id: string | null
+          description: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          task_id: string
+          user_id: string
+          comment_id?: string | null
+          description: string
+          created_at?: string
+        }
+        Update: Partial<Database['public']['Tables']['revisions']['Insert']>
+      }
+      goals: {
+        Row: {
+          id: string
+          title: string
+          description: string | null
+          is_completed: boolean
+          user_id: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          title: string
+          description?: string | null
+          is_completed?: boolean
+          user_id: string
+          created_at?: string
+        }
+        Update: Partial<Database['public']['Tables']['goals']['Insert']>
       }
     }
   }
