@@ -65,5 +65,15 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 
+  if (data) {
+    await supabase.from('notifications').insert({
+      title: 'Yeni rapor hazır',
+      description: `${data.title} yayınlandı.`,
+      type: 'report',
+      user_id: session.user.id,
+      meta: { report_id: data.id }
+    })
+  }
+
   return NextResponse.json(data, { status: 201 })
 }

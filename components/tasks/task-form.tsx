@@ -6,6 +6,7 @@ import { useSupabaseClient } from '@supabase/auth-helpers-react'
 import { Task, TaskStatus, TASK_STATUS_LABELS, TASK_STATUS_ORDER } from '@/lib/types'
 import { Button } from '@/components/ui/button'
 import { Database } from '@/lib/supabase-types'
+import { useNotificationCenter } from '@/components/providers/notification-provider'
 
 interface TaskFormProps {
   onSuccess: (message?: string) => void
@@ -26,6 +27,7 @@ export function TaskForm({ onSuccess, projects, initialData }: TaskFormProps) {
   const [attachmentUrl, setAttachmentUrl] = useState<string | null>(initialData?.attachment_url ?? null)
   const [previewUrl, setPreviewUrl] = useState<string | null>(null)
   const supabase = useSupabaseClient<Database>()
+  const { refresh: refreshNotifications } = useNotificationCenter()
 
   useEffect(() => {
     if (!file) {
@@ -95,6 +97,7 @@ export function TaskForm({ onSuccess, projects, initialData }: TaskFormProps) {
 
       setFile(null)
       onSuccess(initialData ? 'Görev başarıyla güncellendi' : 'Yeni görev oluşturuldu')
+      void refreshNotifications()
     } catch (uploadError) {
       setLoading(false)
       setError(uploadError instanceof Error ? uploadError.message : 'Bir hata oluştu')

@@ -3,7 +3,7 @@ import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
 import { cookies } from 'next/headers'
 import { Database } from '@/lib/supabase-types'
 
-export async function GET() {
+export async function GET(request: Request) {
   const supabase = createRouteHandlerClient<Database>({ cookies })
   const {
     data: { session }
@@ -19,13 +19,17 @@ export async function GET() {
     .eq('id', session.user.id)
     .single()
 
-  const query = supabase
-    .from('tasks')
-    .select('*')
-    .order('due_date', { ascending: true })
+  const { searchParams } = new URL(request.url)
+  const category = searchParams.get('category')
+
+  let query = supabase.from('files').select('*').order('created_at', { ascending: false })
+
+  if (category) {
+    query = query.eq('category', category as Database['public']['Tables']['files']['Row']['category'])
+  }
 
   if (profile?.role !== 'admin') {
-    query.eq('user_id', session.user.id)
+    query = query.eq('user_id', session.user.id)
   }
 
   const { data, error } = await query
@@ -34,7 +38,7 @@ export async function GET() {
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 
-  return NextResponse.json(data)
+  return NextResponse.json(data ?? [])
 }
 
 export async function POST(request: Request) {
@@ -49,30 +53,29 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Yetkisiz erişim' }, { status: 401 })
   }
 
-  const payload = {
-    title: body.title,
-    description: body.description,
-    status: (body.status as Database['public']['Tables']['tasks']['Row']['status']) ?? 'yapiliyor',
-    priority: (body.priority as Database['public']['Tables']['tasks']['Row']['priority']) ?? 'medium',
-    due_date: body.due_date,
-    project_id: body.project_id,
-    attachment_url: body.attachment_url ?? null,
+  const payload: Database['public']['Tables']['files']['Insert'] = {
+    name: body.name,
+    bucket: body.bucket,
+    path: body.path,
+    url: body.url ?? null,
+    category: body.category as Database['public']['Tables']['files']['Row']['category'],
+    description: body.description ?? null,
     user_id: session.user.id
   }
 
-  const { data, error } = await supabase.from('tasks').insert(payload).select('*').single()
+  const { data, error } = await supabase.from('files').insert(payload).select('*').single()
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 
-  if (data) {
+  if (data.category === 'invoice') {
     await supabase.from('notifications').insert({
-      title: 'Yeni görev oluşturuldu',
-      description: `${data.title} görevi panoya eklendi`,
-      type: 'task',
+      title: 'Yeni fatura yüklendi',
+      description: `${data.name} hazır.`,
+      type: 'invoice',
       user_id: session.user.id,
-      meta: { task_id: data.id }
+      meta: { file_id: data.id }
     })
   }
 

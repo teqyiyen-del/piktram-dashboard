@@ -14,6 +14,17 @@ export function formatDate(date: string | null) {
   }).format(new Date(date))
 }
 
+export function formatDateTime(date: string | null) {
+  if (!date) return ''
+  return new Intl.DateTimeFormat('tr-TR', {
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
+  }).format(new Date(date))
+}
+
 export function getInitials(fullName?: string | null) {
   if (!fullName) return 'K'
   const parts = fullName.split(' ')

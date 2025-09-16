@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
 import { cookies } from 'next/headers'
 import { Database } from '@/lib/supabase-types'
+import { TASK_STATUS_LABELS, TaskStatus } from '@/lib/types'
 
 export async function PUT(request: Request, { params }: { params: { id: string } }) {
   const supabase = createRouteHandlerClient<Database>({ cookies })
@@ -35,6 +36,24 @@ export async function PUT(request: Request, { params }: { params: { id: string }
     return NextResponse.json({ error: 'Güncellenecek alan bulunamadı' }, { status: 400 })
   }
 
+  let previousTask: Database['public']['Tables']['tasks']['Row'] | null = null
+
+  if ('status' in body) {
+    let detailQuery = supabase.from('tasks').select('*').eq('id', params.id)
+
+    if (profile?.role !== 'admin') {
+      detailQuery = detailQuery.eq('user_id', session.user.id)
+    }
+
+    const { data: existing, error: existingError } = await detailQuery.single()
+
+    if (existingError) {
+      return NextResponse.json({ error: existingError.message }, { status: 404 })
+    }
+
+    previousTask = existing
+  }
+
   let query = supabase.from('tasks').update(updates).eq('id', params.id)
 
   if (profile?.role !== 'admin') {
@@ -45,6 +64,18 @@ export async function PUT(request: Request, { params }: { params: { id: string }
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 })
+  }
+
+  if (previousTask && updates.status && previousTask.status !== updates.status) {
+    const fromLabel = TASK_STATUS_LABELS[previousTask.status as TaskStatus]
+    const toLabel = TASK_STATUS_LABELS[updates.status as TaskStatus]
+    await supabase.from('notifications').insert({
+      title: 'Görev durumu güncellendi',
+      description: `${previousTask.title} görevi ${fromLabel} → ${toLabel} olarak değişti`,
+      type: 'task',
+      user_id: session.user.id,
+      meta: { task_id: previousTask.id, from: previousTask.status, to: updates.status }
+    })
   }
 
   return NextResponse.json(data)

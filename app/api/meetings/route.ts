@@ -19,13 +19,10 @@ export async function GET() {
     .eq('id', session.user.id)
     .single()
 
-  const query = supabase
-    .from('tasks')
-    .select('*')
-    .order('due_date', { ascending: true })
+  let query = supabase.from('meetings').select('*').order('preferred_date', { ascending: true })
 
   if (profile?.role !== 'admin') {
-    query.eq('user_id', session.user.id)
+    query = query.eq('user_id', session.user.id)
   }
 
   const { data, error } = await query
@@ -34,7 +31,7 @@ export async function GET() {
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 
-  return NextResponse.json(data)
+  return NextResponse.json(data ?? [])
 }
 
 export async function POST(request: Request) {
@@ -49,32 +46,28 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Yetkisiz erişim' }, { status: 401 })
   }
 
-  const payload = {
+  const payload: Database['public']['Tables']['meetings']['Insert'] = {
     title: body.title,
-    description: body.description,
-    status: (body.status as Database['public']['Tables']['tasks']['Row']['status']) ?? 'yapiliyor',
-    priority: (body.priority as Database['public']['Tables']['tasks']['Row']['priority']) ?? 'medium',
-    due_date: body.due_date,
-    project_id: body.project_id,
-    attachment_url: body.attachment_url ?? null,
+    agenda: body.agenda ?? null,
+    preferred_date: body.preferred_date ?? null,
+    meeting_url: body.meeting_url ?? null,
+    status: body.status ?? 'beklemede',
     user_id: session.user.id
   }
 
-  const { data, error } = await supabase.from('tasks').insert(payload).select('*').single()
+  const { data, error } = await supabase.from('meetings').insert(payload).select('*').single()
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 
-  if (data) {
-    await supabase.from('notifications').insert({
-      title: 'Yeni görev oluşturuldu',
-      description: `${data.title} görevi panoya eklendi`,
-      type: 'task',
-      user_id: session.user.id,
-      meta: { task_id: data.id }
-    })
-  }
+  await supabase.from('notifications').insert({
+    title: 'Toplantı talebiniz alındı',
+    description: `${data.title} için talebiniz kaydedildi.`,
+    type: 'meeting',
+    user_id: session.user.id,
+    meta: { meeting_id: data.id }
+  })
 
   return NextResponse.json(data, { status: 201 })
 }

@@ -194,3 +194,134 @@ begin
 exception when unique_violation then
   update storage.buckets set public = true where id = 'task-attachments';
 end $$;
+
+create table if not exists subscriptions (
+  id uuid primary key default gen_random_uuid(),
+  plan_name text not null,
+  price numeric not null,
+  currency text default 'TRY',
+  renewal_date date,
+  status text default 'aktif',
+  user_id uuid not null references auth.users(id) on delete cascade,
+  created_at timestamp with time zone default timezone('utc'::text, now())
+);
+
+alter table subscriptions enable row level security;
+drop policy if exists "subscriptions_select" on subscriptions;
+drop policy if exists "subscriptions_modify" on subscriptions;
+create policy "subscriptions_select" on subscriptions for select using (
+  user_id = auth.uid() or exists(select 1 from profiles as p where p.id = auth.uid() and p.role = 'admin')
+);
+create policy "subscriptions_modify" on subscriptions for all using (
+  user_id = auth.uid() or exists(select 1 from profiles as p where p.id = auth.uid() and p.role = 'admin')
+) with check (
+  user_id = auth.uid() or exists(select 1 from profiles as p where p.id = auth.uid() and p.role = 'admin')
+);
+
+insert into subscriptions (plan_name, price, currency, renewal_date, status, user_id)
+values ('Piktram Büyüme', 8750, 'TRY', current_date + interval '30 day', 'aktif', '00000000-0000-0000-0000-000000000000')
+on conflict do nothing;
+
+create type if not exists file_category as enum ('invoice', 'contract', 'logo', 'post', 'reel', 'visual');
+
+create table if not exists files (
+  id uuid primary key default gen_random_uuid(),
+  name text not null,
+  bucket text not null,
+  path text not null,
+  url text,
+  category file_category not null,
+  description text,
+  user_id uuid not null references auth.users(id) on delete cascade,
+  created_at timestamp with time zone default timezone('utc'::text, now())
+);
+
+alter table files enable row level security;
+drop policy if exists "files_select" on files;
+drop policy if exists "files_modify" on files;
+create policy "files_select" on files for select using (
+  user_id = auth.uid() or exists(select 1 from profiles as p where p.id = auth.uid() and p.role = 'admin')
+);
+create policy "files_modify" on files for all using (
+  user_id = auth.uid() or exists(select 1 from profiles as p where p.id = auth.uid() and p.role = 'admin')
+) with check (
+  user_id = auth.uid() or exists(select 1 from profiles as p where p.id = auth.uid() and p.role = 'admin')
+);
+
+insert into files (name, bucket, path, url, category, description, user_id)
+values
+  ('2024-02 Faturası.pdf', 'brand-assets', 'faturalar/2024-02-faturasi.pdf', 'https://storage.googleapis.com/piktram-demo/faturalar/2024-02-faturasi.pdf', 'invoice', 'Şubat 2024 faturası', '00000000-0000-0000-0000-000000000000'),
+  ('Hizmet Sozlesmesi.pdf', 'brand-assets', 'sozlesmeler/hizmet-sozlesmesi.pdf', 'https://storage.googleapis.com/piktram-demo/sozlesmeler/hizmet-sozlesmesi.pdf', 'contract', 'Güncel hizmet sözleşmesi', '00000000-0000-0000-0000-000000000000'),
+  ('Piktram Logo.png', 'brand-assets', 'logolar/piktram-logo.png', 'https://storage.googleapis.com/piktram-demo/logolar/piktram-logo.png', 'logo', 'Marka logotype', '00000000-0000-0000-0000-000000000000'),
+  ('Mart Kampanya Postu.png', 'brand-assets', 'postlar/mart-kampanya.png', 'https://storage.googleapis.com/piktram-demo/postlar/mart-kampanya.png', 'post', 'Sosyal medya şablonu', '00000000-0000-0000-0000-000000000000'),
+  ('Reels Tanitim.mp4', 'brand-assets', 'reels/reels-tanitim.mp4', 'https://storage.googleapis.com/piktram-demo/reels/reels-tanitim.mp4', 'reel', 'Ürün tanıtım videosu', '00000000-0000-0000-0000-000000000000'),
+  ('Stüdyo Çekimi.jpg', 'brand-assets', 'gorseller/studyo-cekimi.jpg', 'https://storage.googleapis.com/piktram-demo/gorseller/studyo-cekimi.jpg', 'visual', 'Ürün görseli', '00000000-0000-0000-0000-000000000000')
+on conflict do nothing;
+
+do $$
+begin
+  insert into storage.buckets (id, name, public)
+  values ('brand-assets', 'brand-assets', true);
+exception when unique_violation then
+  update storage.buckets set public = true where id = 'brand-assets';
+end $$;
+
+create table if not exists meetings (
+  id uuid primary key default gen_random_uuid(),
+  title text not null,
+  agenda text,
+  preferred_date timestamp with time zone,
+  meeting_url text,
+  status text default 'beklemede',
+  user_id uuid not null references auth.users(id) on delete cascade,
+  created_at timestamp with time zone default timezone('utc'::text, now())
+);
+
+alter table meetings enable row level security;
+drop policy if exists "meetings_select" on meetings;
+drop policy if exists "meetings_modify" on meetings;
+create policy "meetings_select" on meetings for select using (
+  user_id = auth.uid() or exists(select 1 from profiles as p where p.id = auth.uid() and p.role = 'admin')
+);
+create policy "meetings_modify" on meetings for all using (
+  user_id = auth.uid() or exists(select 1 from profiles as p where p.id = auth.uid() and p.role = 'admin')
+) with check (
+  user_id = auth.uid() or exists(select 1 from profiles as p where p.id = auth.uid() and p.role = 'admin')
+);
+
+insert into meetings (title, agenda, preferred_date, status, user_id)
+values
+  ('Aylık Performans Değerlendirmesi', 'Şubat performansının üzerinden geçelim.', current_timestamp + interval '2 day', 'planlandi', '00000000-0000-0000-0000-000000000000'),
+  ('İçerik Üretim Çalıştayı', 'Fin ekibinin sorularını toplayalım.', current_timestamp + interval '5 day', 'beklemede', '00000000-0000-0000-0000-000000000000')
+on conflict do nothing;
+
+create table if not exists notifications (
+  id uuid primary key default gen_random_uuid(),
+  title text not null,
+  description text,
+  type text not null,
+  meta jsonb,
+  read_at timestamp with time zone,
+  user_id uuid not null references auth.users(id) on delete cascade,
+  created_at timestamp with time zone default timezone('utc'::text, now())
+);
+
+alter table notifications enable row level security;
+drop policy if exists "notifications_select" on notifications;
+drop policy if exists "notifications_modify" on notifications;
+create policy "notifications_select" on notifications for select using (
+  user_id = auth.uid()
+);
+create policy "notifications_modify" on notifications for update using (
+  user_id = auth.uid()
+) with check (
+  user_id = auth.uid()
+);
+create policy "notifications_insert" on notifications for insert with check (
+  auth.uid() = user_id or exists(select 1 from profiles as p where p.id = auth.uid() and p.role = 'admin')
+);
+
+insert into notifications (title, description, type, user_id)
+values
+  ('Hoş geldiniz!', 'Pano bildirimlerinizi buradan takip edebilirsiniz.', 'general', '00000000-0000-0000-0000-000000000000')
+on conflict do nothing;

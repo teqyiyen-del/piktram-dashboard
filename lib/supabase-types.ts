@@ -127,6 +127,96 @@ export type Database = {
         }
         Update: Partial<Database['public']['Tables']['reports']['Insert']>
       }
+      subscriptions: {
+        Row: {
+          id: string
+          plan_name: string
+          price: number
+          currency: string
+          renewal_date: string | null
+          status: 'aktif' | 'beklemede' | 'iptal'
+          user_id: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          plan_name: string
+          price: number
+          currency?: string
+          renewal_date?: string | null
+          status?: 'aktif' | 'beklemede' | 'iptal'
+          user_id: string
+        }
+        Update: Partial<Database['public']['Tables']['subscriptions']['Insert']>
+      }
+      files: {
+        Row: {
+          id: string
+          name: string
+          bucket: string
+          path: string
+          url: string | null
+          category: 'invoice' | 'contract' | 'logo' | 'post' | 'reel' | 'visual'
+          description: string | null
+          user_id: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          name: string
+          bucket: string
+          path: string
+          url?: string | null
+          category: 'invoice' | 'contract' | 'logo' | 'post' | 'reel' | 'visual'
+          description?: string | null
+          user_id: string
+        }
+        Update: Partial<Database['public']['Tables']['files']['Insert']>
+      }
+      meetings: {
+        Row: {
+          id: string
+          title: string
+          agenda: string | null
+          preferred_date: string | null
+          meeting_url: string | null
+          status: 'beklemede' | 'onaylandi' | 'planlandi'
+          user_id: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          title: string
+          agenda?: string | null
+          preferred_date?: string | null
+          meeting_url?: string | null
+          status?: 'beklemede' | 'onaylandi' | 'planlandi'
+          user_id: string
+        }
+        Update: Partial<Database['public']['Tables']['meetings']['Insert']>
+      }
+      notifications: {
+        Row: {
+          id: string
+          title: string
+          description: string | null
+          type: 'task' | 'report' | 'invoice' | 'meeting' | 'general'
+          created_at: string
+          read_at: string | null
+          user_id: string
+          meta: Json | null
+        }
+        Insert: {
+          id?: string
+          title: string
+          description?: string | null
+          type: 'task' | 'report' | 'invoice' | 'meeting' | 'general'
+          read_at?: string | null
+          user_id: string
+          meta?: Json | null
+        }
+        Update: Partial<Database['public']['Tables']['notifications']['Insert']>
+      }
     }
   }
 }

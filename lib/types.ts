@@ -114,3 +114,55 @@ export type Report = {
   created_at: string
   user_id: string
 }
+
+export type SubscriptionStatus = 'aktif' | 'beklemede' | 'iptal'
+
+export type Subscription = {
+  id: string
+  plan_name: string
+  price: number
+  currency: string
+  renewal_date: string | null
+  status: SubscriptionStatus
+  user_id: string
+  created_at: string
+}
+
+export type FileCategory = 'invoice' | 'contract' | 'logo' | 'post' | 'reel' | 'visual'
+
+export type StoredFile = {
+  id: string
+  name: string
+  bucket: string
+  path: string
+  url: string | null
+  category: FileCategory
+  description: string | null
+  user_id: string
+  created_at: string
+}
+
+export type MeetingStatus = 'beklemede' | 'onaylandi' | 'planlandi'
+
+export type Meeting = {
+  id: string
+  title: string
+  agenda: string | null
+  preferred_date: string | null
+  meeting_url: string | null
+  status: MeetingStatus
+  user_id: string
+  created_at: string
+}
+
+export type NotificationType = 'task' | 'report' | 'invoice' | 'meeting' | 'general'
+
+export type Notification = {
+  id: string
+  title: string
+  description: string | null
+  type: NotificationType
+  created_at: string
+  read_at: string | null
+  user_id: string
+}

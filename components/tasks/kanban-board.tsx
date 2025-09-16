@@ -7,6 +7,7 @@ import { TaskCard } from './task-card'
 import { Modal } from '@/components/ui/modal'
 import { TaskForm } from './task-form'
 import { Button } from '@/components/ui/button'
+import { useNotificationCenter } from '@/components/providers/notification-provider'
 
 interface KanbanBoardProps {
   initialTasks: Task[]
@@ -26,6 +27,7 @@ export function KanbanBoard({ initialTasks, projects }: KanbanBoardProps) {
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [editingTask, setEditingTask] = useState<Task | null>(null)
   const [toast, setToast] = useState<{ type: 'success' | 'error'; message: string } | null>(null)
+  const { refresh: refreshNotifications } = useNotificationCenter()
 
   useEffect(() => {
     setTasks(initialTasks)
@@ -90,6 +92,7 @@ export function KanbanBoard({ initialTasks, projects }: KanbanBoardProps) {
     const updatedTask = await response.json()
     setTasks((prev) => prev.map((task) => (task.id === draggableId ? { ...task, ...updatedTask } : task)))
     showToast('success', `${movedTask.title} ${TASK_STATUS_LABELS[movedTask.status]} → ${TASK_STATUS_LABELS[newStatus]} durumuna taşındı`)
+    void refreshNotifications()
   }
 
   const handleDelete = async (task: Task) => {
@@ -119,6 +122,7 @@ export function KanbanBoard({ initialTasks, projects }: KanbanBoardProps) {
     setTasks((prev) => prev.map((task) => (task.id === taskId ? { ...task, ...updated } : task)))
     if (payload.status) {
       showToast('success', `Durum ${TASK_STATUS_LABELS[payload.status as TaskStatus]} olarak güncellendi`)
+      void refreshNotifications()
     } else {
       showToast('success', 'Görev güncellendi')
     }

@@ -2,9 +2,10 @@
 
 import { useSupabaseClient } from '@supabase/auth-helpers-react'
 import { useRouter } from 'next/navigation'
-import { Bell, LogOut, Menu, Search } from 'lucide-react'
+import { LogOut, Menu, Search } from 'lucide-react'
 import { getInitials } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
+import { NotificationDropdown } from '@/components/notifications/notification-dropdown'
 
 interface TopbarProps {
   fullName: string | null
@@ -43,10 +44,7 @@ export default function Topbar({ fullName, email, onMenuClick }: TopbarProps) {
           </div>
         </div>
         <div className="flex items-center gap-3 sm:justify-end">
-          <button className="relative flex h-11 w-11 items-center justify-center rounded-full bg-gray-100 text-gray-500 transition hover:text-accent dark:bg-gray-800 dark:text-gray-300 dark:hover:text-accent">
-            <Bell className="h-5 w-5" />
-            <span className="absolute right-2 top-2 block h-2.5 w-2.5 rounded-full bg-accent" />
-          </button>
+          <NotificationDropdown />
           <div className="hidden min-w-[200px] items-center gap-3 rounded-2xl border border-gray-200 bg-white px-4 py-2 shadow-sm dark:border-gray-700 dark:bg-gray-900 lg:flex">
             <div className="flex h-10 w-10 items-center justify-center rounded-full bg-accent/15 text-sm font-semibold text-accent">
               {getInitials(fullName)}
