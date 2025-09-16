@@ -7,7 +7,11 @@ export type Profile = {
   email_notifications?: boolean
   push_notifications?: boolean
   weekly_summary?: boolean
+<<<<<<< HEAD
   role?: 'user' | 'admin'
+=======
+  role?: 'admin' | 'user'
+>>>>>>> codex-restore-ux
 }
 
 export type Project = {
@@ -17,6 +21,7 @@ export type Project = {
   progress: number
   due_date: string | null
   user_id: string
+<<<<<<< HEAD
 }
 
 export type TaskStatus = 'yapiliyor' | 'onay_surecinde' | 'revize' | 'onaylandi' | 'paylasildi'
@@ -30,6 +35,19 @@ export const TASK_STATUS_LABELS: Record<TaskStatus, string> = {
 }
 
 export const TASK_STATUS_ORDER: TaskStatus[] = ['yapiliyor', 'onay_surecinde', 'revize', 'onaylandi', 'paylasildi']
+=======
+  created_at?: string
+}
+
+export type TaskStatus =
+  | 'todo'
+  | 'in_progress'
+  | 'in_review'
+  | 'revision'
+  | 'approved'
+  | 'published'
+  | 'done'
+>>>>>>> codex-restore-ux
 
 export type Task = {
   id: string
@@ -40,6 +58,7 @@ export type Task = {
   due_date: string | null
   project_id: string | null
   user_id: string
+<<<<<<< HEAD
   attachment_url: string | null
 }
 
@@ -165,4 +184,41 @@ export type Notification = {
   created_at: string
   read_at: string | null
   user_id: string
+=======
+  created_at?: string
+}
+
+export type Comment = {
+  id: string
+  task_id: string
+  user_id: string
+  content: string
+  created_at: string
+  author?: {
+    full_name: string | null
+    email: string | null
+  }
+}
+
+export type Revision = {
+  id: string
+  task_id: string
+  user_id: string
+  comment_id: string | null
+  description: string
+  created_at: string
+  author?: {
+    full_name: string | null
+    email: string | null
+  }
+}
+
+export type Goal = {
+  id: string
+  title: string
+  description: string | null
+  is_completed: boolean
+  user_id: string
+  created_at?: string
+>>>>>>> codex-restore-ux
 }

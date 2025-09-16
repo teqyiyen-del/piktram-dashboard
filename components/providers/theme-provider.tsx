@@ -1,61 +1,66 @@
-'use client'
+"use client"
 
-import { createContext, ReactNode, useContext, useEffect, useMemo, useState } from 'react'
+import { createContext, useContext, useEffect, useState } from "react"
 
-type Theme = 'light' | 'dark'
+type Theme = "light" | "dark"
 
-type ThemeContextValue = {
+interface ThemeContextType {
   theme: Theme
   setTheme: (theme: Theme) => void
 }
 
-const ThemeContext = createContext<ThemeContextValue | undefined>(undefined)
+const ThemeContext = createContext<ThemeContextType | undefined>(undefined)
 
-type Props = {
-  children: ReactNode
+export function ThemeProvider({
+  children,
+  initialTheme = "light",
+}: {
+  children: React.ReactNode
   initialTheme?: Theme
-}
-
-export function ThemeProvider({ children, initialTheme = 'light' }: Props) {
+}) {
   const [theme, setThemeState] = useState<Theme>(initialTheme)
 
+  // LocalStorage'dan tema oku
   useEffect(() => {
-    const stored = window.localStorage.getItem('piktram-theme') as Theme | null
+    const stored = window.localStorage.getItem("piktram-theme") as Theme | null
     if (stored) {
       setThemeState(stored)
       applyTheme(stored)
     } else {
       applyTheme(initialTheme)
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
+  // Tema değiştiğinde uygulama
   useEffect(() => {
     applyTheme(theme)
-    window.localStorage.setItem('piktram-theme', theme)
+    window.localStorage.setItem("piktram-theme", theme)
   }, [theme])
 
-  const value = useMemo(() => ({
-    theme,
-    setTheme: (next: Theme) => setThemeState(next)
-  }), [theme])
-
-  return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>
-}
-
-function applyTheme(theme: Theme) {
-  if (typeof document === 'undefined') return
-  if (theme === 'dark') {
-    document.documentElement.classList.add('dark')
-  } else {
-    document.documentElement.classList.remove('dark')
+  function setTheme(newTheme: Theme) {
+    setThemeState(newTheme)
+    applyTheme(newTheme)
+    window.localStorage.setItem("piktram-theme", newTheme)
   }
+
+  function applyTheme(theme: Theme) {
+    if (theme  "dark") {
+      document.documentElement.classList.add("dark")
+    } else {
+      document.documentElement.classList.remove("dark")
+    }
+  }
+
+  return (
+    <ThemeContext.Provider value={{ theme, setTheme }}>
+      {children}
+    </ThemeContext.Provider>
+  )
 }
 
 export function useTheme() {
   const context = useContext(ThemeContext)
-  if (!context) {
-    throw new Error('useTheme must be used inside ThemeProvider')
-  }
+  if (!context) throw new Error("useTheme must be used within a ThemeProvider")
   return context
 }
+

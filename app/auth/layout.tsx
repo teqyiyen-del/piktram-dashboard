@@ -2,6 +2,7 @@ import { ReactNode } from 'react'
 
 export default function AuthLayout({ children }: { children: ReactNode }) {
   return (
+<<<<<<< HEAD
     <div className="flex min-h-screen flex-col bg-muted dark:bg-muted-dark">
       <div className="flex flex-1 flex-col lg:flex-row">
         <aside className="relative hidden w-full max-w-xl flex-col justify-between overflow-hidden rounded-br-[48px] bg-gradient-to-br from-[#FF5E4A] via-[#FF7A66] to-[#FF947D] px-12 pb-12 pt-16 text-white shadow-[0_40px_90px_-50px_rgba(255,94,74,0.6)] lg:flex">
@@ -51,6 +52,18 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
         <div className="px-6 pb-10 text-sm text-gray-500 dark:text-gray-400">
           <p className="text-center">© {new Date().getFullYear()} Piktram. Tüm hakları saklıdır.</p>
         </div>
+=======
+    <div className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-br from-white to-gray-100 p-6">
+      <div className="w-full max-w-md rounded-3xl bg-white p-8 shadow-lg">
+        <div className="mb-6 text-center">
+          <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-accent text-lg font-bold text-white">
+            P
+          </div>
+          <h1 className="text-2xl font-semibold text-gray-900">Piktram</h1>
+          <p className="text-sm text-gray-500">Projelerinizi yönetmek için akıllı yol arkadaşınız.</p>
+        </div>
+        {children}
+>>>>>>> codex-restore-ux
       </div>
     </div>
   )

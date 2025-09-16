@@ -3,11 +3,12 @@ import { createServerComponentClient } from '@supabase/auth-helpers-nextjs'
 import { cookies } from 'next/headers'
 import { Database } from '@/lib/supabase-types'
 
-export default async function HomePage() {
+export default async function Home() {
   const supabase = createServerComponentClient<Database>({ cookies })
   const {
-    data: { session }
+    data: { session },
   } = await supabase.auth.getSession()
 
-  redirect(session ? '/anasayfa' : '/auth/login')
+  // Eğer kullanıcı login olduysa dashboard'a, yoksa login sayfasına yönlendir
+  redirect(session ? '/dashboard' : '/auth/login')
 }

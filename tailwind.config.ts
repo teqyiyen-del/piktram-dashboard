@@ -1,7 +1,10 @@
 import type { Config } from 'tailwindcss'
 
 const config: Config = {
+<<<<<<< HEAD
   darkMode: 'class',
+=======
+>>>>>>> codex-restore-ux
   content: [
     './app/**/*.{js,ts,jsx,tsx}',
     './components/**/*.{js,ts,jsx,tsx}'
@@ -9,6 +12,7 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
+<<<<<<< HEAD
         accent: '#FF5E4A',
         'accent-dark': '#e44a39',
         muted: '#F5F5F7',
@@ -24,6 +28,12 @@ const config: Config = {
       },
       borderRadius: {
         xl: '1.25rem'
+=======
+        background: '#FFFFFF',
+        sidebar: '#121212',
+        accent: '#FF5E4A',
+        muted: '#F7F7F7'
+>>>>>>> codex-restore-ux
       },
       fontFamily: {
         sans: ['Inter', 'sans-serif']

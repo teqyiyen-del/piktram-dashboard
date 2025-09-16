@@ -51,14 +51,23 @@ export function CalendarView({ tasks, onCreateTask }: CalendarViewProps) {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div>
+<<<<<<< HEAD
           <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Takvim</h2>
           <p className="text-sm text-gray-500 dark:text-gray-400">Görevlerinizi aylık görünümde takip edin.</p>
+=======
+          <h2 className="text-xl font-semibold text-gray-900">Takvim</h2>
+          <p className="text-sm text-gray-500">Görevlerinizi aylık görünümde takip edin.</p>
+>>>>>>> codex-restore-ux
         </div>
         <div className="flex items-center gap-2">
           <Button variant="secondary" onClick={() => setCurrentDate(addMonths(currentDate, -1))}>
             Önceki
           </Button>
+<<<<<<< HEAD
           <div className="rounded-full bg-surface px-4 py-2 text-sm font-medium text-gray-700 shadow dark:bg-surface-dark dark:text-gray-200">
+=======
+          <div className="rounded-full bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow">
+>>>>>>> codex-restore-ux
             {format(currentDate, 'LLLL yyyy', { locale: tr })}
           </div>
           <Button variant="secondary" onClick={() => setCurrentDate(addMonths(currentDate, 1))}>
@@ -67,7 +76,11 @@ export function CalendarView({ tasks, onCreateTask }: CalendarViewProps) {
           <Button onClick={onCreateTask}>Takvime Görev Ekle</Button>
         </div>
       </div>
+<<<<<<< HEAD
       <div className="grid grid-cols-7 gap-3 text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">
+=======
+      <div className="grid grid-cols-7 gap-3 text-xs font-medium uppercase tracking-wide text-gray-500">
+>>>>>>> codex-restore-ux
         {['Pzt', 'Sal', 'Çar', 'Per', 'Cum', 'Cmt', 'Paz'].map((day) => (
           <div key={day} className="text-center">
             {day}
@@ -86,9 +99,13 @@ export function CalendarView({ tasks, onCreateTask }: CalendarViewProps) {
               key={key}
               onClick={() => setSelectedDate(day)}
               className={`flex h-24 flex-col rounded-2xl border p-2 text-left transition ${
+<<<<<<< HEAD
                 isCurrentMonth
                   ? 'bg-surface border-gray-200 text-gray-700 dark:border-gray-700 dark:bg-surface-dark dark:text-gray-200'
                   : 'bg-gray-50 border-gray-100 text-gray-400 dark:border-gray-800 dark:bg-gray-900/40 dark:text-gray-600'
+=======
+                isCurrentMonth ? 'bg-white border-gray-200' : 'bg-gray-50 border-gray-100 text-gray-400'
+>>>>>>> codex-restore-ux
               } ${isToday ? 'ring-2 ring-accent' : ''}`}
             >
               <span className="text-sm font-semibold">{format(day, 'd', { locale: tr })}</span>
@@ -105,6 +122,7 @@ export function CalendarView({ tasks, onCreateTask }: CalendarViewProps) {
       <Modal
         isOpen={!!selectedDate}
         onClose={() => setSelectedDate(null)}
+<<<<<<< HEAD
         title={selectedDate ? format(selectedDate, 'd MMMM yyyy', { locale: tr }) : 'Görevler'}
       >
         {selectedTasks.length === 0 ? (
@@ -126,6 +144,19 @@ export function CalendarView({ tasks, onCreateTask }: CalendarViewProps) {
                     📎 Ek dosyayı aç
                   </a>
                 )}
+=======
+        title={selectedDate ? format(selectedDate, "d MMMM yyyy", { locale: tr }) : 'Görevler'}
+      >
+        {selectedTasks.length === 0 ? (
+          <p className="text-sm text-gray-500">Bu tarih için görev bulunmuyor.</p>
+        ) : (
+          <div className="space-y-3">
+            {selectedTasks.map((task) => (
+              <div key={task.id} className="rounded-xl border border-gray-200 p-3">
+                <p className="text-sm font-semibold text-gray-900">{task.title}</p>
+                <p className="text-xs text-gray-500">{task.description}</p>
+                <p className="mt-1 text-xs text-gray-400">Bitiş: {formatDate(task.due_date)}</p>
+>>>>>>> codex-restore-ux
               </div>
             ))}
           </div>

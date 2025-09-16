@@ -12,7 +12,7 @@ export default async function ProtectedLayout({ children }: { children: ReactNod
   } = await supabase.auth.getSession()
 
   if (!session) {
-    redirect('/auth/login')
+  redirect('/auth/login')
   }
 
   const { data: profile } = await supabase

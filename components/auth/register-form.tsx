@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { FormEvent, useState } from 'react'
 import { useSupabaseClient } from '@supabase/auth-helpers-react'
 import { useRouter } from 'next/navigation'
+<<<<<<< HEAD
 import { Mail, Lock, Eye, EyeOff, User, Github, Apple, Chrome } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 
@@ -26,12 +27,27 @@ export function RegisterForm() {
   const [success, setSuccess] = useState<string | null>(null)
 
   const translateError = (message: string) => registerErrors[message] ?? registerErrors.default
+=======
+import { Button } from '@/components/ui/button'
+
+export function RegisterForm() {
+  const supabase = useSupabaseClient()
+  const router = useRouter()
+  const [fullName, setFullName] = useState('Demo Kullanıcı')
+  const [email, setEmail] = useState('demo@piktram.com')
+  const [password, setPassword] = useState('piktram123')
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+>>>>>>> codex-restore-ux
 
   const handleSubmit = async (event: FormEvent) => {
     event.preventDefault()
     setLoading(true)
     setError(null)
+<<<<<<< HEAD
     setSuccess(null)
+=======
+>>>>>>> codex-restore-ux
 
     const { data, error } = await supabase.auth.signUp({
       email,
@@ -44,11 +60,16 @@ export function RegisterForm() {
     })
 
     if (error) {
+<<<<<<< HEAD
       setError(translateError(error.message))
+=======
+      setError(error.message)
+>>>>>>> codex-restore-ux
       setLoading(false)
       return
     }
 
+<<<<<<< HEAD
     const userId = data.user?.id ?? data.session?.user.id
 
     if (userId) {
@@ -57,10 +78,18 @@ export function RegisterForm() {
         full_name: fullName,
         email,
         role: 'user'
+=======
+    if (data.user) {
+      await supabase.from('profiles').upsert({
+        id: data.user.id,
+        full_name: fullName,
+        email
+>>>>>>> codex-restore-ux
       })
     }
 
     setLoading(false)
+<<<<<<< HEAD
 
     if (data.session) {
       router.replace('/anasayfa')
@@ -166,11 +195,65 @@ export function RegisterForm() {
         </Button>
       </form>
       <p className="text-center text-sm text-gray-500 dark:text-gray-400">
+=======
+    router.replace('/dashboard')
+  }
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-5">
+      <div className="space-y-2">
+        <label className="text-sm font-medium text-gray-700" htmlFor="name">
+          Adınız Soyadınız
+        </label>
+        <input
+          id="name"
+          value={fullName}
+          onChange={(e) => setFullName(e.target.value)}
+          placeholder="Örn. Ayşe Yılmaz"
+          required
+        />
+      </div>
+      <div className="space-y-2">
+        <label className="text-sm font-medium text-gray-700" htmlFor="email">
+          E-posta
+        </label>
+        <input
+          id="email"
+          type="email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          placeholder="ornek@piktram.com"
+          required
+        />
+      </div>
+      <div className="space-y-2">
+        <label className="text-sm font-medium text-gray-700" htmlFor="password">
+          Parola
+        </label>
+        <input
+          id="password"
+          type="password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          placeholder="••••••"
+          required
+        />
+      </div>
+      {error && <p className="text-sm text-red-500">{error}</p>}
+      <Button type="submit" className="w-full" disabled={loading}>
+        {loading ? 'Kayıt yapılıyor...' : 'Hesap Oluştur'}
+      </Button>
+      <p className="text-center text-sm text-gray-500">
+>>>>>>> codex-restore-ux
         Hesabınız var mı?{' '}
         <Link href="/auth/login" className="font-semibold text-accent">
           Giriş yapın
         </Link>
       </p>
+<<<<<<< HEAD
     </div>
+=======
+    </form>
+>>>>>>> codex-restore-ux
   )
 }

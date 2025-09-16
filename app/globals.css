@@ -6,6 +6,7 @@
   color-scheme: light;
 }
 
+ HEAD
 html.dark {
   color-scheme: dark;
 }
@@ -34,11 +35,24 @@ select {
 
 input::file-selector-button {
   @apply mr-3 rounded-full bg-accent px-4 py-2 text-sm font-medium text-white transition hover:bg-accent-dark;
+
+body {
+  @apply bg-muted text-gray-900;
+}
+
+a {
+  @apply text-accent;
+}
+
+input, textarea, select {
+  @apply bg-white border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-accent;
+
 }
 
 button {
   @apply focus:outline-none;
 }
+ 
 
 label {
   @apply block text-sm font-medium text-gray-700 dark:text-gray-300;
@@ -55,3 +69,4 @@ label {
 .pill {
   @apply rounded-full bg-gray-100 px-3 py-1 text-xs font-medium text-gray-600 dark:bg-gray-800 dark:text-gray-300;
 }
+

@@ -13,6 +13,7 @@ export default async function CalendarPage() {
     return null
   }
 
+<<<<<<< HEAD
   const { data: profile } = await supabase
     .from('profiles')
     .select('role')
@@ -31,6 +32,17 @@ export default async function CalendarPage() {
 
   const { data: tasksData } = await tasksQuery
   const { data: projectsData } = await projectsQuery
+=======
+  const { data: tasksData } = await supabase
+    .from('tasks')
+    .select('*')
+    .eq('user_id', session.user.id)
+
+  const { data: projectsData } = await supabase
+    .from('projects')
+    .select('id, title')
+    .eq('user_id', session.user.id)
+>>>>>>> codex-restore-ux
 
   return <CalendarClient initialTasks={tasksData ?? []} projects={projectsData ?? []} />
 }

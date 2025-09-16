@@ -1,9 +1,15 @@
+<<<<<<< HEAD
 'use client'
 
 import { ReactNode, useState } from 'react'
 import Sidebar from './sidebar'
 import Topbar from './topbar'
 import { NotificationProvider } from '@/components/providers/notification-provider'
+=======
+import { ReactNode } from 'react'
+import Sidebar from './sidebar'
+import Topbar from './topbar'
+>>>>>>> codex-restore-ux
 
 interface DashboardShellProps {
   children: ReactNode
@@ -15,6 +21,7 @@ interface DashboardShellProps {
 }
 
 export default function DashboardShell({ children, user }: DashboardShellProps) {
+<<<<<<< HEAD
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
 
   return (
@@ -34,5 +41,17 @@ export default function DashboardShell({ children, user }: DashboardShellProps) 
         </div>
       </div>
     </NotificationProvider>
+=======
+  return (
+    <div className="flex min-h-screen bg-muted">
+      <Sidebar role={user.role} />
+      <div className="flex flex-1 flex-col">
+        <Topbar fullName={user.full_name} email={user.email} />
+        <main className="flex-1 overflow-y-auto bg-muted p-8">
+          {children}
+        </main>
+      </div>
+    </div>
+>>>>>>> codex-restore-ux
   )
 }

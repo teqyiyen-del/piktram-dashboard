@@ -2,19 +2,31 @@
 
 import { useSupabaseClient } from '@supabase/auth-helpers-react'
 import { useRouter } from 'next/navigation'
+<<<<<<< HEAD
 import { LogOut, Menu, Search } from 'lucide-react'
 import { getInitials } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { NotificationDropdown } from '@/components/notifications/notification-dropdown'
+=======
+import { Bell, LogOut, Search } from 'lucide-react'
+import { getInitials } from '@/lib/utils'
+import { Button } from '@/components/ui/button'
+>>>>>>> codex-restore-ux
 
 interface TopbarProps {
   fullName: string | null
   email: string
+<<<<<<< HEAD
   role: 'admin' | 'user'
   onMenuClick: () => void
 }
 
 export default function Topbar({ fullName, email, onMenuClick }: TopbarProps) {
+=======
+}
+
+export default function Topbar({ fullName, email }: TopbarProps) {
+>>>>>>> codex-restore-ux
   const supabase = useSupabaseClient()
   const router = useRouter()
 
@@ -24,6 +36,7 @@ export default function Topbar({ fullName, email, onMenuClick }: TopbarProps) {
   }
 
   return (
+<<<<<<< HEAD
     <header className="border-b border-gray-200/70 bg-white/70 px-6 py-5 shadow-sm backdrop-blur transition-colors duration-300 dark:border-gray-800/70 dark:bg-surface-dark/80">
       <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
         <div className="flex w-full flex-1 items-center gap-3">
@@ -76,6 +89,31 @@ export default function Topbar({ fullName, email, onMenuClick }: TopbarProps) {
           Menüyü kullanarak bölümler arasında gezinin
         </span>
       </nav>
+=======
+    <header className="flex items-center justify-between border-b border-gray-200 bg-white px-8 py-4">
+      <div className="relative w-full max-w-md">
+        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+        <input className="w-full rounded-full border border-gray-200 bg-gray-50 py-2 pl-10 pr-4 text-sm focus:border-accent" placeholder="Ara..." />
+      </div>
+      <div className="flex items-center gap-4">
+        <button className="relative rounded-full bg-gray-100 p-2 text-gray-500 transition hover:text-accent">
+          <Bell className="h-5 w-5" />
+          <span className="absolute right-1 top-1 block h-2 w-2 rounded-full bg-accent"></span>
+        </button>
+        <div className="flex items-center gap-3">
+          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-accent/20 text-sm font-semibold text-accent">
+            {getInitials(fullName)}
+          </div>
+          <div className="text-sm">
+            <p className="font-semibold text-gray-900">{fullName ?? 'Takım Üyesi'}</p>
+            <p className="text-xs text-gray-500">{email}</p>
+          </div>
+        </div>
+        <Button variant="secondary" onClick={handleLogout} className="gap-2">
+          <LogOut className="h-4 w-4" /> Çıkış Yap
+        </Button>
+      </div>
+>>>>>>> codex-restore-ux
     </header>
   )
 }

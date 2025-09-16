@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { useState, FormEvent } from 'react'
 import { useSupabaseClient } from '@supabase/auth-helpers-react'
 import { useRouter } from 'next/navigation'
+<<<<<<< HEAD
 import { Mail, Lock, Eye, EyeOff, Github, Apple, Chrome } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 
@@ -26,6 +27,18 @@ export function LoginForm() {
     return errorMessages[message] ?? errorMessages.default
   }
 
+=======
+import { Button } from '@/components/ui/button'
+
+export function LoginForm() {
+  const supabase = useSupabaseClient()
+  const router = useRouter()
+  const [email, setEmail] = useState('demo@piktram.com')
+  const [password, setPassword] = useState('piktram123')
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+>>>>>>> codex-restore-ux
   const handleSubmit = async (event: FormEvent) => {
     event.preventDefault()
     setLoading(true)
@@ -36,6 +49,7 @@ export function LoginForm() {
     setLoading(false)
 
     if (error) {
+<<<<<<< HEAD
       setError(translateError(error.message))
       return
     }
@@ -127,11 +141,57 @@ export function LoginForm() {
         </Button>
       </form>
       <p className="text-center text-sm text-gray-500 dark:text-gray-400">
+=======
+      setError(error.message)
+      return
+    }
+
+    router.replace('/dashboard')
+  }
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-5">
+      <div className="space-y-2">
+        <label className="text-sm font-medium text-gray-700" htmlFor="email">
+          E-posta
+        </label>
+        <input
+          id="email"
+          type="email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          placeholder="ornek@piktram.com"
+          required
+        />
+      </div>
+      <div className="space-y-2">
+        <label className="text-sm font-medium text-gray-700" htmlFor="password">
+          Parola
+        </label>
+        <input
+          id="password"
+          type="password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          placeholder="••••••"
+          required
+        />
+      </div>
+      {error && <p className="text-sm text-red-500">{error}</p>}
+      <Button type="submit" className="w-full" disabled={loading}>
+        {loading ? 'Giriş yapılıyor...' : 'Giriş Yap'}
+      </Button>
+      <p className="text-center text-sm text-gray-500">
+>>>>>>> codex-restore-ux
         Hesabınız yok mu?{' '}
         <Link href="/auth/register" className="font-semibold text-accent">
           Hemen kayıt olun
         </Link>
       </p>
+<<<<<<< HEAD
     </div>
+=======
+    </form>
+>>>>>>> codex-restore-ux
   )
 }
