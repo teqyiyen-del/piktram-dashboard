@@ -2,18 +2,31 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { LayoutDashboard, FolderKanban, ListTodo, CalendarDays, Settings } from 'lucide-react'
+import { LayoutDashboard, FolderKanban, ListTodo, CalendarDays, Settings, Target, ShieldCheck } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
-const navItems = [
+type NavItem = {
+  name: string
+  href: string
+  icon: typeof LayoutDashboard
+  adminOnly?: boolean
+}
+
+const navItems: NavItem[] = [
   { name: 'Gösterge Paneli', href: '/dashboard', icon: LayoutDashboard },
   { name: 'Projeler', href: '/projects', icon: FolderKanban },
   { name: 'Görevler', href: '/tasks', icon: ListTodo },
+  { name: 'Hedefler', href: '/goals', icon: Target },
   { name: 'Takvim', href: '/calendar', icon: CalendarDays },
-  { name: 'Ayarlar', href: '/settings', icon: Settings }
+  { name: 'Ayarlar', href: '/settings', icon: Settings },
+  { name: 'Yönetim', href: '/admin', icon: ShieldCheck, adminOnly: true }
 ]
 
-export default function Sidebar() {
+interface SidebarProps {
+  role: 'admin' | 'user'
+}
+
+export default function Sidebar({ role }: SidebarProps) {
   const pathname = usePathname()
 
   return (
@@ -26,7 +39,9 @@ export default function Sidebar() {
         </div>
       </div>
       <nav className="flex flex-1 flex-col gap-1">
-        {navItems.map((item) => {
+        {navItems
+          .filter((item) => (item.adminOnly ? role === 'admin' : true))
+          .map((item) => {
           const Icon = item.icon
           const isActive = pathname === item.href || pathname?.startsWith(item.href + '/')
           return (

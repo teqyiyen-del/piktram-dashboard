@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Modal } from '@/components/ui/modal'
 import { ProjectForm } from './project-form'
 import { ProjectCard } from './project-card'
+import { useToast } from '@/components/providers/toast-provider'
 
 interface ProjectsClientProps {
   initialProjects: Project[]
@@ -15,16 +16,28 @@ export function ProjectsClient({ initialProjects }: ProjectsClientProps) {
   const [projects, setProjects] = useState<Project[]>(initialProjects)
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [editingProject, setEditingProject] = useState<Project | undefined>(undefined)
+  const { toast } = useToast()
 
   useEffect(() => {
     setProjects(initialProjects)
   }, [initialProjects])
 
   const refreshProjects = async () => {
-    const response = await fetch('/api/projects')
-    if (response.ok) {
-      const data = await response.json()
+    try {
+      const response = await fetch('/api/projects')
+      if (!response.ok) {
+        const data = await response.json()
+        toast({ title: 'Projeler yenilenemedi', description: data.error ?? 'Bir hata oluştu.', variant: 'error' })
+        return
+      }
+      const data = (await response.json()) as Project[]
       setProjects(data)
+    } catch (error) {
+      toast({
+        title: 'Projeler yenilenemedi',
+        description: error instanceof Error ? error.message : 'Bir hata oluştu.',
+        variant: 'error'
+      })
     }
   }
 
@@ -34,8 +47,22 @@ export function ProjectsClient({ initialProjects }: ProjectsClientProps) {
   }
 
   const handleDelete = async (project: Project) => {
-    await fetch(`/api/projects/${project.id}`, { method: 'DELETE' })
-    refreshProjects()
+    try {
+      const response = await fetch(`/api/projects/${project.id}`, { method: 'DELETE' })
+      if (!response.ok) {
+        const data = await response.json()
+        toast({ title: 'Proje silinemedi', description: data.error ?? 'Bir hata oluştu.', variant: 'error' })
+        return
+      }
+      toast({ title: 'Proje silindi', description: 'Proje başarıyla kaldırıldı.', variant: 'success' })
+      refreshProjects()
+    } catch (error) {
+      toast({
+        title: 'Proje silinemedi',
+        description: error instanceof Error ? error.message : 'Bir hata oluştu.',
+        variant: 'error'
+      })
+    }
   }
 
   return (
@@ -70,9 +97,16 @@ export function ProjectsClient({ initialProjects }: ProjectsClientProps) {
       >
         <ProjectForm
           initialData={editingProject}
-          onSuccess={() => {
+          onSuccess={(project) => {
             setIsModalOpen(false)
             setEditingProject(undefined)
+            setProjects((prev) => {
+              const exists = prev.some((item) => item.id === project.id)
+              if (exists) {
+                return prev.map((item) => (item.id === project.id ? project : item))
+              }
+              return [...prev, project]
+            })
             refreshProjects()
           }}
         />

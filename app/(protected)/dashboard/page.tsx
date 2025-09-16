@@ -6,6 +6,7 @@ import { WeeklyCompletionChart, ProjectProgressDonut } from '@/components/dashbo
 import { TodayTasks } from '@/components/dashboard/today-tasks'
 import { subDays, isSameDay, format } from 'date-fns'
 import { tr } from 'date-fns/locale'
+import { COMPLETED_STATUSES, normalizeStatus } from '@/lib/task-status'
 
 export default async function DashboardPage() {
   const supabase = createServerComponentClient<Database>({ cookies })
@@ -31,20 +32,23 @@ export default async function DashboardPage() {
   const projects = projectsData ?? []
 
   const totalTasks = tasks.length
-  const completedTasks = tasks.filter((task) => task.status === 'done').length
+  const completedTasks = tasks.filter((task) => COMPLETED_STATUSES.includes(normalizeStatus(task.status))).length
   const delayedTasks = tasks.filter((task) => {
     if (!task.due_date) return false
     const dueDate = new Date(task.due_date)
-    return dueDate < new Date() && task.status !== 'done'
+    return dueDate < new Date() && !COMPLETED_STATUSES.includes(normalizeStatus(task.status))
   }).length
   const activeProjects = projects.filter((project) => project.progress < 100).length
 
   const weeklyData = Array.from({ length: 7 }).map((_, index) => {
     const date = subDays(new Date(), 6 - index)
     const label = format(date, 'dd MMM', { locale: tr })
-    const value = tasks.filter(
-      (task) => task.status === 'done' && task.due_date && isSameDay(new Date(task.due_date), date)
-    ).length
+    const value = tasks.filter((task) => {
+      const normalized = normalizeStatus(task.status)
+      return (
+        COMPLETED_STATUSES.includes(normalized) && task.due_date && isSameDay(new Date(task.due_date), date)
+      )
+    }).length
     return { label, value }
   })
 

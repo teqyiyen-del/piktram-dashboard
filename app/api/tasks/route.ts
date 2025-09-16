@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
 import { cookies } from 'next/headers'
 import { Database } from '@/lib/supabase-types'
+import { updateProjectProgress } from './helpers'
 
 export async function GET() {
   const supabase = createRouteHandlerClient<Database>({ cookies })
@@ -43,8 +44,8 @@ export async function POST(request: Request) {
     description: body.description,
     status: body.status ?? 'todo',
     priority: body.priority ?? 'medium',
-    due_date: body.due_date,
-    project_id: body.project_id,
+    due_date: body.due_date ? body.due_date : null,
+    project_id: body.project_id || null,
     user_id: session.user.id
   }
 
@@ -53,6 +54,8 @@ export async function POST(request: Request) {
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
+
+  await updateProjectProgress(supabase, body.project_id ?? null, session.user.id)
 
   return NextResponse.json(data, { status: 201 })
 }

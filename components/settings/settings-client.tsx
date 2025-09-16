@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { Profile } from '@/lib/types'
 import { Button } from '@/components/ui/button'
 import { useTheme } from '@/components/providers/theme-provider'
+import { useToast } from '@/components/providers/toast-provider'
 
 interface SettingsClientProps {
   profile: Profile
@@ -17,50 +18,82 @@ export function SettingsClient({ profile }: SettingsClientProps) {
   const [weeklySummary, setWeeklySummary] = useState(profile.weekly_summary ?? true)
   const [feedback, setFeedback] = useState<string | null>(null)
   const { theme, setTheme } = useTheme()
+  const { toast } = useToast()
 
   const updateProfile = async () => {
-    const response = await fetch('/api/profile', {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ full_name: fullName, email })
-    })
-    const data = await response.json()
-    if (!response.ok) {
-      setFeedback(data.error ?? 'Profil güncellenemedi')
-      return
+    try {
+      const response = await fetch('/api/profile', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ full_name: fullName, email })
+      })
+      const data = await response.json()
+      if (!response.ok) {
+        setFeedback(data.error ?? 'Profil güncellenemedi')
+        toast({ title: 'Profil kaydedilemedi', description: data.error ?? 'Bir hata oluştu.', variant: 'error' })
+        return
+      }
+      setFeedback('Profil bilgileri başarıyla güncellendi.')
+      toast({ title: 'Profil güncellendi', description: 'Bilgileriniz başarıyla kaydedildi.', variant: 'success' })
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Profil güncellenemedi.'
+      setFeedback(message)
+      toast({ title: 'Profil kaydedilemedi', description: message, variant: 'error' })
     }
-    setFeedback('Profil bilgileri başarıyla güncellendi.')
   }
 
   const updateNotifications = async () => {
-    const response = await fetch('/api/profile/preferences', {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        email_notifications: emailNotifications,
-        push_notifications: pushNotifications,
-        weekly_summary: weeklySummary
+    try {
+      const response = await fetch('/api/profile/preferences', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email_notifications: emailNotifications,
+          push_notifications: pushNotifications,
+          weekly_summary: weeklySummary
+        })
       })
-    })
-    const data = await response.json()
-    if (!response.ok) {
-      setFeedback(data.error ?? 'Bildirim tercihleri kaydedilemedi')
-      return
+      const data = await response.json()
+      if (!response.ok) {
+        setFeedback(data.error ?? 'Bildirim tercihleri kaydedilemedi')
+        toast({ title: 'Tercihler kaydedilemedi', description: data.error ?? 'Bir hata oluştu.', variant: 'error' })
+        return
+      }
+      setFeedback('Bildirim tercihleri güncellendi.')
+      toast({ title: 'Tercihler güncellendi', description: 'Bildirim ayarlarınız kaydedildi.', variant: 'success' })
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Bildirim tercihleri kaydedilemedi.'
+      setFeedback(message)
+      toast({ title: 'Tercihler kaydedilemedi', description: message, variant: 'error' })
     }
-    setFeedback('Bildirim tercihleri güncellendi.')
   }
 
   const handleThemeChange = async (nextTheme: 'light' | 'dark') => {
+    const previousTheme = theme
     setTheme(nextTheme)
-    const response = await fetch('/api/profile/preferences', {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ theme: nextTheme })
-    })
-    if (!response.ok) {
-      setFeedback('Tema güncellenemedi')
-    } else {
+    try {
+      const response = await fetch('/api/profile/preferences', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ theme: nextTheme })
+      })
+      if (!response.ok) {
+        setFeedback('Tema güncellenemedi')
+        toast({ title: 'Tema uygulanamadı', description: 'Lütfen tekrar deneyin.', variant: 'error' })
+        setTheme(previousTheme)
+        return
+      }
       setFeedback(`Tema ${nextTheme === 'dark' ? 'koyu' : 'açık'} moda alındı.`)
+      toast({
+        title: 'Tema güncellendi',
+        description: `Arayüz ${nextTheme === 'dark' ? 'koyu' : 'açık'} moda taşındı.`,
+        variant: 'success'
+      })
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Tema güncellenemedi.'
+      setFeedback(message)
+      toast({ title: 'Tema uygulanamadı', description: message, variant: 'error' })
+      setTheme(previousTheme)
     }
   }
 
