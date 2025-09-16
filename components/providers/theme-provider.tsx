@@ -44,7 +44,7 @@ export function ThemeProvider({
   }
 
   function applyTheme(theme: Theme) {
-    if (theme  "dark") {
+    if (theme ===  "dark") {
       document.documentElement.classList.add("dark")
     } else {
       document.documentElement.classList.remove("dark")
