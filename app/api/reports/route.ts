@@ -19,16 +19,13 @@ export async function GET() {
     .eq('id', session.user.id)
     .single()
 
-  const query = supabase
-    .from('tasks')
-    .select('*')
-    .order('due_date', { ascending: true })
+  const reportsQuery = supabase.from('reports').select('*').order('created_at', { ascending: false })
 
   if (profile?.role !== 'admin') {
-    query.eq('user_id', session.user.id)
+    reportsQuery.eq('user_id', session.user.id)
   }
 
-  const { data, error } = await query
+  const { data, error } = await reportsQuery
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 })
@@ -49,18 +46,20 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Yetkisiz erişim' }, { status: 401 })
   }
 
-  const payload = {
+  const payload: Database['public']['Tables']['reports']['Insert'] = {
     title: body.title,
-    description: body.description,
-    status: (body.status as Database['public']['Tables']['tasks']['Row']['status']) ?? 'yapiliyor',
-    priority: (body.priority as Database['public']['Tables']['tasks']['Row']['priority']) ?? 'medium',
-    due_date: body.due_date,
-    project_id: body.project_id,
-    attachment_url: body.attachment_url ?? null,
+    period: body.period,
+    period_label: body.period_label ?? null,
+    followers: body.followers,
+    likes: body.likes,
+    posts: body.posts,
+    engagement_rate: body.engagement_rate ?? null,
+    summary: body.summary ?? null,
+    file_url: body.file_url ?? null,
     user_id: session.user.id
   }
 
-  const { data, error } = await supabase.from('tasks').insert(payload).select('*').single()
+  const { data, error } = await supabase.from('reports').insert(payload).select('*').single()
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 })

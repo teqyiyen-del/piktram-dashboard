@@ -19,11 +19,23 @@ export type Project = {
   user_id: string
 }
 
+export type TaskStatus = 'yapiliyor' | 'onay_surecinde' | 'revize' | 'onaylandi' | 'paylasildi'
+
+export const TASK_STATUS_LABELS: Record<TaskStatus, string> = {
+  yapiliyor: 'Yapılıyor',
+  onay_surecinde: 'Onay Sürecinde',
+  revize: 'Revize',
+  onaylandi: 'Onaylandı',
+  paylasildi: 'Paylaşıldı'
+}
+
+export const TASK_STATUS_ORDER: TaskStatus[] = ['yapiliyor', 'onay_surecinde', 'revize', 'onaylandi', 'paylasildi']
+
 export type Task = {
   id: string
   title: string
   description: string | null
-  status: 'todo' | 'in_progress' | 'done'
+  status: TaskStatus
   priority: 'low' | 'medium' | 'high'
   due_date: string | null
   project_id: string | null
@@ -51,24 +63,54 @@ export type Campaign = {
   owner: string
 }
 
-export type WorkflowStatus = 'yapiliyor' | 'onay_surecinde' | 'revize' | 'onaylandi' | 'paylasildi'
+export type WorkflowStatus = TaskStatus
 
 export type WorkflowItem = {
   id: string
   title: string
-  brand: string
-  owner?: string
+  brand?: string | null
+  owner?: string | null
   deadline?: string | null
   status: WorkflowStatus
+  priority?: Task['priority']
+  attachment_url?: string | null
+  description?: string | null
 }
 
 export type AgendaEventType = 'icerik' | 'toplanti' | 'odeme' | 'rapor'
 
+export type Event = {
+  id: string
+  title: string
+  description: string | null
+  event_date: string
+  event_type: AgendaEventType
+  related: string | null
+  user_id: string
+}
+
 export type AgendaEvent = {
   id: string
   title: string
-  description?: string
+  description?: string | null
   date: string
   type: AgendaEventType
-  related?: string
+  related?: string | null
+}
+
+export type ReportPeriod = 'weekly' | 'monthly'
+
+export type Report = {
+  id: string
+  title: string
+  period: ReportPeriod
+  period_label: string | null
+  followers: number
+  likes: number
+  posts: number
+  engagement_rate: number | null
+  summary: string | null
+  file_url: string | null
+  created_at: string
+  user_id: string
 }

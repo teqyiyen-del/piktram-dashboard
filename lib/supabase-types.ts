@@ -54,7 +54,7 @@ export type Database = {
           id: string
           title: string
           description: string | null
-          status: 'todo' | 'in_progress' | 'done'
+          status: 'yapiliyor' | 'onay_surecinde' | 'revize' | 'onaylandi' | 'paylasildi'
           priority: 'low' | 'medium' | 'high'
           due_date: string | null
           project_id: string | null
@@ -66,7 +66,7 @@ export type Database = {
           id?: string
           title: string
           description?: string | null
-          status?: 'todo' | 'in_progress' | 'done'
+          status?: 'yapiliyor' | 'onay_surecinde' | 'revize' | 'onaylandi' | 'paylasildi'
           priority?: 'low' | 'medium' | 'high'
           due_date?: string | null
           project_id?: string | null
@@ -74,6 +74,58 @@ export type Database = {
           attachment_url?: string | null
         }
         Update: Partial<Database['public']['Tables']['tasks']['Insert']>
+      }
+      events: {
+        Row: {
+          id: string
+          title: string
+          description: string | null
+          event_date: string
+          event_type: 'icerik' | 'toplanti' | 'odeme' | 'rapor'
+          related: string | null
+          user_id: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          title: string
+          description?: string | null
+          event_date: string
+          event_type: 'icerik' | 'toplanti' | 'odeme' | 'rapor'
+          related?: string | null
+          user_id: string
+        }
+        Update: Partial<Database['public']['Tables']['events']['Insert']>
+      }
+      reports: {
+        Row: {
+          id: string
+          title: string
+          period: 'weekly' | 'monthly'
+          period_label: string | null
+          followers: number
+          likes: number
+          posts: number
+          engagement_rate: number | null
+          summary: string | null
+          file_url: string | null
+          user_id: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          title: string
+          period: 'weekly' | 'monthly'
+          period_label?: string | null
+          followers: number
+          likes: number
+          posts: number
+          engagement_rate?: number | null
+          summary?: string | null
+          file_url?: string | null
+          user_id: string
+        }
+        Update: Partial<Database['public']['Tables']['reports']['Insert']>
       }
     }
   }

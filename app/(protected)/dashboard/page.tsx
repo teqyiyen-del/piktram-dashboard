@@ -4,6 +4,7 @@ import { Database } from '@/lib/supabase-types'
 import { StatCard } from '@/components/dashboard/stat-card'
 import { WeeklyCompletionChart, ProjectProgressDonut } from '@/components/dashboard/charts'
 import { TodayTasks } from '@/components/dashboard/today-tasks'
+import type { Task } from '@/lib/types'
 import { subDays, isSameDay, format } from 'date-fns'
 import { tr } from 'date-fns/locale'
 
@@ -36,15 +37,16 @@ export default async function DashboardPage() {
   const { data: tasksData } = await tasksQuery
   const { data: projectsData } = await projectsQuery
 
-  const tasks = tasksData ?? []
+  const tasks = (tasksData ?? []) as unknown as Task[]
   const projects = projectsData ?? []
 
+  const completedStatuses = new Set(['onaylandi', 'paylasildi'])
   const totalTasks = tasks.length
-  const completedTasks = tasks.filter((task) => task.status === 'done').length
+  const completedTasks = tasks.filter((task) => completedStatuses.has(task.status as string)).length
   const delayedTasks = tasks.filter((task) => {
     if (!task.due_date) return false
     const dueDate = new Date(task.due_date)
-    return dueDate < new Date() && task.status !== 'done'
+    return dueDate < new Date() && !completedStatuses.has(task.status as string)
   }).length
   const activeProjects = projects.filter((project) => project.progress < 100).length
 
@@ -52,7 +54,7 @@ export default async function DashboardPage() {
     const date = subDays(new Date(), 6 - index)
     const label = format(date, 'dd MMM', { locale: tr })
     const value = tasks.filter(
-      (task) => task.status === 'done' && task.due_date && isSameDay(new Date(task.due_date), date)
+      (task) => completedStatuses.has(task.status as string) && task.due_date && isSameDay(new Date(task.due_date), date)
     ).length
     return { label, value }
   })

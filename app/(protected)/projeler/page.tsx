@@ -42,13 +42,15 @@ export default async function ProjelerPage() {
   const projects: Project[] = (projectsData ?? []) as Project[]
   const tasks: Task[] = (tasksData ?? []) as Task[]
 
+  const completedStatuses = new Set<Task['status']>(['onaylandi', 'paylasildi'])
+
   const tasksByProject = tasks.reduce<Record<string, { total: number; done: number; upcoming: number }>>((acc, task) => {
     if (!task.project_id) return acc
     if (!acc[task.project_id]) {
       acc[task.project_id] = { total: 0, done: 0, upcoming: 0 }
     }
     acc[task.project_id].total += 1
-    if (task.status === 'done') {
+    if (completedStatuses.has(task.status)) {
       acc[task.project_id].done += 1
     }
     if (task.due_date) {

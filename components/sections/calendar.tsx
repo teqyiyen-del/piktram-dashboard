@@ -35,9 +35,13 @@ const typeIcon: Record<AgendaEvent['type'], ReactNode> = {
 
 interface CalendarProps {
   events: AgendaEvent[]
+  onCreateEvent?: (date: Date) => void
+  onEditEvent?: (event: AgendaEvent) => void
+  onDeleteEvent?: (event: AgendaEvent) => void
+  pendingEventId?: string | null
 }
 
-export function Calendar({ events }: CalendarProps) {
+export function Calendar({ events, onCreateEvent, onEditEvent, onDeleteEvent, pendingEventId }: CalendarProps) {
   const [currentDate, setCurrentDate] = useState(new Date())
   const [selectedDate, setSelectedDate] = useState<Date | null>(null)
 
@@ -98,7 +102,7 @@ export function Calendar({ events }: CalendarProps) {
           return (
             <button
               key={key}
-              onClick={() => (hasEvents ? setSelectedDate(day) : undefined)}
+              onClick={() => setSelectedDate(day)}
               className={cn(
                 'flex h-28 flex-col rounded-2xl border p-3 text-left transition',
                 isCurrentMonth
@@ -139,9 +143,18 @@ export function Calendar({ events }: CalendarProps) {
         isOpen={!!selectedDate}
         onClose={() => setSelectedDate(null)}
         title={selectedDate ? format(selectedDate, 'd MMMM yyyy, EEEE', { locale: tr }) : ''}
+        actions={
+          onCreateEvent && selectedDate ? (
+            <Button className="px-4 py-2 text-xs" onClick={() => onCreateEvent(selectedDate)}>
+              Yeni Etkinlik Ekle
+            </Button>
+          ) : undefined
+        }
       >
         {selectedEvents.length === 0 ? (
-          <p className="text-sm text-gray-500 dark:text-gray-400">Bu tarih için planlanmış etkinlik bulunmuyor.</p>
+          <p className="text-sm text-gray-500 dark:text-gray-400">
+            Bu tarih için planlanmış etkinlik bulunmuyor. {onCreateEvent ? 'Yeni bir etkinlik eklemek için yukarıdaki butonu kullanabilirsiniz.' : ''}
+          </p>
         ) : (
           <div className="space-y-3">
             {selectedEvents.map((event) => {
@@ -156,12 +169,35 @@ export function Calendar({ events }: CalendarProps) {
                   key={event.id}
                   icon={typeIcon[event.type]}
                   title={event.title}
-                  description={event.description}
+                  description={event.description ?? undefined}
                   meta={metaLabel}
                   tone={eventTypeConfig[event.type].tone}
                   tag={eventTypeConfig[event.type].label}
                   tagColor="accent"
                   compact
+                  rightSlot={
+                    <div className="flex items-center gap-2">
+                      {onEditEvent ? (
+                        <Button
+                          variant="outline"
+                          className="px-3 py-1.5 text-xs"
+                          onClick={() => onEditEvent(event)}
+                        >
+                          Düzenle
+                        </Button>
+                      ) : null}
+                      {onDeleteEvent ? (
+                        <Button
+                          variant="ghost"
+                          className="px-3 py-1.5 text-xs text-red-500 hover:text-red-600 dark:text-red-300 dark:hover:text-red-200"
+                          onClick={() => onDeleteEvent(event)}
+                          disabled={pendingEventId === event.id}
+                        >
+                          {pendingEventId === event.id ? 'Siliniyor...' : 'Sil'}
+                        </Button>
+                      ) : null}
+                    </div>
+                  }
                 />
               )
             })}

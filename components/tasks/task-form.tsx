@@ -3,12 +3,12 @@
 import Image from 'next/image'
 import { useEffect, useMemo, useState, FormEvent } from 'react'
 import { useSupabaseClient } from '@supabase/auth-helpers-react'
-import { Task } from '@/lib/types'
+import { Task, TaskStatus, TASK_STATUS_LABELS, TASK_STATUS_ORDER } from '@/lib/types'
 import { Button } from '@/components/ui/button'
 import { Database } from '@/lib/supabase-types'
 
 interface TaskFormProps {
-  onSuccess: () => void
+  onSuccess: (message?: string) => void
   projects: { id: string; title: string }[]
   initialData?: Task
 }
@@ -16,7 +16,7 @@ interface TaskFormProps {
 export function TaskForm({ onSuccess, projects, initialData }: TaskFormProps) {
   const [title, setTitle] = useState(initialData?.title ?? '')
   const [description, setDescription] = useState(initialData?.description ?? '')
-  const [status, setStatus] = useState<Task['status']>(initialData?.status ?? 'todo')
+  const [status, setStatus] = useState<Task['status']>(initialData?.status ?? 'yapiliyor')
   const [priority, setPriority] = useState<Task['priority']>(initialData?.priority ?? 'medium')
   const [dueDate, setDueDate] = useState(initialData?.due_date?.slice(0, 10) ?? '')
   const [projectId, setProjectId] = useState(initialData?.project_id ?? '')
@@ -94,7 +94,7 @@ export function TaskForm({ onSuccess, projects, initialData }: TaskFormProps) {
       }
 
       setFile(null)
-      onSuccess()
+      onSuccess(initialData ? 'Görev başarıyla güncellendi' : 'Yeni görev oluşturuldu')
     } catch (uploadError) {
       setLoading(false)
       setError(uploadError instanceof Error ? uploadError.message : 'Bir hata oluştu')
@@ -119,10 +119,12 @@ export function TaskForm({ onSuccess, projects, initialData }: TaskFormProps) {
         </div>
         <div>
           <label>Durum</label>
-          <select value={status} onChange={(e) => setStatus(e.target.value as Task['status'])}>
-            <option value="todo">Yapılacak</option>
-            <option value="in_progress">Devam Ediyor</option>
-            <option value="done">Tamamlandı</option>
+          <select value={status} onChange={(e) => setStatus(e.target.value as TaskStatus)}>
+            {TASK_STATUS_ORDER.map((option) => (
+              <option key={option} value={option}>
+                {TASK_STATUS_LABELS[option]}
+              </option>
+            ))}
           </select>
         </div>
         <div>

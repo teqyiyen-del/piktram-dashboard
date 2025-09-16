@@ -1,120 +1,184 @@
+import { createServerComponentClient } from '@supabase/auth-helpers-nextjs'
+import { cookies } from 'next/headers'
+import { Database } from '@/lib/supabase-types'
 import { Card } from '@/components/sections/card'
 import { ChartContainer } from '@/components/sections/chart-container'
-import { ListItem } from '@/components/sections/list-item'
 import { InfoGrid } from '@/components/ui/info-grid'
+import { ListItem } from '@/components/sections/list-item'
+import { WeeklyReportsChart, MonthlyReportsChart } from '@/components/reports/reports-charts'
+import type { Report } from '@/lib/types'
+import { formatDate } from '@/lib/utils'
 
-const summaryStats = [
-  { label: 'Toplam Kampanya', value: '24', helper: 'Önceki aya göre +4 artış' },
-  { label: 'Ortalama Onay Süresi', value: '18 saat', helper: 'Hedeflenen 24 saatin altında' },
-  { label: 'Tamamlanan Görev', value: '312', helper: 'Bu ay kapanan görev sayısı' },
-  { label: 'Rapor Teslimi', value: '%92', helper: 'Takvime göre zamanında gönderilen raporlar' }
-]
+function formatNumber(value: number) {
+  return new Intl.NumberFormat('tr-TR').format(value)
+}
 
-const weeklyInsights = [
-  {
-    title: 'Instagram Etkileşimleri',
-    description: '%35 artış • Story izlenmelerinde ciddi büyüme',
-    meta: 'Hafta 07 • Önceki haftaya göre +12.4K etkileşim',
-    tone: 'violet' as const
-  },
-  {
-    title: 'Blog Trafiği',
-    description: '%18 artış • SEO içerikleri etkisi',
-    meta: 'Hafta 07 • Organik kaynaklardan +8.1K oturum',
-    tone: 'emerald' as const
+export default async function RaporlarPage() {
+  const supabase = createServerComponentClient<Database>({ cookies })
+  const {
+    data: { session }
+  } = await supabase.auth.getSession()
+
+  if (!session) {
+    return null
   }
-]
 
-const monthlyInsights = [
-  {
-    title: 'Kampanya Performansı',
-    description: 'Mart ayı kampanyalarında ortalama %4.3 tıklanma oranı',
-    meta: 'En yüksek performanslı içerik: Bahar Lansmanı',
-    tone: 'accent' as const
-  },
-  {
-    title: 'Reklam Harcaması',
-    description: 'Harcanan bütçe ₺124.500 • Getiri katsayısı 4.1x',
-    meta: 'En verimli kanal: Instagram Reel Ads',
-    tone: 'amber' as const
-  },
-  {
-    title: 'Topluluk Büyümesi',
-    description: 'Toplam takipçi sayısı 18.240 • Aylık %6,2 artış',
-    meta: 'Yeni üyeler çoğunlukla organik kampanyalardan',
-    tone: 'emerald' as const
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('role')
+    .eq('id', session.user.id)
+    .single()
+
+  const isAdmin = profile?.role === 'admin'
+
+  const reportsQuery = supabase.from('reports').select('*').order('created_at', { ascending: false })
+
+  if (!isAdmin) {
+    reportsQuery.eq('user_id', session.user.id)
   }
-]
 
-const chartPlaceholder = (label: string) => (
-  <div className="flex h-full flex-col items-center justify-center gap-4 rounded-3xl border border-dashed border-gray-300 bg-gray-50 text-center text-sm text-gray-500 dark:border-gray-700 dark:bg-gray-900/40 dark:text-gray-400">
-    <span className="pill bg-white/60 text-gray-500 dark:bg-gray-800/70 dark:text-gray-300">{label}</span>
-    <p className="max-w-xs text-xs leading-relaxed">
-      Chart.js entegrasyonu ile bu alan otomatik olarak Supabase verileriyle dolacaktır. Haftalık ve aylık rapor trendlerini görselleştirmek için hazır placeholder.
-    </p>
-  </div>
-)
+  const { data: reportsData } = await reportsQuery
 
-export default function RaporlarPage() {
+  const reports = (reportsData ?? []) as Report[]
+  const weeklyReports = reports.filter((report) => report.period === 'weekly')
+  const monthlyReports = reports.filter((report) => report.period === 'monthly')
+
+  const avgFollowersWeekly = weeklyReports.length
+    ? Math.round(weeklyReports.reduce((sum, report) => sum + report.followers, 0) / weeklyReports.length)
+    : 0
+  const avgLikesWeekly = weeklyReports.length
+    ? Math.round(weeklyReports.reduce((sum, report) => sum + report.likes, 0) / weeklyReports.length)
+    : 0
+  const avgPostsMonthly = monthlyReports.length
+    ? Math.round(monthlyReports.reduce((sum, report) => sum + report.posts, 0) / monthlyReports.length)
+    : 0
+  const avgEngagementMonthly = monthlyReports.length
+    ? (monthlyReports.reduce((sum, report) => sum + (report.engagement_rate ?? 0), 0) / monthlyReports.length).toFixed(1)
+    : '0.0'
+
+  const summaryStats = [
+    {
+      label: 'Toplam Rapor',
+      value: reports.length.toString(),
+      helper: 'Haftalık ve aylık rapor sayısı'
+    },
+    {
+      label: 'Haftalık Ortalama Takipçi',
+      value: `${formatNumber(avgFollowersWeekly)} kişi`,
+      helper: 'Haftalık raporlardaki ortalama artış'
+    },
+    {
+      label: 'Haftalık Ortalama Beğeni',
+      value: `${formatNumber(avgLikesWeekly)}`,
+      helper: 'Etkileşim performansı'
+    },
+    {
+      label: 'Aylık Ortalama İçerik',
+      value: `${formatNumber(avgPostsMonthly)} gönderi`,
+      helper: 'Aylık içerik üretim temposu'
+    }
+  ]
+
+  const weeklyChartData = weeklyReports
+    .slice()
+    .reverse()
+    .map((report) => ({
+      label: report.period_label ?? formatDate(report.created_at),
+      followers: report.followers,
+      likes: report.likes,
+      posts: report.posts
+    }))
+
+  const monthlyChartData = monthlyReports
+    .slice()
+    .reverse()
+    .map((report) => ({
+      label: report.period_label ?? formatDate(report.created_at),
+      followers: report.followers,
+      likes: report.likes,
+      posts: report.posts
+    }))
+
+  const renderDownloadLink = (url: string | null) => {
+    if (!url) return null
+    return (
+      <a
+        href={url}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="inline-flex items-center rounded-full bg-accent px-4 py-2 text-xs font-semibold text-white shadow-sm transition hover:bg-accent-dark"
+      >
+        PDF İndir
+      </a>
+    )
+  }
+
   return (
     <div className="space-y-10">
-      <Card
-        title="Rapor Özeti"
-        description="Ana metriklerinizi tek bakışta değerlendirin."
-      >
+      <Card title="Rapor Özeti" description="Ana metriklerinizi tek bakışta değerlendirin.">
         <InfoGrid items={summaryStats} columns={4} />
       </Card>
 
       <div className="grid gap-6 xl:grid-cols-2">
         <ChartContainer
           title="Haftalık Performans"
-          description="Haftalık bazda görev tamamlama ve etkileşim trendleri."
+          description="Haftalık bazda takipçi artışı, beğeni ve paylaşım trendleri."
         >
-          {chartPlaceholder('Haftalık performans grafiği')}
+          <WeeklyReportsChart data={weeklyChartData} />
         </ChartContainer>
 
         <ChartContainer
           title="Aylık Dağılım"
-          description="Aylık rapor kırılımları, kampanya türlerine göre özet."
+          description="Aylık rapor kırılımları ve metriklerin eğilimleri."
         >
-          {chartPlaceholder('Aylık dağılım grafiği')}
+          <MonthlyReportsChart data={monthlyChartData} />
         </ChartContainer>
       </div>
 
       <div className="grid gap-6 lg:grid-cols-2">
         <Card
-          title="Haftalık Notlar"
-          description="Son haftada öne çıkan rapor içgörülerini inceleyin."
+          title="Haftalık Raporlar"
+          description="Son haftalarda yayınlanan raporlar ve öne çıkan notlar."
         >
           <div className="space-y-4">
-            {weeklyInsights.map((insight) => (
-              <ListItem
-                key={insight.title}
-                title={insight.title}
-                description={insight.description}
-                meta={insight.meta}
-                tone={insight.tone}
-                icon={<span className="text-lg">📊</span>}
-              />
-            ))}
+            {weeklyReports.length === 0 ? (
+              <p className="text-sm text-gray-500 dark:text-gray-400">Henüz haftalık rapor bulunmuyor.</p>
+            ) : (
+              weeklyReports.map((report) => (
+                <ListItem
+                  key={report.id}
+                  title={report.title}
+                  description={report.summary ?? 'Özet bilgisi eklenmedi.'}
+                  meta={`${report.period_label ?? formatDate(report.created_at)} • Takipçi: ${formatNumber(report.followers)}`}
+                  tone="violet"
+                  icon={<span className="text-lg">📊</span>}
+                  rightSlot={renderDownloadLink(report.file_url)}
+                />
+              ))
+            )}
           </div>
         </Card>
 
         <Card
-          title="Aylık İçgörüler"
-          description="Uzun dönemli trendleri ve stratejik önerileri takip edin."
+          title="Aylık Raporlar"
+          description={`Son aylarda yayınlanan raporlar. Ortalama etkileşim oranı %${avgEngagementMonthly}.`}
         >
           <div className="space-y-4">
-            {monthlyInsights.map((insight) => (
-              <ListItem
-                key={insight.title}
-                title={insight.title}
-                description={insight.description}
-                meta={insight.meta}
-                tone={insight.tone}
-                icon={<span className="text-lg">📈</span>}
-              />
-            ))}
+            {monthlyReports.length === 0 ? (
+              <p className="text-sm text-gray-500 dark:text-gray-400">Henüz aylık rapor bulunmuyor.</p>
+            ) : (
+              monthlyReports.map((report) => (
+                <ListItem
+                  key={report.id}
+                  title={report.title}
+                  description={report.summary ?? 'Özet bilgisi eklenmedi.'}
+                  meta={`${report.period_label ?? formatDate(report.created_at)} • Beğeni: ${formatNumber(report.likes)}`}
+                  tone="emerald"
+                  icon={<span className="text-lg">📈</span>}
+                  rightSlot={renderDownloadLink(report.file_url)}
+                />
+              ))
+            )}
           </div>
         </Card>
       </div>

@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import { useState } from 'react'
 import { formatDate } from '@/lib/utils'
+import { TASK_STATUS_LABELS, TaskStatus } from '@/lib/types'
 
 type UserRecord = {
   id: string
@@ -25,7 +26,7 @@ type ProjectRecord = {
 type TaskRecord = {
   id: string
   title: string
-  status: 'todo' | 'in_progress' | 'done'
+  status: TaskStatus
   priority: 'low' | 'medium' | 'high'
   due_date: string | null
   user_id: string
@@ -47,11 +48,7 @@ interface AdminDashboardProps {
   }
 }
 
-const statusLabels: Record<TaskRecord['status'], string> = {
-  todo: 'Yapılacak',
-  in_progress: 'Devam Ediyor',
-  done: 'Tamamlandı'
-}
+const statusLabels: Record<TaskRecord['status'], string> = TASK_STATUS_LABELS
 
 const priorityLabels: Record<TaskRecord['priority'], string> = {
   low: 'Düşük',

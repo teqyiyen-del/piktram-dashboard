@@ -92,7 +92,7 @@ create table if not exists tasks (
   id uuid primary key default gen_random_uuid(),
   title text not null,
   description text,
-  status text default 'todo',
+  status text default 'yapiliyor',
   priority text default 'medium',
   due_date date,
   project_id uuid references projects(id) on delete set null,
@@ -126,9 +126,9 @@ values
 
 insert into tasks (title, description, status, priority, due_date, project_id, user_id, attachment_url)
 values
-  ('Pazarlama stratejisi', 'Sosyal medya kampanyalarını planla.', 'in_progress', 'high', current_date + interval '2 day', '11111111-1111-1111-1111-111111111111', '00000000-0000-0000-0000-000000000000', null),
-  ('Tasarım onayı', 'Yeni ana sayfa tasarımını gözden geçir.', 'todo', 'medium', current_date + interval '1 day', '11111111-1111-1111-1111-111111111111', '00000000-0000-0000-0000-000000000000', 'https://storage.googleapis.com/piktram-demo/brifing.pdf'),
-  ('Test senaryoları', 'Mobil uygulama için hata testlerini tamamla.', 'done', 'high', current_date - interval '1 day', '22222222-2222-2222-2222-222222222222', '00000000-0000-0000-0000-000000000000', null);
+  ('Pazarlama stratejisi', 'Sosyal medya kampanyalarını planla.', 'onay_surecinde', 'high', current_date + interval '2 day', '11111111-1111-1111-1111-111111111111', '00000000-0000-0000-0000-000000000000', null),
+  ('Tasarım onayı', 'Yeni ana sayfa tasarımını gözden geçir.', 'yapiliyor', 'medium', current_date + interval '1 day', '11111111-1111-1111-1111-111111111111', '00000000-0000-0000-0000-000000000000', 'https://storage.googleapis.com/piktram-demo/brifing.pdf'),
+  ('Test senaryoları', 'Mobil uygulama için hata testlerini tamamla.', 'onaylandi', 'high', current_date - interval '1 day', '22222222-2222-2222-2222-222222222222', '00000000-0000-0000-0000-000000000000', null);
 
 -- Görev ekleri için genel bucket
 do $$

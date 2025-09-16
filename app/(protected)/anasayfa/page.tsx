@@ -51,11 +51,13 @@ export default async function AnasayfaPage() {
   const startToday = startOfDay(new Date())
   const upcomingLimit = addDays(startToday, 7)
 
-  const awaitingApproval = tasks.filter((task) => task.status === 'in_progress')
+  const awaitingApproval = tasks.filter((task) => task.status === 'onay_surecinde')
   const awaitingCount = awaitingApproval.length
 
-  const todoCount = tasks.filter((task) => task.status === 'todo').length
-  const doneCount = tasks.filter((task) => task.status === 'done').length
+  const yapiliyorCount = tasks.filter((task) => task.status === 'yapiliyor').length
+  const revizeCount = tasks.filter((task) => task.status === 'revize').length
+  const onaylandiCount = tasks.filter((task) => task.status === 'onaylandi').length
+  const paylasildiCount = tasks.filter((task) => task.status === 'paylasildi').length
 
   const upcomingAgenda = tasks
     .filter((task) => {
@@ -78,9 +80,11 @@ export default async function AnasayfaPage() {
   const activeProjects = projects.filter((project) => project.progress < 100).length
 
   const chartData = [
-    { label: 'Planlandı', value: todoCount, color: '#F59E0B' },
-    { label: 'Onay Bekliyor', value: awaitingCount, color: '#FF5E4A' },
-    { label: 'Tamamlandı', value: doneCount, color: '#22C55E' }
+    { label: 'Yapılıyor', value: yapiliyorCount, color: '#3B82F6' },
+    { label: 'Onay Sürecinde', value: awaitingCount, color: '#F97316' },
+    { label: 'Revize', value: revizeCount, color: '#EF4444' },
+    { label: 'Onaylandı', value: onaylandiCount, color: '#22C55E' },
+    { label: 'Paylaşıldı', value: paylasildiCount, color: '#A855F7' }
   ]
 
   const priorityLabels: Record<'low' | 'medium' | 'high', string> = {
@@ -116,9 +120,9 @@ export default async function AnasayfaPage() {
       description: '7 gün içinde teslim edilecek görevler'
     },
     {
-      label: 'Tamamlanan Görev',
-      value: doneCount,
-      description: 'Kapanan işler'
+      label: 'Onaylanan Görev',
+      value: onaylandiCount,
+      description: 'Müşteri onayı alınmış işler'
     },
     {
       label: 'Aktif Proje',

@@ -1,8 +1,8 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd'
-import { Task } from '@/lib/types'
+import { Task, TaskStatus, TASK_STATUS_LABELS, TASK_STATUS_ORDER } from '@/lib/types'
 import { TaskCard } from './task-card'
 import { Modal } from '@/components/ui/modal'
 import { TaskForm } from './task-form'
@@ -13,57 +13,66 @@ interface KanbanBoardProps {
   projects: { id: string; title: string }[]
 }
 
-type ColumnKey = 'todo' | 'in_progress' | 'done'
-
-const columnTitles: Record<ColumnKey, string> = {
-  todo: 'Yapılacaklar',
-  in_progress: 'Devam Edenler',
-  done: 'Tamamlanan'
+const columnStyles: Record<TaskStatus, string> = {
+  yapiliyor: 'border-blue-100 bg-blue-50/80 dark:border-blue-500/30 dark:bg-blue-500/10',
+  onay_surecinde: 'border-amber-100 bg-amber-50/80 dark:border-amber-500/30 dark:bg-amber-500/10',
+  revize: 'border-rose-100 bg-rose-50/80 dark:border-rose-500/30 dark:bg-rose-500/10',
+  onaylandi: 'border-emerald-100 bg-emerald-50/80 dark:border-emerald-500/30 dark:bg-emerald-500/10',
+  paylasildi: 'border-purple-100 bg-purple-50/80 dark:border-purple-500/30 dark:bg-purple-500/10'
 }
 
 export function KanbanBoard({ initialTasks, projects }: KanbanBoardProps) {
   const [tasks, setTasks] = useState<Task[]>(initialTasks)
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [editingTask, setEditingTask] = useState<Task | null>(null)
-  const [boardMessage, setBoardMessage] = useState<string | null>(null)
-
-  const groupedTasks = useMemo(() => {
-    return tasks.reduce(
-      (acc, task) => {
-        acc[task.status].push(task)
-        return acc
-      },
-      {
-        todo: [] as Task[],
-        in_progress: [] as Task[],
-        done: [] as Task[]
-      }
-    )
-  }, [tasks])
-
-  const refreshTasks = async () => {
-    const response = await fetch('/api/tasks')
-    if (response.ok) {
-      const data = await response.json()
-      setTasks(data)
-      setBoardMessage(null)
-    }
-  }
+  const [toast, setToast] = useState<{ type: 'success' | 'error'; message: string } | null>(null)
 
   useEffect(() => {
     setTasks(initialTasks)
   }, [initialTasks])
 
+  useEffect(() => {
+    if (!toast) return
+    const timeout = window.setTimeout(() => setToast(null), 3500)
+    return () => window.clearTimeout(timeout)
+  }, [toast])
+
+  const groupedTasks = useMemo(() => {
+    const base: Record<TaskStatus, Task[]> = {
+      yapiliyor: [],
+      onay_surecinde: [],
+      revize: [],
+      onaylandi: [],
+      paylasildi: []
+    }
+    tasks.forEach((task) => {
+      base[task.status].push(task)
+    })
+    return base
+  }, [tasks])
+
+  const showToast = useCallback((type: 'success' | 'error', message: string) => {
+    setToast({ type, message })
+  }, [])
+
+  const refreshTasks = useCallback(async () => {
+    const response = await fetch('/api/tasks')
+    if (response.ok) {
+      const data = await response.json()
+      setTasks(data)
+    }
+  }, [])
+
   const handleDragEnd = async ({ destination, source, draggableId }: DropResult) => {
     if (!destination) return
     if (destination.droppableId === source.droppableId && destination.index === source.index) return
 
-    const newStatus = destination.droppableId as ColumnKey
+    const newStatus = destination.droppableId as TaskStatus
+    const previousTasks = tasks
+    const movedTask = tasks.find((task) => task.id === draggableId)
+    if (!movedTask || movedTask.status === newStatus) return
 
-    setTasks((prev) => {
-      const updated = prev.map((task) => (task.id === draggableId ? { ...task, status: newStatus } : task))
-      return updated
-    })
+    setTasks((prev) => prev.map((task) => (task.id === draggableId ? { ...task, status: newStatus } : task)))
 
     const response = await fetch(`/api/tasks/${draggableId}`, {
       method: 'PUT',
@@ -72,22 +81,28 @@ export function KanbanBoard({ initialTasks, projects }: KanbanBoardProps) {
     })
 
     if (!response.ok) {
-      setBoardMessage('Görev durumu güncellenemedi')
-      refreshTasks()
+      setTasks(previousTasks)
+      showToast('error', 'Görev durumu güncellenemedi')
+      await refreshTasks()
       return
     }
 
     const updatedTask = await response.json()
     setTasks((prev) => prev.map((task) => (task.id === draggableId ? { ...task, ...updatedTask } : task)))
+    showToast('success', `${movedTask.title} ${TASK_STATUS_LABELS[movedTask.status]} → ${TASK_STATUS_LABELS[newStatus]} durumuna taşındı`)
   }
 
   const handleDelete = async (task: Task) => {
-    await fetch(`/api/tasks/${task.id}`, { method: 'DELETE' })
-    refreshTasks()
+    const response = await fetch(`/api/tasks/${task.id}`, { method: 'DELETE' })
+    if (!response.ok) {
+      showToast('error', 'Görev silinemedi')
+      return
+    }
+    await refreshTasks()
+    showToast('success', 'Görev başarıyla silindi')
   }
 
   const handleInlineUpdate = async (taskId: string, payload: Partial<Task>) => {
-    setBoardMessage(null)
     const response = await fetch(`/api/tasks/${taskId}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
@@ -96,12 +111,21 @@ export function KanbanBoard({ initialTasks, projects }: KanbanBoardProps) {
 
     if (!response.ok) {
       const data = await response.json().catch(() => ({}))
-      setBoardMessage(data.error ?? 'Görev güncellenemedi')
+      showToast('error', data.error ?? 'Görev güncellenemedi')
       return
     }
 
     const updated = await response.json()
     setTasks((prev) => prev.map((task) => (task.id === taskId ? { ...task, ...updated } : task)))
+    if (payload.status) {
+      showToast('success', `Durum ${TASK_STATUS_LABELS[payload.status as TaskStatus]} olarak güncellendi`)
+    } else {
+      showToast('success', 'Görev güncellendi')
+    }
+  }
+
+  const handleStatusChange = async (taskId: string, status: TaskStatus) => {
+    await handleInlineUpdate(taskId, { status })
   }
 
   const closeModal = () => {
@@ -111,6 +135,17 @@ export function KanbanBoard({ initialTasks, projects }: KanbanBoardProps) {
 
   return (
     <div className="space-y-4">
+      {toast ? (
+        <div
+          className={`fixed right-6 top-24 z-50 min-w-[260px] rounded-2xl px-4 py-3 text-sm shadow-lg transition ${
+            toast.type === 'success'
+              ? 'border border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-200'
+              : 'border border-red-200 bg-red-50 text-red-600 dark:border-red-500/30 dark:bg-red-500/10 dark:text-red-200'
+          }`}
+        >
+          {toast.message}
+        </div>
+      ) : null}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Görev Panosu</h2>
@@ -122,67 +157,73 @@ export function KanbanBoard({ initialTasks, projects }: KanbanBoardProps) {
             setIsModalOpen(true)
           }}
         >
-          + Görev Ekle
+          Yeni Görev Ekle
         </Button>
       </div>
-      {boardMessage && (
-        <div className="rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-600 dark:border-red-500/40 dark:bg-red-500/10 dark:text-red-300">
-          {boardMessage}
-        </div>
-      )}
       <DragDropContext onDragEnd={handleDragEnd}>
-        <div className="grid gap-6 md:grid-cols-3">
-          {(Object.keys(columnTitles) as ColumnKey[]).map((column) => (
+        <div className="grid gap-6 lg:grid-cols-5">
+          {TASK_STATUS_ORDER.map((column) => (
             <Droppable droppableId={column} key={column}>
-              {(provided, snapshot) => (
-                <div
-                  ref={provided.innerRef}
-                  {...provided.droppableProps}
-                  className={`flex min-h-[420px] flex-col gap-4 rounded-3xl border border-gray-100 bg-white/70 p-5 shadow-sm transition-colors duration-300 dark:border-gray-700 dark:bg-surface-dark/80 ${
-                    snapshot.isDraggingOver ? 'ring-2 ring-accent/40' : ''
-                  }`}
-                >
-                  <div className="flex items-center justify-between">
-                    <h3 className="text-xs font-semibold uppercase tracking-[0.2em] text-gray-500 dark:text-gray-300">
-                      {columnTitles[column]}
-                    </h3>
-                    <span className="pill text-gray-500 dark:text-gray-400">{groupedTasks[column].length} görev</span>
+              {(provided, snapshot) => {
+                const columnTasks = groupedTasks[column] ?? []
+                return (
+                  <div
+                    ref={provided.innerRef}
+                    {...provided.droppableProps}
+                    className={`flex min-h-[420px] flex-col gap-4 rounded-3xl border bg-white/80 p-5 shadow-sm transition-colors duration-300 dark:bg-surface-dark/80 ${
+                      snapshot.isDraggingOver ? 'ring-2 ring-accent/40' : ''
+                    } ${columnStyles[column]}`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <h3 className="text-xs font-semibold uppercase tracking-[0.2em] text-gray-600 dark:text-gray-300">
+                        {TASK_STATUS_LABELS[column]}
+                      </h3>
+                      <span className="pill bg-white/70 text-gray-500 dark:bg-surface-dark/70 dark:text-gray-300">
+                        {columnTasks.length} görev
+                      </span>
+                    </div>
+                    {columnTasks.map((task, index) => (
+                      <Draggable draggableId={task.id} index={index} key={task.id}>
+                        {(dragProvided, dragSnapshot) => {
+                          const style = {
+                            ...dragProvided.draggableProps.style,
+                            transition: dragSnapshot.isDragging
+                              ? 'transform 0.18s ease, box-shadow 0.18s ease'
+                              : 'transform 0.35s ease',
+                            boxShadow: dragSnapshot.isDragging ? '0 24px 30px -18px rgba(17, 24, 39, 0.35)' : undefined
+                          }
+                          return (
+                            <div
+                              ref={dragProvided.innerRef}
+                              {...dragProvided.draggableProps}
+                              {...dragProvided.dragHandleProps}
+                              style={style}
+                              className={dragSnapshot.isDragging ? 'rotate-1' : ''}
+                            >
+                              <TaskCard
+                                task={task}
+                                onDelete={handleDelete}
+                                onUpdate={handleInlineUpdate}
+                                onEdit={(selected) => {
+                                  setEditingTask(selected)
+                                  setIsModalOpen(true)
+                                }}
+                                onStatusChange={handleStatusChange}
+                              />
+                            </div>
+                          )
+                        }}
+                      </Draggable>
+                    ))}
+                    {provided.placeholder}
+                    {columnTasks.length === 0 ? (
+                      <p className="mt-auto text-center text-xs text-gray-400 dark:text-gray-600">
+                        Bu sütunda görev bulunmuyor.
+                      </p>
+                    ) : null}
                   </div>
-                  {groupedTasks[column].map((task, index) => (
-                    <Draggable draggableId={task.id} index={index} key={task.id}>
-                      {(dragProvided, dragSnapshot) => {
-                        const style = {
-                          ...dragProvided.draggableProps.style,
-                          transition: dragSnapshot.isDragging
-                            ? 'transform 0.18s ease, box-shadow 0.18s ease'
-                            : 'transform 0.35s ease',
-                          boxShadow: dragSnapshot.isDragging ? '0 24px 30px -18px rgba(17, 24, 39, 0.35)' : undefined
-                        }
-                        return (
-                          <div
-                            ref={dragProvided.innerRef}
-                            {...dragProvided.draggableProps}
-                            {...dragProvided.dragHandleProps}
-                            style={style}
-                            className={dragSnapshot.isDragging ? 'rotate-1' : ''}
-                          >
-                            <TaskCard
-                              task={task}
-                              onDelete={handleDelete}
-                              onUpdate={handleInlineUpdate}
-                              onEdit={(selected) => {
-                                setEditingTask(selected)
-                                setIsModalOpen(true)
-                              }}
-                            />
-                          </div>
-                        )
-                      }}
-                    </Draggable>
-                  ))}
-                  {provided.placeholder}
-                </div>
-              )}
+                )
+              }}
             </Droppable>
           ))}
         </div>
@@ -196,9 +237,10 @@ export function KanbanBoard({ initialTasks, projects }: KanbanBoardProps) {
         <TaskForm
           projects={projects}
           initialData={editingTask ?? undefined}
-          onSuccess={() => {
+          onSuccess={(message) => {
             closeModal()
             refreshTasks()
+            showToast('success', message ?? 'Görev kaydedildi')
           }}
         />
       </Modal>
