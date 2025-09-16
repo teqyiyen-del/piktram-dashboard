@@ -27,7 +27,7 @@ h3 {
 
 /* Paragraphs */
 p {
-  @apply leading-relaxed text-sm text-muted-foreground;
+  @apply leading-relaxed text-sm text-gray-500;
 }
 
 /* Inputs */
@@ -40,23 +40,21 @@ select {
 
 /* Buttons */
 button {
-  @apply inline-flex items-center justify-center rounded-md 
-         bg-accent px-4 py-2 text-sm font-medium text-white shadow 
-         hover:bg-accent-dark focus:outline-none focus:ring-2 
-         focus:ring-accent focus:ring-offset-2 transition;
+  @apply inline-flex items-center justify-center rounded-md bg-accent px-4 py-2
+         text-sm font-medium text-white shadow hover:bg-accent-dark
+         focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2 transition;
 }
 
 /* Cards / Panels */
 .card {
-  @apply rounded-xl border border-gray-200 bg-white p-4 shadow-sm 
-         dark:bg-background-dark dark:border-gray-800;
+  @apply rounded-xl border border-gray-200 bg-white p-4 shadow-sm
+         dark:bg-background dark:border-gray-800;
 }
 
 /* Sidebar */
 .sidebar-link {
-  @apply flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium 
-         text-gray-700 hover:bg-gray-100 dark:text-gray-200 
-         dark:hover:bg-gray-800;
+  @apply flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium
+         text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-800;
 }
 
 /* Tables */
@@ -64,7 +62,7 @@ table {
   @apply w-full border-collapse text-sm;
 }
 th {
-  @apply border-b px-4 py-2 text-left font-medium text-gray-600 dark:text-gray-300;
+  @apply border-b px-4 py-2 text-left font-medium text-gray-600 dark:text-gray-400;
 }
 td {
   @apply border-b px-4 py-2 text-gray-700 dark:text-gray-200;

@@ -40,8 +40,9 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
       <body className={`${inter.className} bg-muted dark:bg-background-dark`}>
         <SupabaseProvider session={session}>
           <ThemeProvider initialTheme={initialTheme}>
-            <ToastProvider />
-            {children}
+            <ToastProvider>
+              {children}
+            </ToastProvider>
           </ThemeProvider>
         </SupabaseProvider>
       </body>
