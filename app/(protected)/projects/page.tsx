@@ -5,6 +5,7 @@ import { ProjectsClient } from '@/components/projects/projects-client'
 
 export default async function ProjectsPage() {
   const supabase = createServerComponentClient<Database>({ cookies })
+
   const {
     data: { session }
   } = await supabase.auth.getSession()
@@ -13,7 +14,6 @@ export default async function ProjectsPage() {
     return null
   }
 
-<<<<<<< HEAD
   const { data: profile } = await supabase
     .from('profiles')
     .select('role')
@@ -22,24 +22,16 @@ export default async function ProjectsPage() {
 
   const isAdmin = profile?.role === 'admin'
 
-  const query = supabase
+  let query = supabase
     .from('projects')
     .select('*')
     .order('due_date', { ascending: true })
 
   if (!isAdmin) {
-    query.eq('user_id', session.user.id)
+    query = query.eq('user_id', session.user.id)
   }
 
   const { data: projectsData } = await query
 
-=======
-  const { data: projectsData } = await supabase
-    .from('projects')
-    .select('*')
-    .eq('user_id', session.user.id)
-    .order('due_date', { ascending: true })
-
->>>>>>> codex-restore-ux
   return <ProjectsClient initialProjects={projectsData ?? []} />
 }

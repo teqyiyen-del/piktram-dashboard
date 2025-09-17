@@ -4,7 +4,6 @@ import Link from 'next/link'
 import { useState, FormEvent } from 'react'
 import { useSupabaseClient } from '@supabase/auth-helpers-react'
 import { useRouter } from 'next/navigation'
-<<<<<<< HEAD
 import { Mail, Lock, Eye, EyeOff, Github, Apple, Chrome } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 
@@ -17,8 +16,8 @@ const errorMessages: Record<string, string> = {
 export function LoginForm() {
   const supabase = useSupabaseClient()
   const router = useRouter()
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
+  const [email, setEmail] = useState('') // istersen 'demo@piktram.com' yapabilirsin
+  const [password, setPassword] = useState('') // istersen 'piktram123' yapabilirsin
   const [showPassword, setShowPassword] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -27,29 +26,15 @@ export function LoginForm() {
     return errorMessages[message] ?? errorMessages.default
   }
 
-=======
-import { Button } from '@/components/ui/button'
-
-export function LoginForm() {
-  const supabase = useSupabaseClient()
-  const router = useRouter()
-  const [email, setEmail] = useState('demo@piktram.com')
-  const [password, setPassword] = useState('piktram123')
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-
->>>>>>> codex-restore-ux
   const handleSubmit = async (event: FormEvent) => {
     event.preventDefault()
     setLoading(true)
     setError(null)
 
     const { error } = await supabase.auth.signInWithPassword({ email, password })
-
     setLoading(false)
 
     if (error) {
-<<<<<<< HEAD
       setError(translateError(error.message))
       return
     }
@@ -67,10 +52,15 @@ export function LoginForm() {
 
   return (
     <div className="space-y-6">
+      {/* Başlık */}
       <div className="space-y-2 text-left">
         <h2 className="text-2xl font-semibold text-gray-900 dark:text-white">Tekrar hoş geldiniz</h2>
-        <p className="text-sm text-gray-500 dark:text-gray-400">Görevlerinizi yönetmek için hesabınıza giriş yapın.</p>
+        <p className="text-sm text-gray-500 dark:text-gray-400">
+          Görevlerinizi yönetmek için hesabınıza giriş yapın.
+        </p>
       </div>
+
+      {/* OAuth */}
       <div className="grid gap-3">
         <Button variant="secondary" className="w-full" type="button" onClick={() => handleOAuth('google')}>
           <Chrome className="h-4 w-4" /> Google ile devam et
@@ -82,12 +72,16 @@ export function LoginForm() {
           <Apple className="h-4 w-4" /> Apple ile devam et
         </Button>
       </div>
+
+      {/* Divider */}
       <div className="relative flex items-center justify-center">
         <span className="h-px w-full bg-gray-200"></span>
         <span className="absolute bg-white px-3 text-xs font-semibold uppercase tracking-widest text-gray-400 dark:bg-surface-dark">
           veya e-posta ile
         </span>
       </div>
+
+      {/* Form */}
       <form onSubmit={handleSubmit} className="space-y-5">
         <div className="space-y-2">
           <label className="text-sm font-medium text-gray-700 dark:text-gray-300" htmlFor="email">
@@ -106,6 +100,7 @@ export function LoginForm() {
             />
           </div>
         </div>
+
         <div className="space-y-2">
           <label className="text-sm font-medium text-gray-700 dark:text-gray-300" htmlFor="password">
             Parola
@@ -130,68 +125,34 @@ export function LoginForm() {
             </button>
           </div>
           <div className="text-right">
-            <a href="https://supabase.com/docs/guides/auth/auth-password-reset" target="_blank" rel="noopener noreferrer" className="text-xs font-medium text-accent hover:text-accent-dark">
+            <a
+              href="https://supabase.com/docs/guides/auth/auth-password-reset"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-xs font-medium text-accent hover:text-accent-dark"
+            >
               Şifremi unuttum
             </a>
           </div>
         </div>
-        {error && <p className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600 dark:border-red-500/30 dark:bg-red-500/10 dark:text-red-200">{error}</p>}
+
+        {error && (
+          <p className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600 dark:border-red-500/30 dark:bg-red-500/10 dark:text-red-200">
+            {error}
+          </p>
+        )}
+
         <Button type="submit" className="w-full" disabled={loading}>
           {loading ? 'Giriş yapılıyor...' : 'Giriş Yap'}
         </Button>
       </form>
+
       <p className="text-center text-sm text-gray-500 dark:text-gray-400">
-=======
-      setError(error.message)
-      return
-    }
-
-    router.replace('/dashboard')
-  }
-
-  return (
-    <form onSubmit={handleSubmit} className="space-y-5">
-      <div className="space-y-2">
-        <label className="text-sm font-medium text-gray-700" htmlFor="email">
-          E-posta
-        </label>
-        <input
-          id="email"
-          type="email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          placeholder="ornek@piktram.com"
-          required
-        />
-      </div>
-      <div className="space-y-2">
-        <label className="text-sm font-medium text-gray-700" htmlFor="password">
-          Parola
-        </label>
-        <input
-          id="password"
-          type="password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          placeholder="••••••"
-          required
-        />
-      </div>
-      {error && <p className="text-sm text-red-500">{error}</p>}
-      <Button type="submit" className="w-full" disabled={loading}>
-        {loading ? 'Giriş yapılıyor...' : 'Giriş Yap'}
-      </Button>
-      <p className="text-center text-sm text-gray-500">
->>>>>>> codex-restore-ux
         Hesabınız yok mu?{' '}
         <Link href="/auth/register" className="font-semibold text-accent">
           Hemen kayıt olun
         </Link>
       </p>
-<<<<<<< HEAD
     </div>
-=======
-    </form>
->>>>>>> codex-restore-ux
   )
 }

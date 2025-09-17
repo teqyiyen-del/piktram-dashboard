@@ -15,7 +15,6 @@ export async function PUT(request: Request, { params }: { params: { id: string }
     return NextResponse.json({ error: 'Yetkisiz erişim' }, { status: 401 })
   }
 
-<<<<<<< HEAD
   const { data: profile } = await supabase
     .from('profiles')
     .select('role')
@@ -27,7 +26,7 @@ export async function PUT(request: Request, { params }: { params: { id: string }
   if ('title' in body) updates.title = body.title
   if ('description' in body) updates.description = body.description
   if ('progress' in body && body.progress !== undefined) updates.progress = Number(body.progress)
-  if ('due_date' in body) updates.due_date = body.due_date
+  if ('due_date' in body) updates.due_date = body.due_date ?? null
 
   if (Object.keys(updates).length === 0) {
     return NextResponse.json({ error: 'Güncellenecek alan bulunamadı' }, { status: 400 })
@@ -41,22 +40,6 @@ export async function PUT(request: Request, { params }: { params: { id: string }
 
   const { data, error } = await query.select('*').single()
 
-=======
-  const updatePayload: Database['public']['Tables']['projects']['Update'] = {}
-  if ('title' in body) updatePayload.title = body.title
-  if ('description' in body) updatePayload.description = body.description
-  if ('progress' in body) updatePayload.progress = body.progress
-  if ('due_date' in body) updatePayload.due_date = body.due_date ? body.due_date : null
-
-  const { data, error } = await supabase
-    .from('projects')
-    .update(updatePayload)
-    .eq('id', params.id)
-    .eq('user_id', session.user.id)
-    .select('*')
-    .single()
-
->>>>>>> codex-restore-ux
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
@@ -74,7 +57,6 @@ export async function DELETE(_: Request, { params }: { params: { id: string } })
     return NextResponse.json({ error: 'Yetkisiz erişim' }, { status: 401 })
   }
 
-<<<<<<< HEAD
   const { data: profile } = await supabase
     .from('profiles')
     .select('role')
@@ -88,9 +70,6 @@ export async function DELETE(_: Request, { params }: { params: { id: string } })
   }
 
   const { error } = await query
-=======
-  const { error } = await supabase.from('projects').delete().eq('id', params.id).eq('user_id', session.user.id)
->>>>>>> codex-restore-ux
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 })

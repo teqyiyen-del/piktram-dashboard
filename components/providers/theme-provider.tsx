@@ -20,18 +20,15 @@ export function ThemeProvider({
 }) {
   const [theme, setThemeState] = useState<Theme>(initialTheme)
 
-  // LocalStorage'dan tema oku
+  // Mount olduğunda localStorage'dan oku
   useEffect(() => {
     const stored = window.localStorage.getItem("piktram-theme") as Theme | null
-    if (stored) {
-      setThemeState(stored)
-      applyTheme(stored)
-    } else {
-      applyTheme(initialTheme)
-    }
-  }, [])
+    const activeTheme = stored ?? initialTheme
+    setThemeState(activeTheme)
+    applyTheme(activeTheme)
+  }, [initialTheme])
 
-  // Tema değiştiğinde uygulama
+  // Tema değiştiğinde uygula + localStorage'a yaz
   useEffect(() => {
     applyTheme(theme)
     window.localStorage.setItem("piktram-theme", theme)
@@ -44,7 +41,7 @@ export function ThemeProvider({
   }
 
   function applyTheme(theme: Theme) {
-    if (theme ===  "dark") {
+    if (theme === "dark") {
       document.documentElement.classList.add("dark")
     } else {
       document.documentElement.classList.remove("dark")
@@ -63,4 +60,3 @@ export function useTheme() {
   if (!context) throw new Error("useTheme must be used within a ThemeProvider")
   return context
 }
-

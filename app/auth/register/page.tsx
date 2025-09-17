@@ -10,24 +10,23 @@ export default async function RegisterPage() {
     data: { session }
   } = await supabase.auth.getSession()
 
+  // Kullanıcı zaten giriş yaptıysa anasayfaya yönlendir
   if (session) {
-<<<<<<< HEAD
     redirect('/anasayfa')
+    // Alternatif olarak:
+    // redirect('/dashboard')
   }
 
-  return <RegisterForm />
-=======
-    redirect('/dashboard')
-  }
-
+  // Giriş yapılmamışsa kayıt ekranı göster
   return (
     <div className="space-y-6">
       <div className="space-y-1">
         <h2 className="text-xl font-semibold text-gray-900">Yeni hesap oluştur</h2>
-        <p className="text-sm text-gray-500">Piktram ile projelerinizi kolayca planlayın.</p>
+        <p className="text-sm text-gray-500">
+          Piktram ile projelerinizi kolayca planlayın.
+        </p>
       </div>
       <RegisterForm />
     </div>
   )
->>>>>>> codex-restore-ux
 }

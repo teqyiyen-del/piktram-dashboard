@@ -5,7 +5,7 @@
 /* Base Reset */
 html,
 body {
-  @apply bg-background text-foreground antialiased;
+  @apply bg-background text-foreground dark:bg-background-dark dark:text-foreground-dark;
   font-family: 'Inter', sans-serif;
 }
 

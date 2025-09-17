@@ -5,6 +5,7 @@ import { CalendarClient } from '@/components/calendar/calendar-client'
 
 export default async function CalendarPage() {
   const supabase = createServerComponentClient<Database>({ cookies })
+
   const {
     data: { session }
   } = await supabase.auth.getSession()
@@ -13,7 +14,6 @@ export default async function CalendarPage() {
     return null
   }
 
-<<<<<<< HEAD
   const { data: profile } = await supabase
     .from('profiles')
     .select('role')
@@ -22,27 +22,19 @@ export default async function CalendarPage() {
 
   const isAdmin = profile?.role === 'admin'
 
-  const tasksQuery = supabase.from('tasks').select('*')
-  const projectsQuery = supabase.from('projects').select('id, title')
+  // tasks & projects query
+  let tasksQuery = supabase.from('tasks').select('*')
+  let projectsQuery = supabase.from('projects').select('id, title')
 
   if (!isAdmin) {
-    tasksQuery.eq('user_id', session.user.id)
-    projectsQuery.eq('user_id', session.user.id)
+    tasksQuery = tasksQuery.eq('user_id', session.user.id)
+    projectsQuery = projectsQuery.eq('user_id', session.user.id)
   }
 
-  const { data: tasksData } = await tasksQuery
-  const { data: projectsData } = await projectsQuery
-=======
-  const { data: tasksData } = await supabase
-    .from('tasks')
-    .select('*')
-    .eq('user_id', session.user.id)
-
-  const { data: projectsData } = await supabase
-    .from('projects')
-    .select('id, title')
-    .eq('user_id', session.user.id)
->>>>>>> codex-restore-ux
+  const [{ data: tasksData }, { data: projectsData }] = await Promise.all([
+    tasksQuery,
+    projectsQuery
+  ])
 
   return <CalendarClient initialTasks={tasksData ?? []} projects={projectsData ?? []} />
 }

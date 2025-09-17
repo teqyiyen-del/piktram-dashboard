@@ -7,11 +7,7 @@ export type Profile = {
   email_notifications?: boolean
   push_notifications?: boolean
   weekly_summary?: boolean
-<<<<<<< HEAD
   role?: 'user' | 'admin'
-=======
-  role?: 'admin' | 'user'
->>>>>>> codex-restore-ux
 }
 
 export type Project = {
@@ -21,33 +17,48 @@ export type Project = {
   progress: number
   due_date: string | null
   user_id: string
-<<<<<<< HEAD
 }
 
-export type TaskStatus = 'yapiliyor' | 'onay_surecinde' | 'revize' | 'onaylandi' | 'paylasildi'
-
-export const TASK_STATUS_LABELS: Record<TaskStatus, string> = {
-  yapiliyor: 'Yapılıyor',
-  onay_surecinde: 'Onay Sürecinde',
-  revize: 'Revize',
-  onaylandi: 'Onaylandı',
-  paylasildi: 'Paylaşıldı'
-}
-
-export const TASK_STATUS_ORDER: TaskStatus[] = ['yapiliyor', 'onay_surecinde', 'revize', 'onaylandi', 'paylasildi']
-=======
-  created_at?: string
-}
-
+// --- Tek bir TaskStatus tipi ---
+// Türkçe'ye normalize edildi
 export type TaskStatus =
+  | 'yapiliyor'
+  | 'onay_surecinde'
+  | 'revize'
+  | 'onaylandi'
+  | 'paylasildi'
   | 'todo'
   | 'in_progress'
   | 'in_review'
   | 'revision'
   | 'approved'
   | 'published'
-  | 'done'
->>>>>>> codex-restore-ux
+  | 'tamamlandi'
+
+export const TASK_STATUS_LABELS: Record<TaskStatus, string> = {
+  yapiliyor: 'Yapılıyor',
+  onay_surecinde: 'Onay Sürecinde',
+  revize: 'Revize',
+  onaylandi: 'Onaylandı',
+  paylasildi: 'Paylaşıldı',
+  todo: 'Yapılacak',
+  in_progress: 'Devam Ediyor',
+  in_review: 'İncelemede',
+  revision: 'Revizyon',
+  approved: 'Onaylandı',
+  published: 'Yayınlandı',
+  tamamlandi: 'Tamamlandı'
+}
+
+export const TASK_STATUS_ORDER: TaskStatus[] = [
+  'todo',
+  'in_progress',
+  'in_review',
+  'revision',
+  'approved',
+  'published',
+  'tamamlandi'
+]
 
 export type Task = {
   id: string
@@ -58,7 +69,6 @@ export type Task = {
   due_date: string | null
   project_id: string | null
   user_id: string
-<<<<<<< HEAD
   attachment_url: string | null
 }
 
@@ -184,8 +194,6 @@ export type Notification = {
   created_at: string
   read_at: string | null
   user_id: string
-=======
-  created_at?: string
 }
 
 export type Comment = {
@@ -220,5 +228,4 @@ export type Goal = {
   is_completed: boolean
   user_id: string
   created_at?: string
->>>>>>> codex-restore-ux
 }

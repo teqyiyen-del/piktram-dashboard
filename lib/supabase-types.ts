@@ -1,4 +1,10 @@
-export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[]
+export type Json =
+  | string
+  | number
+  | boolean
+  | null
+  | { [key: string]: Json | undefined }
+  | Json[]
 
 export type Database = {
   public: {
@@ -14,11 +20,7 @@ export type Database = {
           push_notifications: boolean | null
           weekly_summary: boolean | null
           created_at: string
-<<<<<<< HEAD
           role: 'user' | 'admin' | null
-=======
-          role: 'admin' | 'user' | null
->>>>>>> codex-restore-ux
         }
         Insert: {
           id: string
@@ -29,14 +31,11 @@ export type Database = {
           email_notifications?: boolean | null
           push_notifications?: boolean | null
           weekly_summary?: boolean | null
-<<<<<<< HEAD
           role?: 'user' | 'admin' | null
-=======
-          role?: 'admin' | 'user' | null
->>>>>>> codex-restore-ux
         }
         Update: Partial<Database['public']['Tables']['profiles']['Insert']>
       }
+
       projects: {
         Row: {
           id: string
@@ -57,49 +56,58 @@ export type Database = {
         }
         Update: Partial<Database['public']['Tables']['projects']['Insert']>
       }
+
       tasks: {
         Row: {
           id: string
           title: string
           description: string | null
-<<<<<<< HEAD
-          status: 'yapiliyor' | 'onay_surecinde' | 'revize' | 'onaylandi' | 'paylasildi'
-=======
-          status: 'todo' | 'in_progress' | 'in_review' | 'revision' | 'approved' | 'published' | 'done'
->>>>>>> codex-restore-ux
+          status:
+            | 'yapiliyor'
+            | 'onay_surecinde'
+            | 'revize'
+            | 'onaylandi'
+            | 'paylasildi'
+            | 'todo'
+            | 'in_progress'
+            | 'in_review'
+            | 'revision'
+            | 'approved'
+            | 'published'
+            | 'done'
           priority: 'low' | 'medium' | 'high'
           due_date: string | null
           project_id: string | null
           user_id: string
           created_at: string
-<<<<<<< HEAD
           attachment_url: string | null
-=======
->>>>>>> codex-restore-ux
         }
         Insert: {
           id?: string
           title: string
           description?: string | null
-<<<<<<< HEAD
-          status?: 'yapiliyor' | 'onay_surecinde' | 'revize' | 'onaylandi' | 'paylasildi'
-=======
-          status?: 'todo' | 'in_progress' | 'in_review' | 'revision' | 'approved' | 'published' | 'done'
->>>>>>> codex-restore-ux
+          status?:
+            | 'yapiliyor'
+            | 'onay_surecinde'
+            | 'revize'
+            | 'onaylandi'
+            | 'paylasildi'
+            | 'todo'
+            | 'in_progress'
+            | 'in_review'
+            | 'revision'
+            | 'approved'
+            | 'published'
+            | 'done'
           priority?: 'low' | 'medium' | 'high'
           due_date?: string | null
           project_id?: string | null
           user_id: string
-<<<<<<< HEAD
           attachment_url?: string | null
         }
         Update: Partial<Database['public']['Tables']['tasks']['Insert']>
       }
-      events: {
-=======
-        }
-        Update: Partial<Database['public']['Tables']['tasks']['Insert']>
-      }
+
       comments: {
         Row: {
           id: string
@@ -117,6 +125,7 @@ export type Database = {
         }
         Update: Partial<Database['public']['Tables']['comments']['Insert']>
       }
+
       revisions: {
         Row: {
           id: string
@@ -136,19 +145,16 @@ export type Database = {
         }
         Update: Partial<Database['public']['Tables']['revisions']['Insert']>
       }
+
       goals: {
->>>>>>> codex-restore-ux
         Row: {
           id: string
           title: string
           description: string | null
-<<<<<<< HEAD
           event_date: string
           event_type: 'icerik' | 'toplanti' | 'odeme' | 'rapor'
           related: string | null
-=======
           is_completed: boolean
->>>>>>> codex-restore-ux
           user_id: string
           created_at: string
         }
@@ -156,14 +162,16 @@ export type Database = {
           id?: string
           title: string
           description?: string | null
-<<<<<<< HEAD
           event_date: string
           event_type: 'icerik' | 'toplanti' | 'odeme' | 'rapor'
           related?: string | null
+          is_completed?: boolean
           user_id: string
+          created_at?: string
         }
-        Update: Partial<Database['public']['Tables']['events']['Insert']>
+        Update: Partial<Database['public']['Tables']['goals']['Insert']>
       }
+
       reports: {
         Row: {
           id: string
@@ -194,6 +202,7 @@ export type Database = {
         }
         Update: Partial<Database['public']['Tables']['reports']['Insert']>
       }
+
       subscriptions: {
         Row: {
           id: string
@@ -216,6 +225,7 @@ export type Database = {
         }
         Update: Partial<Database['public']['Tables']['subscriptions']['Insert']>
       }
+
       files: {
         Row: {
           id: string
@@ -240,6 +250,7 @@ export type Database = {
         }
         Update: Partial<Database['public']['Tables']['files']['Insert']>
       }
+
       meetings: {
         Row: {
           id: string
@@ -262,6 +273,7 @@ export type Database = {
         }
         Update: Partial<Database['public']['Tables']['meetings']['Insert']>
       }
+
       notifications: {
         Row: {
           id: string
@@ -283,13 +295,6 @@ export type Database = {
           meta?: Json | null
         }
         Update: Partial<Database['public']['Tables']['notifications']['Insert']>
-=======
-          is_completed?: boolean
-          user_id: string
-          created_at?: string
-        }
-        Update: Partial<Database['public']['Tables']['goals']['Insert']>
->>>>>>> codex-restore-ux
       }
     }
   }

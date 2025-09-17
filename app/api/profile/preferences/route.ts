@@ -6,6 +6,7 @@ import { Database } from '@/lib/supabase-types'
 export async function PUT(request: Request) {
   const supabase = createRouteHandlerClient<Database>({ cookies })
   const body = await request.json()
+
   const {
     data: { session }
   } = await supabase.auth.getSession()
@@ -16,12 +17,6 @@ export async function PUT(request: Request) {
 
   const updatePayload: Database['public']['Tables']['profiles']['Update'] = {}
 
-<<<<<<< HEAD
-  if ('email_notifications' in body) updatePayload.email_notifications = body.email_notifications
-  if ('push_notifications' in body) updatePayload.push_notifications = body.push_notifications
-  if ('weekly_summary' in body) updatePayload.weekly_summary = body.weekly_summary
-  if ('theme' in body) updatePayload.theme = body.theme
-=======
   if ('email_notifications' in body) {
     updatePayload.email_notifications = body.email_notifications
   }
@@ -36,9 +31,11 @@ export async function PUT(request: Request) {
   }
 
   if (Object.keys(updatePayload).length === 0) {
-    return NextResponse.json({ error: 'Güncellenecek alan belirtilmedi.' }, { status: 400 })
+    return NextResponse.json(
+      { error: 'Güncellenecek alan belirtilmedi.' },
+      { status: 400 }
+    )
   }
->>>>>>> codex-restore-ux
 
   const { error } = await supabase
     .from('profiles')
