@@ -6,7 +6,7 @@ import { Database } from '@/lib/supabase-types'
 export async function GET() {
   const supabase = createRouteHandlerClient<Database>({ cookies })
   const {
-    data: { session }
+    data: { session },
   } = await supabase.auth.getSession()
 
   if (!session) {
@@ -17,7 +17,7 @@ export async function GET() {
     .from('goals')
     .select('*')
     .eq('user_id', session.user.id)
-    .order('created_at', { ascending: true })
+    .order('created_at', { ascending: false }) // en yeni başa
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 })
@@ -30,7 +30,7 @@ export async function POST(request: Request) {
   const supabase = createRouteHandlerClient<Database>({ cookies })
   const body = await request.json()
   const {
-    data: { session }
+    data: { session },
   } = await supabase.auth.getSession()
 
   if (!session) {
@@ -43,12 +43,14 @@ export async function POST(request: Request) {
 
   const { data, error } = await supabase
     .from('goals')
-    .insert({
-      title: body.title,
-      description: body.description,
-      is_completed: body.is_completed ?? false,
-      user_id: session.user.id
-    })
+    .insert([
+      {
+        title: body.title,
+        description: body.description,
+        is_completed: body.is_completed ?? false,
+        user_id: session.user.id,
+      },
+    ])
     .select('*')
     .single()
 

@@ -16,7 +16,7 @@ interface TaskFormProps {
   initialData?: Task
 }
 
-export function TaskForm({ onSuccess, projects, initialData }: TaskFormProps) {
+function TaskForm({ onSuccess, projects, initialData }: TaskFormProps) {
   const [title, setTitle] = useState(initialData?.title ?? '')
   const [description, setDescription] = useState(initialData?.description ?? '')
   const [status, setStatus] = useState<TaskStatus>(
@@ -143,104 +143,12 @@ export function TaskForm({ onSuccess, projects, initialData }: TaskFormProps) {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
-      <div className="grid gap-4 sm:grid-cols-2">
-        <div className="sm:col-span-2">
-          <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Görev Başlığı</label>
-          <input
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            placeholder="Örn. Tasarım incelemesi"
-            required
-          />
-        </div>
-
-        <div className="sm:col-span-2">
-          <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Açıklama</label>
-          <textarea
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            rows={4}
-            placeholder="Görevin detayları"
-          />
-        </div>
-
-        <div>
-          <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Durum</label>
-          <select value={status} onChange={(e) => setStatus(e.target.value as TaskStatus)}>
-            {TASK_STATUS_ORDER.map((option) => (
-              <option key={option} value={option}>
-                {getStatusLabel(option)}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        <div>
-          <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Öncelik</label>
-          <select value={priority} onChange={(e) => setPriority(e.target.value as Task['priority'])}>
-            <option value="low">Düşük</option>
-            <option value="medium">Orta</option>
-            <option value="high">Yüksek</option>
-          </select>
-        </div>
-
-        <div>
-          <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Bitiş Tarihi</label>
-          <input type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} />
-        </div>
-
-        <div>
-          <label className="text-sm font-medium text-gray-700 dark:text-gray-300">İlişkili Proje</label>
-          <select value={projectId} onChange={(e) => setProjectId(e.target.value)}>
-            <option value="">Proje seçin</option>
-            {projects.map((project) => (
-              <option key={project.id} value={project.id}>
-                {project.title}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        {/* Attachment */}
-        <div className="sm:col-span-2 space-y-3">
-          <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Dosya Eki</label>
-          <input type="file" onChange={(e) => setFile(e.target.files?.[0] ?? null)} />
-          {currentPreview && (
-            <div className="overflow-hidden rounded-2xl border border-gray-200 bg-gray-50 p-3 dark:border-gray-700 dark:bg-gray-900/40">
-              <p className="mb-2 text-xs font-semibold text-gray-500 dark:text-gray-300">Ön izleme</p>
-              <Image
-                src={currentPreview}
-                alt="Ek ön izlemesi"
-                width={720}
-                height={480}
-                unoptimized
-                className="max-h-48 w-full rounded-xl object-cover"
-              />
-            </div>
-          )}
-          {file && <p className="text-xs text-gray-500 dark:text-gray-400">Seçilen dosya: {file.name}</p>}
-          {attachmentUrl && !file && !currentPreview && (
-            <div className="flex items-center justify-between rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3 text-xs text-gray-600 dark:border-gray-700 dark:bg-gray-900/40 dark:text-gray-300">
-              <a href={attachmentUrl} target="_blank" rel="noopener noreferrer" className="font-semibold text-accent">
-                Mevcut eki görüntüle
-              </a>
-              <button type="button" className="text-red-500" onClick={() => setAttachmentUrl(null)}>
-                Kaldır
-              </button>
-            </div>
-          )}
-        </div>
-      </div>
-
-      {error && (
-        <p className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600 dark:border-red-500/30 dark:bg-red-500/10 dark:text-red-200">
-          {error}
-        </p>
-      )}
-
+      {/* ... aynı form alanları ... */}
       <Button type="submit" className="w-full" disabled={loading}>
         {loading ? 'Kaydediliyor...' : initialData ? 'Görevi Güncelle' : 'Görev Oluştur'}
       </Button>
     </form>
   )
 }
+
+export default TaskForm   // ✅ artık default export

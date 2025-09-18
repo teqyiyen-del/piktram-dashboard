@@ -26,8 +26,18 @@ export function Modal({ isOpen, onClose, title, children, actions }: ModalProps)
   if (!isOpen) return null
 
   return createPortal(
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
-      <div className="w-full max-w-lg rounded-2xl bg-white p-6 shadow-xl transition-colors duration-300 dark:bg-surface-dark">
+    <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
+      {/* 🔥 Overlay - tıklayınca kapatır */}
+      <div
+        className="absolute inset-0 bg-black/40"
+        onClick={onClose}
+      />
+
+      {/* İçerik */}
+      <div
+        className="relative z-10 w-full max-w-lg rounded-2xl bg-white p-6 shadow-xl transition-colors duration-300 dark:bg-surface-dark"
+        onClick={(e) => e.stopPropagation()} // içerikte tıklama overlay’e gitmesin
+      >
         <div className="mb-4 flex items-center justify-between gap-3">
           <h2 className="text-lg font-semibold text-gray-900 dark:text-white">{title}</h2>
           <div className="flex items-center gap-3">

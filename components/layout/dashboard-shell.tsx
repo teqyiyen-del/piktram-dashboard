@@ -20,7 +20,14 @@ export default function DashboardShell({ children, user }: DashboardShellProps) 
   return (
     <NotificationProvider>
       <div className="flex min-h-screen bg-muted transition-colors duration-300 dark:bg-muted-dark">
-        <Sidebar role={user.role} open={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
+        {/* Sidebar */}
+        <Sidebar
+          role={user.role}
+          open={isSidebarOpen}
+          onClose={() => setIsSidebarOpen(false)}
+        />
+
+        {/* Main content */}
         <div className="flex flex-1 flex-col">
           <Topbar
             fullName={user.full_name}
@@ -28,8 +35,11 @@ export default function DashboardShell({ children, user }: DashboardShellProps) 
             role={user.role}
             onMenuClick={() => setIsSidebarOpen(true)}
           />
+
           <main className="flex-1 overflow-y-auto bg-muted/70 px-6 pb-12 pt-8 transition-colors duration-300 dark:bg-muted-dark">
-            <div className="mx-auto w-full max-w-6xl space-y-8">{children}</div>
+            <div className="mx-auto w-full max-w-6xl space-y-8">
+              {children}
+            </div>
           </main>
         </div>
       </div>

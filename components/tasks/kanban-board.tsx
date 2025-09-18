@@ -3,23 +3,21 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd'
 import { Task, TaskStatus, TASK_STATUS_LABELS, TASK_STATUS_ORDER } from '@/lib/types'
-import { TaskCard } from './task-card'
+import TaskCard from './task-card'
 import { Modal } from '@/components/ui/modal'
-import { TaskForm } from './task-form'
-import { Button } from '@/components/ui/button'
+import TaskForm from './task-form'
 import { useNotificationCenter } from '@/components/providers/notification-provider'
 import { normalizeStatus, getStatusLabel } from '@/lib/task-status'
-import { TaskDetails } from './task-details'
+import TaskDetails from './task-details'
 import { useToast } from '@/components/providers/toast-provider'
 
 interface KanbanBoardProps {
-  initialTasks: Task[]
-  projects: { id: string; title: string }[]
+  initialTasks?: Task[]
+  projects?: { id: string; title: string }[]
 }
 
 type ColumnKey = (typeof TASK_STATUS_ORDER)[number]
 
-// ✅ ClickUp-style: sadece border, içi şeffaf
 const columnStyles: Record<TaskStatus, string> = {
   yapiliyor: 'border-blue-500 bg-transparent dark:border-blue-400',
   onay_surecinde: 'border-amber-500 bg-transparent dark:border-amber-400',
@@ -35,9 +33,9 @@ const columnStyles: Record<TaskStatus, string> = {
   tamamlandi: 'border-gray-500 bg-transparent dark:border-gray-600'
 }
 
-export function KanbanBoard({ initialTasks, projects }: KanbanBoardProps) {
+function KanbanBoard({ initialTasks = [], projects = [] }: KanbanBoardProps) {
   const [tasks, setTasks] = useState<Task[]>(() =>
-    initialTasks.map((task) => ({ ...task, status: normalizeStatus(task.status) }))
+    (initialTasks ?? []).map((task) => ({ ...task, status: normalizeStatus(task.status) }))
   )
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [editingTask, setEditingTask] = useState<Task | null>(null)
@@ -74,7 +72,7 @@ export function KanbanBoard({ initialTasks, projects }: KanbanBoardProps) {
         return
       }
       const data = (await response.json()) as Task[]
-      setTasks(data.map((task) => ({ ...task, status: normalizeStatus(task.status) })))
+      setTasks((data ?? []).map((task) => ({ ...task, status: normalizeStatus(task.status) })))
 
       if (selectedTask) {
         const updated = data.find((item) => item.id === selectedTask.id)
@@ -92,12 +90,11 @@ export function KanbanBoard({ initialTasks, projects }: KanbanBoardProps) {
   }, [toast, selectedTask])
 
   useEffect(() => {
-    setTasks(initialTasks.map((task) => ({ ...task, status: normalizeStatus(task.status) })))
+    setTasks((initialTasks ?? []).map((task) => ({ ...task, status: normalizeStatus(task.status) })))
   }, [initialTasks])
 
   const handleDragEnd = async ({ destination, source, draggableId }: DropResult) => {
-    if (!destination) return
-    if (destination.droppableId === source.droppableId) return
+    if (!destination || destination.droppableId === source.droppableId) return
 
     const newStatus = destination.droppableId as ColumnKey
     const previous = structuredClone(tasks)
@@ -212,14 +209,7 @@ export function KanbanBoard({ initialTasks, projects }: KanbanBoardProps) {
             Görevleri sürükleyerek durumunu anında güncelleyin.
           </p>
         </div>
-        <Button
-          onClick={() => {
-            setEditingTask(null)
-            setIsModalOpen(true)
-          }}
-        >
-          + Yeni Görev
-        </Button>
+        {/* ✅ Yeni Görev butonu kaldırıldı */}
       </div>
 
       {/* Kanban Columns */}
@@ -235,7 +225,7 @@ export function KanbanBoard({ initialTasks, projects }: KanbanBoardProps) {
                     {...provided.droppableProps}
                     className={`min-w-[310px] flex-1 flex flex-col gap-4 rounded-2xl border bg-transparent p-5 shadow-sm transition-colors duration-300
                       ${snapshot.isDraggingOver ? 'ring-2 ring-accent/40' : ''} ${columnStyles[column]}`}
-                    style={{ minHeight: '280px' }} // 🔥 boşken bile sabit yükseklik
+                    style={{ minHeight: '280px' }}
                   >
                     <div className="flex items-center justify-between">
                       <h3 className="text-xs sm:text-sm font-semibold uppercase tracking-wide text-gray-700 dark:text-gray-200 truncate">
@@ -342,3 +332,5 @@ export function KanbanBoard({ initialTasks, projects }: KanbanBoardProps) {
     </div>
   )
 }
+
+export default KanbanBoard

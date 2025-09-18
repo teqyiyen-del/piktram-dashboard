@@ -1,15 +1,17 @@
 import type { Config } from 'tailwindcss'
 
 const config: Config = {
-  darkMode: 'class', // ✅ class bazlı dark mode
+  darkMode: 'class',
   content: [
     './app/**/*.{js,ts,jsx,tsx}',
-    './components/**/*.{js,ts,jsx,tsx}'
+    './components/**/*.{js,ts,jsx,tsx}',
+    './pages/**/*.{js,ts,jsx,tsx}',
+    './src/**/*.{js,ts,jsx,tsx}',
   ],
   theme: {
     extend: {
       colors: {
-        // Arka plan ve foreground
+        // Arka plan & foreground
         background: '#FFFFFF',
         'background-dark': '#121212',
 
@@ -25,7 +27,7 @@ const config: Config = {
         'muted-dark': '#0f0f10',
         'muted-foreground': '#6B7280',
 
-        // Yüzey (kartlar, bloklar için)
+        // Surface (kartlar, bloklar)
         surface: '#FFFFFF',
         'surface-dark': '#1A1A1D',
 
@@ -41,6 +43,15 @@ const config: Config = {
       },
       fontFamily: {
         sans: ['Inter', 'sans-serif'],
+      },
+      // spacing default zaten var, ama ek özel değer gerekiyorsa bırakabilirsin
+      spacing: {
+        xs: '0.5rem',   // 8px
+        sm: '1rem',     // 16px
+        md: '1.5rem',   // 24px
+        lg: '2rem',     // 32px
+        xl: '3rem',     // 48px
+        '2xl': '4rem',  // 64px
       },
     },
   },

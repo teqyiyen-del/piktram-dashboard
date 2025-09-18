@@ -32,7 +32,7 @@ const priorityBadges: Record<Task['priority'], { label: string; className: strin
   }
 }
 
-export function TaskCard({
+function TaskCard({
   task,
   onDelete,
   onUpdate,
@@ -159,3 +159,5 @@ export function TaskCard({
     </div>
   )
 }
+
+export default TaskCard   // ✅ ekledik

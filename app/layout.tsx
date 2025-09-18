@@ -2,11 +2,10 @@ import './globals.css'
 import { Inter } from 'next/font/google'
 import { ReactNode } from 'react'
 import SupabaseProvider from '@/components/providers/supabase-provider'
-import { ThemeProvider } from '@/components/providers/theme-provider'
-import { ToastProvider } from '@/components/providers/toast-provider'
 import { createServerComponentClient } from '@supabase/auth-helpers-nextjs'
 import { cookies } from 'next/headers'
 import { Database } from '@/lib/supabase-types'
+import RootClient from '@/components/providers/root-client' // ✅ Client wrapper
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -15,7 +14,12 @@ export const metadata = {
   description: 'Müşteri yönetim paneli',
 }
 
-export default async function RootLayout({ children }: { children: ReactNode }) {
+export default async function RootLayout({
+  children,
+}: {
+  children: ReactNode
+}) {
+  // ✅ Supabase session check
   const supabase = createServerComponentClient<Database>({ cookies })
   const {
     data: { session },
@@ -35,19 +39,16 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
     }
   }
 
+  // ✅ Server tarafında sadece RootClient çağrılıyor
   return (
     <html lang="tr">
       <body className={`${inter.className} bg-muted dark:bg-background-dark`}>
         <SupabaseProvider session={session}>
-          <ThemeProvider initialTheme={initialTheme}>
-            <ToastProvider>
-              {children}
-            </ToastProvider>
-          </ThemeProvider>
+          <RootClient initialTheme={initialTheme}>
+            {children}
+          </RootClient>
         </SupabaseProvider>
       </body>
     </html>
   )
 }
-
- 

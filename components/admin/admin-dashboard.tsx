@@ -1,255 +1,138 @@
+// components/admin/admin-dashboard.tsx
 'use client'
 
-import Link from 'next/link'
-import { useState, useMemo } from 'react'
+import { useMemo } from 'react'
 import { formatDate } from '@/lib/utils'
-import { TASK_STATUS_LABELS, TaskStatus } from '@/lib/types'
+import { TaskStatus } from '@/lib/types'
+import { WeeklyCompletionChart, ProjectProgressDonut } from '@/components/dashboard/charts'
+import { TodayTasks } from '@/components/dashboard/today-tasks'
+import { Card } from '@/components/sections/card'
 
-type UserRecord = {
-  id: string
-  full_name: string | null
-  email: string | null
-  role: string | null
-  created_at: string
-}
-
-type ProjectRecord = {
-  id: string
-  title: string
-  description: string | null
-  progress: number
-  due_date: string | null
-  user_id: string
-  created_at: string
-}
-
-type TaskRecord = {
-  id: string
-  title: string
-  status: TaskStatus
-  priority: 'low' | 'medium' | 'high'
-  due_date: string | null
-  user_id: string
-  attachment_url: string | null
-  created_at: string
-}
-
-type GoalRecord = {
-  id: string
-  title: string
-  description: string | null
-  is_completed: boolean
-  user_id: string
-  created_at: string
-}
-
-type RevisionRecord = {
-  id: string
-  task_id: string
-  description: string
-  created_at: string
-  user_id: string
-  task_title: string
-  author?: {
-    full_name: string | null
-    email: string | null
-  } | null
-}
-
-type InvoiceRecord = {
-  id: string
-  user_id: string
-  title: string
-  amount: number
-  currency: string
-  status: string
-  due_date: string | null
-  created_at: string
-}
+type UserRecord = { id: string; full_name: string | null; email: string | null; role: string | null; created_at: string }
+type ProjectRecord = { id: string; title: string; description: string | null; progress: number; due_date: string | null; user_id: string; created_at: string }
+type TaskRecord = { id: string; title: string; status: TaskStatus; priority: 'low' | 'medium' | 'high'; due_date: string | null; user_id: string; attachment_url: string | null; created_at: string }
+type GoalRecord = { id: string; title: string; description: string | null; is_completed: boolean; user_id: string; created_at: string }
+type InvoiceRecord = { id: string; user_id: string; title: string; amount: number; currency: string; status: string; due_date: string | null; created_at: string }
 
 interface AdminDashboardProps {
+  currentUser: UserRecord
   users: UserRecord[]
   projects: ProjectRecord[]
   tasks: TaskRecord[]
   goals: GoalRecord[]
-  revisions: RevisionRecord[]
   invoices: InvoiceRecord[]
-  ownerMap: Record<string, { full_name: string | null; email: string | null }>
-  stats: { users: number; projects: number; tasks: number }
-  pagination: {
-    projectsPage: number
-    projectsTotalPages: number
-    tasksPage: number
-    tasksTotalPages: number
-  }
-}
-
-const statusLabels: Record<TaskRecord['status'], string> = TASK_STATUS_LABELS
-
-const priorityLabels: Record<TaskRecord['priority'], string> = {
-  low: 'Düşük',
-  medium: 'Orta',
-  high: 'Yüksek'
 }
 
 export default function AdminDashboard({
-  users,
-  projects,
-  tasks,
-  goals,
-  revisions,
-  invoices,
-  ownerMap,
-  stats,
-  pagination
+  currentUser,
+  users = [],
+  projects = [],
+  tasks = [],
+  goals = [],
+  invoices = [],
 }: AdminDashboardProps) {
-  const [selectedUser, setSelectedUser] = useState<'all' | string>('all')
-
-  const filteredProjects = useMemo(
-    () => (selectedUser === 'all' ? projects : projects.filter((p) => p.user_id === selectedUser)),
-    [projects, selectedUser]
-  )
-
-  const filteredTasks = useMemo(
-    () => (selectedUser === 'all' ? tasks : tasks.filter((t) => t.user_id === selectedUser)),
-    [tasks, selectedUser]
-  )
-
-  const filteredGoals = useMemo(
-    () => (selectedUser === 'all' ? goals : goals.filter((g) => g.user_id === selectedUser)),
-    [goals, selectedUser]
-  )
-
-  const filteredInvoices = useMemo(
-    () => (selectedUser === 'all' ? invoices : invoices.filter((i) => i.user_id === selectedUser)),
-    [invoices, selectedUser]
-  )
+  const recentClients = useMemo(() => users.slice(-5).reverse(), [users])
+  const recentProjects = useMemo(() => projects.slice(-5).reverse(), [projects])
+  const recentInvoices = useMemo(() => invoices.slice(-5).reverse(), [invoices])
 
   return (
-    <div className="space-y-8">
+    <div className="mx-auto w-full max-w-7xl">
       {/* Header */}
-      <header className="rounded-3xl bg-surface p-8 shadow-sm transition-colors dark:bg-surface-dark">
-        <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">Admin Paneli</h1>
-        <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
-          Müşterilere ait tüm verileri yönetin.
+      <header
+        className="rounded-2xl p-6 text-white mb-12"
+        style={{ background: "linear-gradient(to right, #FF5E4A, #FA7C6B)" }}
+      >
+        <h1 className="text-xl md:text-2xl font-semibold">
+          Hoş geldin, {currentUser?.full_name ?? 'Admin'} 👋
+        </h1>
+        <p className="mt-1 text-sm text-white/90">
+          Onay bekleyen içeriklerini gözden geçir, ajandanı planla ve işlerini yönet.
         </p>
-
-        <div className="mt-4">
-          <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Müşteri Seç</label>
-          <select
-            value={selectedUser}
-            onChange={(e) => setSelectedUser(e.target.value)}
-            className="ml-3 rounded-lg border px-3 py-2 text-sm dark:bg-surface-dark dark:text-white"
-          >
-            <option value="all">Tümü</option>
-            {users.map((u) => (
-              <option key={u.id} value={u.id}>
-                {u.full_name ?? u.email}
-              </option>
-            ))}
-          </select>
-        </div>
       </header>
 
-      {/* Stats */}
-      <section className="grid gap-6 md:grid-cols-4">
-        <StatTile title="Kullanıcılar" value={stats.users} description="Aktif hesap sayısı" />
-        <StatTile title="Projeler" value={filteredProjects.length} description="Seçilen müşteriye ait" />
-        <StatTile title="Görevler" value={filteredTasks.length} description="Seçilen müşteriye ait" />
-        <StatTile title="Hedefler" value={filteredGoals.length} description="Seçilen müşteriye ait" />
+      {/* Stat kutular */}
+      <section className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4 mb-12">
+        <StatMini value={tasks.filter(t => t.status === 'pending').length} label="Bekleyen Görev" />
+        <StatMini value={projects.length} label="Aktif Proje" />
+        <StatMini value={users.length} label="Kullanıcı" />
+        <StatMini value={goals.length} label="Hedef" />
       </section>
 
-      {/* Projects */}
-      <EntitySection title="Projeler" data={filteredProjects} render={(project) => {
-        const owner = ownerMap[project.user_id]
-        return (
-          <article key={project.id} className="rounded-2xl border p-4 dark:border-gray-700">
-            <div className="flex justify-between">
-              <h3 className="text-sm font-semibold">{project.title}</h3>
-              <span className="text-xs text-gray-500">{formatDate(project.due_date)}</span>
-            </div>
-            <p className="text-xs text-gray-400">{project.description}</p>
-            <p className="text-xs text-gray-500">Sorumlu: {owner?.full_name ?? 'Bilinmiyor'}</p>
-          </article>
-        )
-      }} />
+      {/* Bugünkü Görevler */}
+      <section className="mb-12">
+        <Card title="Bugünkü Görevler" description="Tamamlanması gereken görevler" className="min-h-[200px]">
+          <TodayTasks role="admin" tasks={tasks} />
+        </Card>
+      </section>
 
-      {/* Tasks */}
-      <EntitySection title="Görevler" data={filteredTasks} render={(task) => {
-        const owner = ownerMap[task.user_id]
-        return (
-          <article key={task.id} className="rounded-2xl border p-4 dark:border-gray-700">
-            <div className="flex justify-between">
-              <h3 className="text-sm font-semibold">{task.title}</h3>
-              <span className="text-xs">{statusLabels[task.status]}</span>
-            </div>
-            <p className="text-xs text-gray-400">Öncelik: {priorityLabels[task.priority]}</p>
-            <p className="text-xs">{owner?.full_name ?? 'Bilinmiyor'}</p>
-          </article>
-        )
-      }} />
+      {/* Alt Grid (Projeler, Yeni Müşteriler, Faturalar) */}
+      <section className="grid gap-8 lg:grid-cols-3 mb-12">
+        <Card title="Projeler" description="Son 5 proje" className="h-[300px] flex flex-col">
+          <ul className="space-y-3 overflow-y-auto pr-2 flex-1">
+            {recentProjects.length > 0 ? recentProjects.map((p) => (
+              <li key={p.id} className="flex justify-between text-sm">
+                <span>{p.title}</span>
+                <span className="text-xs text-gray-400">
+                  {p.due_date ? formatDate(p.due_date) : '—'}
+                </span>
+              </li>
+            )) : <p className="text-sm text-gray-400">Henüz proje yok.</p>}
+          </ul>
+        </Card>
 
-      {/* Goals */}
-      <EntitySection title="Hedefler" data={filteredGoals} render={(goal) => (
-        <article key={goal.id} className="rounded-2xl border p-4 dark:border-gray-700">
-          <h3 className="text-sm font-semibold">{goal.title}</h3>
-          <p className="text-xs text-gray-400">{goal.description}</p>
-          <p className={`text-xs font-medium ${goal.is_completed ? 'text-emerald-600' : 'text-gray-500'}`}>
-            {goal.is_completed ? 'Tamamlandı' : 'Devam Ediyor'}
-          </p>
-        </article>
-      )} />
+        <Card title="Yeni Müşteriler" description="Son eklenen 5 müşteri" className="h-[300px] flex flex-col">
+          <ul className="space-y-3 overflow-y-auto pr-2 flex-1">
+            {recentClients.length > 0 ? recentClients.map((c) => (
+              <li key={c.id} className="flex justify-between text-sm">
+                <span>{c.full_name ?? c.email}</span>
+                <span className="text-xs text-gray-400">
+                  {c.created_at ? formatDate(c.created_at) : '—'}
+                </span>
+              </li>
+            )) : <p className="text-sm text-gray-400">Henüz müşteri yok.</p>}
+          </ul>
+        </Card>
 
-      {/* Revisions */}
-      <EntitySection title="Son Revizyonlar" data={revisions} render={(rev) => (
-        <article key={rev.id} className="rounded-2xl border p-4 dark:border-gray-700">
-          <div className="flex justify-between">
-            <h3 className="text-sm font-semibold">{rev.task_title}</h3>
-            <span className="text-xs text-gray-500">{formatDate(rev.created_at)}</span>
+        <Card title="Faturalar" description="Son 5 fatura" className="h-[300px] flex flex-col">
+          <ul className="space-y-3 overflow-y-auto pr-2 flex-1">
+            {recentInvoices.length > 0 ? recentInvoices.map((inv) => (
+              <li key={inv.id} className="flex justify-between text-sm">
+                <span>{inv.title}</span>
+                <span className={`text-xs ${inv.status === 'paid' ? 'text-emerald-600' : 'text-red-500'}`}>
+                  {inv.status === 'paid' ? 'Ödendi' : 'Bekliyor'}
+                </span>
+              </li>
+            )) : <p className="text-sm text-gray-400">Henüz fatura yok.</p>}
+          </ul>
+        </Card>
+      </section>
+
+      {/* Chartlar */}
+      <section className="grid gap-6 lg:grid-cols-2 mb-12">
+        <Card title="Görev Tamamlama Oranı" description="Haftalık genel görünüm">
+          <div className="h-72">
+            <WeeklyCompletionChart data={tasks.map((t) => ({ label: t.title, value: 1 }))} />
           </div>
-          <p className="text-xs text-gray-400">{rev.author?.full_name ?? rev.author?.email}</p>
-          <p className="text-sm">{rev.description}</p>
-        </article>
-      )} />
+        </Card>
 
-      {/* Invoices */}
-      <EntitySection title="Faturalar" data={filteredInvoices} render={(inv) => (
-        <article key={inv.id} className="rounded-2xl border p-4 dark:border-gray-700">
-          <div className="flex justify-between">
-            <h3 className="text-sm font-semibold">{inv.title}</h3>
-            <span className="text-xs text-gray-500">{inv.currency} {inv.amount}</span>
+        <Card title="Proje İlerleme" description="Tamamlanan vs kalan görevler">
+          <div className="h-72">
+            <ProjectProgressDonut
+              completed={tasks.filter((t) => t.status === 'done').length}
+              remaining={tasks.filter((t) => t.status !== 'done').length}
+            />
           </div>
-          <p className={`text-xs font-medium ${inv.status === 'paid' ? 'text-emerald-600' : 'text-red-500'}`}>
-            {inv.status === 'paid' ? 'Ödendi' : 'Beklemede'}
-          </p>
-          <p className="text-xs text-gray-500">Son Tarih: {formatDate(inv.due_date)}</p>
-        </article>
-      )} />
+        </Card>
+      </section>
     </div>
   )
 }
 
-function StatTile({ title, value, description }: { title: string; value: number; description: string }) {
+function StatMini({ value, label }: { value: number; label: string }) {
   return (
-    <div className="rounded-3xl border bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-surface-dark">
-      <p className="text-xs font-semibold uppercase text-gray-400">{title}</p>
-      <p className="mt-3 text-3xl font-semibold">{value}</p>
-      <p className="mt-2 text-sm text-gray-500">{description}</p>
+    <div className="rounded-lg bg-gradient-to-r from-[#FF5E4A] to-[#FA7C6B] p-4 text-center shadow-sm">
+      <p className="text-lg md:text-xl font-bold text-white">{value}</p>
+      <p className="text-xs text-white/90">{label}</p>
     </div>
-  )
-}
-
-function EntitySection<T>({ title, data, render }: { title: string; data: T[]; render: (item: T) => JSX.Element }) {
-  return (
-    <section className="rounded-3xl border bg-surface p-6 dark:border-gray-700 dark:bg-surface-dark">
-      <h2 className="text-lg font-semibold">{title}</h2>
-      <div className="mt-4 space-y-4">
-        {data.length === 0 ? (
-          <p className="text-sm text-gray-500">Henüz kayıt yok.</p>
-        ) : (
-          data.map(render)
-        )}
-      </div>
-    </section>
   )
 }

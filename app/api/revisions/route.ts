@@ -1,26 +1,25 @@
 import { NextResponse } from 'next/server'
-import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
-import { cookies } from 'next/headers'
 import { Database } from '@/lib/supabase-types'
+import { getSessionAndRole } from '@/lib/checkrole'
 
 export async function GET() {
-  const supabase = createRouteHandlerClient<Database>({ cookies })
-  const {
-    data: { session }
-  } = await supabase.auth.getSession()
-
-  if (!session) {
-    return NextResponse.json({ error: 'Yetkisiz erişim' }, { status: 401 })
+  const { error, session, role, supabase } = await getSessionAndRole()
+  if (error || !session) {
+    return NextResponse.json({ error }, { status: 401 })
   }
 
-  const { data, error } = await supabase
+  let query = supabase
     .from('revisions')
     .select('id, task_id, description, created_at, user_id, tasks(title), profiles(full_name, email)')
-    .eq('user_id', session.user.id)
     .order('created_at', { ascending: false })
 
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 })
+  if (role !== 'admin') {
+    query = query.eq('user_id', session.user.id)
+  }
+
+  const { data, error: fetchError } = await query
+  if (fetchError) {
+    return NextResponse.json({ error: fetchError.message }, { status: 500 })
   }
 
   const revisions = (data ?? []).map((revision) => ({

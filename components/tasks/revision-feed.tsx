@@ -22,7 +22,7 @@ interface RevisionFeedProps {
   initialRevisions: RevisionItem[]
 }
 
-export function RevisionFeed({ initialRevisions }: RevisionFeedProps) {
+function RevisionFeed({ initialRevisions }: RevisionFeedProps) {
   const [revisions, setRevisions] = useState<RevisionItem[]>(initialRevisions)
   const [loading, setLoading] = useState(false)
   const { toast } = useToast()
@@ -62,7 +62,9 @@ export function RevisionFeed({ initialRevisions }: RevisionFeedProps) {
       <div className="flex items-center justify-between">
         <div>
           <h3 className="text-lg font-semibold text-gray-900">Revize Geçmişi</h3>
-          <p className="text-sm text-gray-500">Tüm görevlerde yapılan yorum ve durum güncellemeleri.</p>
+          <p className="text-sm text-gray-500">
+            Tüm görevlerde yapılan yorum ve durum güncellemeleri.
+          </p>
         </div>
         <Button variant="secondary" onClick={refresh} disabled={loading}>
           {loading ? 'Yükleniyor...' : 'Yenile'}
@@ -73,7 +75,10 @@ export function RevisionFeed({ initialRevisions }: RevisionFeedProps) {
       ) : (
         <div className="space-y-3">
           {revisions.map((revision) => (
-            <div key={revision.id} className="rounded-2xl border border-gray-200 bg-gray-50 p-4">
+            <div
+              key={revision.id}
+              className="rounded-2xl border border-gray-200 bg-gray-50 p-4"
+            >
               <div className="flex items-center justify-between text-xs text-gray-500">
                 <span className="font-medium text-gray-700">{revision.task_title}</span>
                 <span>{formatDateTime(revision.created_at)}</span>
@@ -89,3 +94,5 @@ export function RevisionFeed({ initialRevisions }: RevisionFeedProps) {
     </div>
   )
 }
+
+export default RevisionFeed   // ✅ artık default export

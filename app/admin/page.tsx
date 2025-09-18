@@ -2,53 +2,79 @@
 import { createServerComponentClient } from '@supabase/auth-helpers-nextjs'
 import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
-import { Database } from '@/lib/supabase-types'
+import AdminDashboard from '@/components/admin/admin-dashboard'
+import type { Database } from '@/lib/supabase-types'
 
-export default async function AdminHomePage() {
+export default async function AdminPage() {
   const supabase = createServerComponentClient<Database>({ cookies })
 
+  // Session kontrolü
   const {
-    data: { session }
+    data: { session },
   } = await supabase.auth.getSession()
 
-  if (!session) redirect('/login')
-
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('role, full_name')
-    .eq('id', session.user.id)
-    .single()
-
-  if (profile?.role !== 'admin') {
-    redirect('/') // admin değilse ana sayfaya at
+  if (!session) {
+    redirect('/login')
   }
 
-  // küçük sayılar: toplam user, proje, task
-  const [usersRes, projectsRes, tasksRes] = await Promise.all([
-    supabase.from('profiles').select('id', { count: 'exact', head: true }),
-    supabase.from('projects').select('id', { count: 'exact', head: true }),
-    supabase.from('tasks').select('id', { count: 'exact', head: true })
+  // Kullanıcı bilgisi (mevcut admin)
+  const { data: currentUser } = await supabase
+    .from('profiles')
+    .select('*')
+    .eq('id', session.user.id)
+    .maybeSingle()
+
+  if (!currentUser) {
+    redirect('/login')
+  }
+  if (currentUser.role !== 'admin') {
+    redirect('/')
+  }
+
+  // --- Tüm verileri paralel çek ---
+  const [
+    { data: usersData },
+    { data: projectsData },
+    { data: tasksData },
+    { data: goalsData },
+    { data: revisionsData },
+    { data: invoicesData },
+  ] = await Promise.all([
+    supabase.from('profiles').select('*'),
+    supabase.from('projects').select('*'),
+    supabase.from('tasks').select('*'),
+    supabase.from('goals').select('*'),
+    supabase.from('revisions').select('*'),
+    supabase.from('invoices').select('*'),
   ])
 
-  return (
-    <div className="space-y-8">
-      <h1 className="text-2xl font-bold">Admin Dashboard</h1>
-      <p className="text-gray-600">Hoş geldin {profile.full_name ?? 'Admin'} 👋</p>
+  const users = usersData ?? []
+  const projects = projectsData ?? []
+  const tasks = tasksData ?? []
+  const goals = goalsData ?? []
+  const revisions = revisionsData ?? []
+  const invoices = invoicesData ?? []
 
-      <div className="grid gap-6 md:grid-cols-3">
-        <StatCard title="Toplam Kullanıcı" value={usersRes.count ?? 0} />
-        <StatCard title="Toplam Proje" value={projectsRes.count ?? 0} />
-        <StatCard title="Toplam Görev" value={tasksRes.count ?? 0} />
-      </div>
-    </div>
+  // Kullanıcı eşleme (ownerMap)
+  const ownerMap = Object.fromEntries(
+    users.map((u: any) => [
+      u.id,
+      { full_name: u.full_name ?? '', email: u.email ?? '' },
+    ])
   )
-}
 
-function StatCard({ title, value }: { title: string; value: number }) {
   return (
-    <div className="rounded-2xl border bg-white p-6 shadow-sm">
-      <p className="text-sm text-gray-500">{title}</p>
-      <p className="mt-2 text-3xl font-bold">{value}</p>
+    <div className="p-6">
+      <AdminDashboard
+        currentUser={currentUser}
+        users={users}
+        projects={projects}
+        tasks={tasks}
+        goals={goals}
+        revisions={revisions}
+        invoices={invoices}
+        ownerMap={ownerMap}
+      />
     </div>
   )
 }

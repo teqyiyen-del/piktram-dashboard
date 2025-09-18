@@ -1,9 +1,10 @@
+// app/api/admin/clients/route.ts
 import { NextResponse } from 'next/server'
 import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
 import { cookies } from 'next/headers'
 import { Database } from '@/lib/supabase-types'
 
-export async function PATCH(request: Request, { params }: { params: { id: string } }) {
+export async function GET() {
   const supabase = createRouteHandlerClient<Database>({ cookies })
   const {
     data: { session }
@@ -13,29 +14,21 @@ export async function PATCH(request: Request, { params }: { params: { id: string
     return NextResponse.json({ error: 'Yetkisiz erişim' }, { status: 401 })
   }
 
-  const { data: currentProfile } = await supabase
+  // Sadece adminler görebilir
+  const { data: profile } = await supabase
     .from('profiles')
     .select('role')
     .eq('id', session.user.id)
     .single()
 
-  if (currentProfile?.role !== 'admin') {
+  if (profile?.role !== 'admin') {
     return NextResponse.json({ error: 'Bu işlem için yönetici olmanız gerekir' }, { status: 403 })
-  }
-
-  const body = await request.json().catch(() => ({}))
-  const role = body.role as Database['public']['Tables']['profiles']['Row']['role']
-
-  if (role !== 'user' && role !== 'admin') {
-    return NextResponse.json({ error: 'Geçersiz rol değeri' }, { status: 400 })
   }
 
   const { data, error } = await supabase
     .from('profiles')
-    .update({ role })
-    .eq('id', params.id)
-    .select('id, role, full_name, email')
-    .single()
+    .select('id, full_name, email, company, role')
+    .order('created_at', { ascending: false })
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 })

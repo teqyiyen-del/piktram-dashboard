@@ -4,7 +4,7 @@ import Link from 'next/link'
 import { FormEvent, useState } from 'react'
 import { useSupabaseClient } from '@supabase/auth-helpers-react'
 import { useRouter } from 'next/navigation'
-import { Mail, Lock, Eye, EyeOff, User, Github, Apple, Chrome } from 'lucide-react'
+import { Mail, Lock, Eye, EyeOff, User, Building2, Chrome } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 
 const registerErrors: Record<string, string> = {
@@ -18,6 +18,7 @@ export function RegisterForm() {
   const supabase = useSupabaseClient()
   const router = useRouter()
   const [fullName, setFullName] = useState('')
+  const [company, setCompany] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
@@ -37,7 +38,7 @@ export function RegisterForm() {
       email,
       password,
       options: {
-        data: { full_name: fullName }
+        data: { full_name: fullName, company }
       }
     })
 
@@ -51,8 +52,9 @@ export function RegisterForm() {
       await supabase.from('profiles').upsert({
         id: data.user.id,
         full_name: fullName,
+        company,
         email,
-        role: 'user'
+        role: 'müşteri'
       })
     }
 
@@ -65,125 +67,130 @@ export function RegisterForm() {
     }
   }
 
-  const handleOAuth = async (provider: 'google' | 'github' | 'apple') => {
+  const handleOAuth = async () => {
     setError(null)
     setSuccess(null)
-    const { error } = await supabase.auth.signInWithOAuth({ provider })
-    if (error) {
-      setError(translateError(error.message))
-    }
+    const { error } = await supabase.auth.signInWithOAuth({ provider: 'google' })
+    if (error) setError(translateError(error.message))
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 text-center">
       {/* Başlık */}
-      <div className="space-y-2 text-left">
-        <h2 className="text-2xl font-semibold text-gray-900 dark:text-white">Yeni hesap oluştur</h2>
-        <p className="text-sm text-gray-500 dark:text-gray-400">Piktram ile projelerinizi kolayca planlayın.</p>
-      </div>
-
-      {/* OAuth */}
-      <div className="grid gap-3">
-        <Button variant="secondary" className="w-full" type="button" onClick={() => handleOAuth('google')}>
-          <Chrome className="h-4 w-4" /> Google ile kayıt ol
-        </Button>
-        <Button variant="secondary" className="w-full" type="button" onClick={() => handleOAuth('github')}>
-          <Github className="h-4 w-4" /> GitHub ile kayıt ol
-        </Button>
-        <Button variant="secondary" className="w-full" type="button" onClick={() => handleOAuth('apple')}>
-          <Apple className="h-4 w-4" /> Apple ile kayıt ol
-        </Button>
-      </div>
-
-      {/* Divider */}
-      <div className="relative flex items-center justify-center">
-        <span className="h-px w-full bg-gray-200"></span>
-        <span className="absolute bg-white px-3 text-xs font-semibold uppercase tracking-widest text-gray-400 dark:bg-surface-dark">
-          veya e-posta ile
-        </span>
+      <div className="space-y-2">
+        <h2 className="text-3xl font-bold text-gray-900 dark:text-white">
+          Hesap Oluştur!
+        </h2>
+        <p className="text-sm text-gray-500 dark:text-gray-400">
+          Piktram ile şirketinizi kolayca yönetin.
+        </p>
       </div>
 
       {/* Form */}
-      <form onSubmit={handleSubmit} className="space-y-5">
+      <form onSubmit={handleSubmit} className="space-y-5 text-left">
+        {/* Full Name */}
         <div className="space-y-2">
-          <label className="text-sm font-medium text-gray-700 dark:text-gray-300" htmlFor="name">
-            Adınız Soyadınız
-          </label>
+          <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Ad Soyad</label>
           <div className="relative">
             <User className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
             <input
-              id="name"
               value={fullName}
               onChange={(e) => setFullName(e.target.value)}
               placeholder="Örn. Ayşe Yılmaz"
-              className="pl-11"
+              className="w-full rounded-xl border border-gray-200 bg-white px-11 py-3 text-sm shadow-sm focus:border-[#FF5E4A] focus:ring-2 focus:ring-[#FF5E4A]/20 transition"
               required
             />
           </div>
         </div>
 
+        {/* Company */}
         <div className="space-y-2">
-          <label className="text-sm font-medium text-gray-700 dark:text-gray-300" htmlFor="email">
-            E-posta Adresi
-          </label>
+          <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Şirket Adı</label>
+          <div className="relative">
+            <Building2 className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+            <input
+              value={company}
+              onChange={(e) => setCompany(e.target.value)}
+              placeholder="Örn. Piktram Creative"
+              className="w-full rounded-xl border border-gray-200 bg-white px-11 py-3 text-sm shadow-sm focus:border-[#FF5E4A] focus:ring-2 focus:ring-[#FF5E4A]/20 transition"
+              required
+            />
+          </div>
+        </div>
+
+        {/* Email */}
+        <div className="space-y-2">
+          <label className="text-sm font-medium text-gray-700 dark:text-gray-300">E-posta Adresi</label>
           <div className="relative">
             <Mail className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
             <input
-              id="email"
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="ornek@piktram.com"
-              className="pl-11"
+              className="w-full rounded-xl border border-gray-200 bg-white px-11 py-3 text-sm shadow-sm focus:border-[#FF5E4A] focus:ring-2 focus:ring-[#FF5E4A]/20 transition"
               required
             />
           </div>
         </div>
 
+        {/* Password */}
         <div className="space-y-2">
-          <label className="text-sm font-medium text-gray-700 dark:text-gray-300" htmlFor="password">
-            Parola
-          </label>
+          <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Parola</label>
           <div className="relative">
             <Lock className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
             <input
-              id="password"
               type={showPassword ? 'text' : 'password'}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="En az 6 karakter"
-              className="pl-11 pr-11"
+              className="w-full rounded-xl border border-gray-200 bg-white px-11 py-3 text-sm shadow-sm focus:border-[#FF5E4A] focus:ring-2 focus:ring-[#FF5E4A]/20 transition"
               required
             />
             <button
               type="button"
               onClick={() => setShowPassword((prev) => !prev)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 transition hover:text-gray-600"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-[#FF5E4A] transition"
             >
               {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
             </button>
           </div>
         </div>
 
-        {error && (
-          <p className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600 dark:border-red-500/30 dark:bg-red-500/10 dark:text-red-200">
-            {error}
-          </p>
-        )}
-        {success && (
-          <p className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-600 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-200">
-            {success}
-          </p>
-        )}
+        {error && <p className="text-sm text-red-600">{error}</p>}
+        {success && <p className="text-sm text-emerald-600">{success}</p>}
 
-        <Button type="submit" className="w-full" disabled={loading}>
+        <Button
+          type="submit"
+          className="w-full rounded-xl bg-[#FF5E4A] hover:bg-[#fa6a56] text-white font-medium shadow-md transition"
+          disabled={loading}
+        >
           {loading ? 'Kayıt yapılıyor...' : 'Hesap Oluştur'}
         </Button>
       </form>
 
-      <p className="text-center text-sm text-gray-500 dark:text-gray-400">
+      {/* Divider */}
+      <div className="relative flex items-center justify-center">
+        <span className="h-px w-full bg-gray-200"></span>
+        <span className="absolute bg-white px-3 text-xs font-semibold uppercase tracking-widest text-gray-400 dark:bg-surface-dark">
+          veya
+        </span>
+      </div>
+
+      {/* Google Register */}
+      <Button
+        variant="outline"
+        className="w-full rounded-xl border-gray-300 hover:bg-gray-50 transition"
+        type="button"
+        onClick={handleOAuth}
+      >
+        <Chrome className="h-4 w-4 text-[#FF5E4A]" />
+        <span className="ml-2 font-medium text-gray-700">Google ile kayıt ol</span>
+      </Button>
+
+      <p className="text-sm text-gray-500">
         Hesabınız var mı?{' '}
-        <Link href="/auth/login" className="font-semibold text-accent">
+        <Link href="/auth/login" className="font-semibold text-[#FF5E4A] hover:underline">
           Giriş yapın
         </Link>
       </p>

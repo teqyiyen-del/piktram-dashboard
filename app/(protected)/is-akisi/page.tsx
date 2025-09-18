@@ -2,7 +2,7 @@ import { createServerComponentClient } from '@supabase/auth-helpers-nextjs'
 import { cookies } from 'next/headers'
 import { Database } from '@/lib/supabase-types'
 import { Card } from '@/components/sections/card'
-import { KanbanBoard } from '@/components/tasks/kanban-board'
+import KanbanBoard from '@/components/tasks/kanban-board'
 import { Task } from '@/lib/types'
 
 export default async function IsAkisiPage() {

@@ -1,23 +1,15 @@
 import { NextResponse } from 'next/server'
-import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
 import { cookies } from 'next/headers'
+import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
 import { Database } from '@/lib/supabase-types'
+import { getSessionAndRole } from '@/lib/checkrole'
 
+// GET: Dosyaları listele
 export async function GET(request: Request) {
-  const supabase = createRouteHandlerClient<Database>({ cookies })
-  const {
-    data: { session }
-  } = await supabase.auth.getSession()
-
-  if (!session) {
-    return NextResponse.json({ error: 'Yetkisiz erişim' }, { status: 401 })
+  const { error, session, role, supabase } = await getSessionAndRole()
+  if (error || !session) {
+    return NextResponse.json({ error }, { status: 401 })
   }
-
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('role')
-    .eq('id', session.user.id)
-    .single()
 
   const { searchParams } = new URL(request.url)
   const category = searchParams.get('category')
@@ -28,55 +20,61 @@ export async function GET(request: Request) {
     query = query.eq('category', category as Database['public']['Tables']['files']['Row']['category'])
   }
 
-  if (profile?.role !== 'admin') {
+  if (role !== 'admin') {
     query = query.eq('user_id', session.user.id)
   }
 
-  const { data, error } = await query
-
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 })
+  const { data, error: fetchError } = await query
+  if (fetchError) {
+    return NextResponse.json({ error: fetchError.message }, { status: 500 })
   }
 
   return NextResponse.json(data ?? [])
 }
 
+// POST: Dosya ekle
 export async function POST(request: Request) {
-  const supabase = createRouteHandlerClient<Database>({ cookies })
-  const body = await request.json()
-
-  const {
-    data: { session }
-  } = await supabase.auth.getSession()
-
-  if (!session) {
-    return NextResponse.json({ error: 'Yetkisiz erişim' }, { status: 401 })
+  const { error, session, supabase } = await getSessionAndRole()
+  if (error || !session) {
+    return NextResponse.json({ error }, { status: 401 })
   }
 
-  const payload: Database['public']['Tables']['files']['Insert'] = {
-    name: body.name,
-    bucket: body.bucket,
-    path: body.path,
-    url: body.url ?? null,
-    category: body.category as Database['public']['Tables']['files']['Row']['category'],
-    description: body.description ?? null,
-    user_id: session.user.id
+  const body = await request.formData()
+  const file = body.get('file') as File
+  const category = body.get('category') as string
+  const description = body.get('description') as string | null
+
+  if (!file || !category) {
+    return NextResponse.json({ error: 'Dosya ve kategori gerekli' }, { status: 400 })
   }
 
-  const { data, error } = await supabase.from('files').insert(payload).select('*').single()
+  // Supabase storage'a yükle
+  const filePath = `${session.user.id}/${Date.now()}-${file.name}`
+  const { error: uploadError } = await supabase.storage
+    .from('content-library')
+    .upload(filePath, file, { upsert: true })
 
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 })
+  if (uploadError) {
+    return NextResponse.json({ error: uploadError.message }, { status: 500 })
   }
 
-  if (data.category === 'invoice') {
-    await supabase.from('notifications').insert({
-      title: 'Yeni fatura yüklendi',
-      description: `${data.name} hazır.`,
-      type: 'invoice',
-      user_id: session.user.id,
-      meta: { file_id: data.id }
+  const { data: publicUrl } = supabase.storage.from('content-library').getPublicUrl(filePath)
+
+  // DB kaydı
+  const { data, error: insertError } = await supabase
+    .from('files')
+    .insert({
+      name: file.name,
+      category: category as Database['public']['Tables']['files']['Row']['category'],
+      description,
+      url: publicUrl.publicUrl,
+      user_id: session.user.id
     })
+    .select('*')
+    .single()
+
+  if (insertError) {
+    return NextResponse.json({ error: insertError.message }, { status: 500 })
   }
 
   return NextResponse.json(data, { status: 201 })

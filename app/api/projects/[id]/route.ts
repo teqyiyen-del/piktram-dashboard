@@ -1,31 +1,22 @@
 import { NextResponse } from 'next/server'
-import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
-import { cookies } from 'next/headers'
 import { Database } from '@/lib/supabase-types'
+import { getSessionAndRole } from '@/lib/checkrole'
 
+// PUT: Proje güncelle
 export async function PUT(request: Request, { params }: { params: { id: string } }) {
-  const supabase = createRouteHandlerClient<Database>({ cookies })
-  const body = await request.json()
-
-  const {
-    data: { session }
-  } = await supabase.auth.getSession()
-
-  if (!session) {
-    return NextResponse.json({ error: 'Yetkisiz erişim' }, { status: 401 })
+  const { error, session, role, supabase } = await getSessionAndRole()
+  if (error || !session) {
+    return NextResponse.json({ error }, { status: 401 })
   }
 
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('role')
-    .eq('id', session.user.id)
-    .single()
-
+  const body = await request.json()
   const updates: Database['public']['Tables']['projects']['Update'] = {}
 
   if ('title' in body) updates.title = body.title
   if ('description' in body) updates.description = body.description
-  if ('progress' in body && body.progress !== undefined) updates.progress = Number(body.progress)
+  if ('progress' in body && body.progress !== undefined) {
+    updates.progress = Number(body.progress)
+  }
   if ('due_date' in body) updates.due_date = body.due_date ?? null
 
   if (Object.keys(updates).length === 0) {
@@ -34,45 +25,35 @@ export async function PUT(request: Request, { params }: { params: { id: string }
 
   let query = supabase.from('projects').update(updates).eq('id', params.id)
 
-  if (profile?.role !== 'admin') {
+  if (role !== 'admin') {
     query = query.eq('user_id', session.user.id)
   }
 
-  const { data, error } = await query.select('*').single()
+  const { data, error: updateError } = await query.select('*').single()
 
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 })
+  if (updateError) {
+    return NextResponse.json({ error: updateError.message }, { status: 500 })
   }
 
   return NextResponse.json(data)
 }
 
+// DELETE: Proje sil
 export async function DELETE(_: Request, { params }: { params: { id: string } }) {
-  const supabase = createRouteHandlerClient<Database>({ cookies })
-  const {
-    data: { session }
-  } = await supabase.auth.getSession()
-
-  if (!session) {
-    return NextResponse.json({ error: 'Yetkisiz erişim' }, { status: 401 })
+  const { error, session, role, supabase } = await getSessionAndRole()
+  if (error || !session) {
+    return NextResponse.json({ error }, { status: 401 })
   }
-
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('role')
-    .eq('id', session.user.id)
-    .single()
 
   let query = supabase.from('projects').delete().eq('id', params.id)
 
-  if (profile?.role !== 'admin') {
+  if (role !== 'admin') {
     query = query.eq('user_id', session.user.id)
   }
 
-  const { error } = await query
-
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 })
+  const { error: deleteError } = await query
+  if (deleteError) {
+    return NextResponse.json({ error: deleteError.message }, { status: 500 })
   }
 
   return NextResponse.json({ success: true })

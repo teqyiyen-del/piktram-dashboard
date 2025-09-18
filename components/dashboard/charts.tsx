@@ -24,9 +24,12 @@ interface ProgressChartProps {
 
 export function WeeklyCompletionChart({ data }: WeeklyChartProps) {
   return (
-    <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
-      <h3 className="text-lg font-semibold text-gray-900">Haftalık Görev Tamamlama</h3>
-      <div className="mt-4">
+    <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
+      <h3 className="text-lg font-semibold text-[#FF5E4A]">
+        Haftalık Görev Tamamlama
+      </h3>
+      {/* Chart container */}
+      <div className="mt-4 w-full h-[220px] sm:h-[280px] md:h-[320px] lg:h-[360px]">
         <Bar
           data={{
             labels: data.map((item) => item.label),
@@ -35,11 +38,12 @@ export function WeeklyCompletionChart({ data }: WeeklyChartProps) {
                 label: 'Tamamlanan Görevler',
                 data: data.map((item) => item.value),
                 backgroundColor: '#FF5E4A',
-                borderRadius: 12
+                borderRadius: 10
               }
             ]
           }}
           options={{
+            maintainAspectRatio: false, // responsive yükseklik için kritik
             responsive: true,
             plugins: {
               legend: { display: false }
@@ -47,11 +51,11 @@ export function WeeklyCompletionChart({ data }: WeeklyChartProps) {
             scales: {
               x: {
                 grid: { display: false },
-                ticks: { color: '#9CA3AF' }
+                ticks: { color: '#FF5E4A' }
               },
               y: {
-                grid: { color: '#f1f1f1' },
-                ticks: { stepSize: 1, color: '#9CA3AF' }
+                grid: { color: '#FFE4DE' },
+                ticks: { stepSize: 1, color: '#FF5E4A' }
               }
             }
           }}
@@ -63,28 +67,32 @@ export function WeeklyCompletionChart({ data }: WeeklyChartProps) {
 
 export function ProjectProgressDonut({ completed, remaining }: ProgressChartProps) {
   return (
-    <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
-      <h3 className="text-lg font-semibold text-gray-900">Proje İlerleme Durumu</h3>
-      <div className="mt-4">
+    <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
+      <h3 className="text-lg font-semibold text-[#FF5E4A]">
+        Genel Proje İlerleme
+      </h3>
+      {/* Chart container */}
+      <div className="mt-4 w-full h-[220px] sm:h-[280px] md:h-[320px] lg:h-[360px]">
         <Doughnut
           data={{
             labels: ['Tamamlanan', 'Devam Eden'],
             datasets: [
               {
                 data: [completed, remaining],
-                backgroundColor: ['#FF5E4A', '#E5E7EB'],
+                backgroundColor: ['#FF5E4A', '#FFE4DE'],
                 borderWidth: 0
               }
             ]
           }}
           options={{
+            maintainAspectRatio: false, // responsive yükseklik için kritik
             responsive: true,
             plugins: {
               legend: {
                 position: 'bottom',
                 labels: {
                   usePointStyle: true,
-                  color: '#9CA3AF'
+                  color: '#FF5E4A'
                 }
               }
             }
