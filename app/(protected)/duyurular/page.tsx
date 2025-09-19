@@ -3,41 +3,33 @@ import { ListItem } from '@/components/sections/list-item'
 import { Announcement } from '@/lib/types'
 import { format } from 'date-fns'
 import { tr } from 'date-fns/locale'
+import { Bell, Pin } from 'lucide-react'
+import { SectionHeader } from '@/components/layout/section-header'
 
 const announcements: Announcement[] = [
   {
     id: '1',
     title: 'Haziran içerik planı güncellendi',
-    description: 'Yeni ürün lansmanı için Instagram ve LinkedIn gönderileri ajandaya eklendi. Görseller revize bekliyor.',
+    description:
+      "Yeni ürün lansmanı için Instagram ve LinkedIn gönderileri ajandaya eklendi. Görseller revize bekliyor.",
     date: new Date().toISOString(),
-    category: 'guncelleme',
-    highlighted: true
+    highlighted: true,
   },
   {
     id: '2',
     title: 'Toplantı hatırlatması',
-    description: 'Müşteriyle aylık performans toplantısı 11:00’de Zoom üzerinden gerçekleştirilecek.',
+    description:
+      "Müşteriyle aylık performans toplantısı 11:00’de Zoom üzerinden gerçekleştirilecek.",
     date: new Date(new Date().setDate(new Date().getDate() + 1)).toISOString(),
-    category: 'hatirlatma'
   },
   {
     id: '3',
     title: 'Blog içeriği yayına alındı',
-    description: '“Dijital PR’da 2024 Trendleri” başlıklı makale başarıyla yayınlandı. Sosyal medya dağıtımı planına eklendi.',
+    description:
+      '"Dijital PR’da 2024 Trendleri" başlıklı makale başarıyla yayınlandı. Sosyal medya dağıtımı planına eklendi.',
     date: new Date(new Date().setDate(new Date().getDate() - 2)).toISOString(),
-    category: 'genel'
-  }
+  },
 ]
-
-const categoryConfig: Record<
-  Announcement['category'],
-  { label: string; tone: 'accent' | 'blue' | 'emerald' | 'amber' | 'violet'; tagColor: 'accent' | 'info' | 'warning' | 'success' }
-> = {
-  guncelleme: { label: 'Güncelleme', tone: 'accent', tagColor: 'accent' },
-  hatirlatma: { label: 'Hatırlatma', tone: 'amber', tagColor: 'warning' },
-  genel: { label: 'Genel Duyuru', tone: 'blue', tagColor: 'info' },
-  kampanya: { label: 'Kampanya', tone: 'emerald', tagColor: 'success' }
-}
 
 const formatAnnouncementDate = (date: string) =>
   format(new Date(date), 'd MMMM yyyy • HH:mm', { locale: tr })
@@ -46,18 +38,14 @@ export default function DuyurularPage() {
   const pinned = announcements.filter((item) => item.highlighted)
 
   return (
-    <div className="space-y-10">
-      {/* Turuncu accent header */}
-      <div
-        className="rounded-2xl p-6 text-white shadow-sm"
-        style={{ background: 'linear-gradient(to right, #FF5E4A, #FA7C6B)' }}
-      >
-        <h1 className="text-xl md:text-2xl font-semibold">Duyurular</h1>
-        <p className="mt-1 text-sm text-white/90">
-          Takım içi bildirimleri ve sizinle paylaşılan notları buradan
-          görüntüleyebilirsiniz.
-        </p>
-      </div>
+    <div className="space-y-10 px-layout-x py-layout-y">
+      {/* Section Header (standart hero gibi gradientli) */}
+      <SectionHeader
+        title="Duyurular"
+        subtitle="Takım içi bildirimleri ve sizinle paylaşılan notları buradan görüntüleyebilirsiniz."
+        badge="Genel"
+        gradient
+      />
 
       {/* Genel Duyuru Akışı */}
       <Card title="Duyuru Akışı" description="Tüm duyuruların listesi">
@@ -67,29 +55,27 @@ export default function DuyurularPage() {
               Henüz duyuru eklenmedi.
             </p>
           ) : (
-            announcements.map((announcement) => {
-              const config = categoryConfig[announcement.category]
-              return (
-                <ListItem
-                  key={announcement.id}
-                  icon={<span className="text-lg">🔔</span>}
-                  title={announcement.title}
-                  description={announcement.description}
-                  meta={formatAnnouncementDate(announcement.date)}
-                  tag={config.label}
-                  tagColor={config.tagColor}
-                  tone={config.tone}
-                  compact
-                  rightSlot={
-                    announcement.highlighted ? (
-                      <span className="pill bg-white/80 text-accent dark:bg-surface-dark/80">
-                        Öne Çıkan
-                      </span>
-                    ) : null
-                  }
-                />
-              )
-            })
+            announcements.map((announcement) => (
+              <ListItem
+                key={announcement.id}
+                icon={
+                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-accent">
+                    <Bell className="h-4 w-4 text-white" />
+                  </div>
+                }
+                title={announcement.title}
+                description={announcement.description}
+                meta={formatAnnouncementDate(announcement.date)}
+                compact
+                rightSlot={
+                  announcement.highlighted ? (
+                    <span className="pill bg-accent/10 text-accent">
+                      Öne Çıkan
+                    </span>
+                  ) : null
+                }
+              />
+            ))
           )}
         </div>
       </Card>
@@ -102,22 +88,20 @@ export default function DuyurularPage() {
               Şu anda sabitlenmiş duyuru yok.
             </p>
           ) : (
-            pinned.map((announcement) => {
-              const config = categoryConfig[announcement.category]
-              return (
-                <ListItem
-                  key={`pin-${announcement.id}`}
-                  icon={<span className="text-lg">📌</span>}
-                  title={announcement.title}
-                  description={announcement.description}
-                  meta={formatAnnouncementDate(announcement.date)}
-                  tag={config.label}
-                  tagColor={config.tagColor}
-                  tone={config.tone}
-                  compact
-                />
-              )
-            })
+            pinned.map((announcement) => (
+              <ListItem
+                key={`pin-${announcement.id}`}
+                icon={
+                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-accent">
+                    <Pin className="h-4 w-4 text-white" />
+                  </div>
+                }
+                title={announcement.title}
+                description={announcement.description}
+                meta={formatAnnouncementDate(announcement.date)}
+                compact
+              />
+            ))
           )}
         </div>
       </Card>

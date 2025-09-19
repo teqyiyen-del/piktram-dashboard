@@ -3,6 +3,7 @@ import { cookies } from 'next/headers'
 import { Database } from '@/lib/supabase-types'
 import { Card } from '@/components/sections/card'
 import { ListItem } from '@/components/sections/list-item'
+import { SectionHeader } from '@/components/layout/section-header'
 import { formatDate } from '@/lib/utils'
 import { addDays, differenceInCalendarDays } from 'date-fns'
 import { Project, Task } from '@/lib/types'
@@ -108,17 +109,14 @@ export default async function ProjelerPage() {
   }).length
 
   return (
-    <div className="space-y-10">
-      {/* Gradient header */}
-      <header
-        className="rounded-2xl p-6 text-white shadow-sm"
-        style={{ background: 'linear-gradient(to right, #FF5E4A, #FA7C6B)' }}
-      >
-        <h1 className="text-xl md:text-2xl font-semibold">Projeler</h1>
-        <p className="mt-1 text-sm text-white/90">
-          Kampanyalarınızı, teslim tarihlerini ve genel proje durumunu takip edin.
-        </p>
-      </header>
+    <div className="space-y-10 px-layout-x py-layout-y">
+      {/* Section Header */}
+      <SectionHeader
+        title="Projeler"
+        subtitle="Kampanyalarınızı, teslim tarihlerini ve genel proje durumunu takip edin."
+        badge="Proje Yönetimi"
+        gradient
+      />
 
       {/* Kampanyalar */}
       <Card title="Kampanyalar" description="Yaklaşan teslim tarihleri ve öne çıkan projeler">
@@ -131,7 +129,6 @@ export default async function ProjelerPage() {
             highlightedCampaigns.map((campaign) => (
               <div key={campaign.id} className="space-y-2">
                 <ListItem
-                  icon={<span className="text-lg">📣</span>}
                   title={campaign.title}
                   description={campaign.description ?? 'Açıklama eklenmedi.'}
                   meta={
@@ -139,9 +136,6 @@ export default async function ProjelerPage() {
                       ? `${formatDate(campaign.due_date)} • ${campaign.tasksTotal} görev`
                       : `${campaign.tasksTotal} görev`
                   }
-                  tag="Kampanya"
-                  tagColor="info"
-                  tone="blue"
                   compact
                   rightSlot={
                     <span className="pill bg-white/80 text-gray-700 dark:bg-surface-dark/80">
@@ -174,7 +168,6 @@ export default async function ProjelerPage() {
             projectSummaries.map((project) => (
               <div key={project.id} className="space-y-2">
                 <ListItem
-                  icon={<span className="text-lg">📁</span>}
                   title={project.title}
                   description={project.description ?? 'Açıklama girilmedi.'}
                   meta={
@@ -182,13 +175,10 @@ export default async function ProjelerPage() {
                       ? `${formatDate(project.due_date)} • ${project.tasksDone}/${project.tasksTotal} görev tamamlandı`
                       : `${project.tasksDone}/${project.tasksTotal} görev tamamlandı`
                   }
-                  tag="Proje"
-                  tagColor="accent"
-                  tone="accent"
                   compact
                   rightSlot={
                     project.upcomingTasks > 0 ? (
-                      <span className="pill bg-white/80 text-amber-600 dark:bg-surface-dark/80 dark:text-amber-300">
+                      <span className="pill bg-white/80 text-accent dark:bg-surface-dark/80">
                         {project.upcomingTasks} yaklaşan
                       </span>
                     ) : null

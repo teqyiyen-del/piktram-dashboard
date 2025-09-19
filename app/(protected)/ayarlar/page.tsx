@@ -3,7 +3,7 @@ import { cookies } from 'next/headers'
 import { Database } from '@/lib/supabase-types'
 import { SectionHeader } from '@/components/layout/section-header'
 import type { Profile } from '@/lib/types'
-import SettingsForm from './settings-form'  // ← burası önemli!
+import { SettingsClient } from '@/components/settings/settings-client' // ✅ doğru path
 
 export default async function SettingsPage() {
   const supabase = createServerComponentClient<Database>({ cookies })
@@ -13,8 +13,12 @@ export default async function SettingsPage() {
     error: sessionError
   } = await supabase.auth.getSession()
 
-  if (sessionError || !session) {
-    return null // oturum yoksa boş dön
+  if (sessionError) {
+    return <div>Session alınamadı: {sessionError.message}</div>
+  }
+
+  if (!session) {
+    return <div>Giriş yapmanız gerekiyor</div>
   }
 
   const { data: profile, error: profileError } = await supabase
@@ -50,7 +54,7 @@ export default async function SettingsPage() {
         badge="Kişisel Alan"
         gradient
       />
-      <SettingsForm profile={mergedProfile} />
+      <SettingsClient profile={mergedProfile} />
     </div>
   )
 }

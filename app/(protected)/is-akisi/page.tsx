@@ -3,6 +3,7 @@ import { cookies } from 'next/headers'
 import { Database } from '@/lib/supabase-types'
 import { Card } from '@/components/sections/card'
 import KanbanBoard from '@/components/tasks/kanban-board'
+import { SectionHeader } from '@/components/layout/section-header'
 import { Task } from '@/lib/types'
 
 export default async function IsAkisiPage() {
@@ -47,17 +48,14 @@ export default async function IsAkisiPage() {
   }))
 
   return (
-    <div className="space-y-10">
-      {/* Gradient Header */}
-      <header
-        className="rounded-2xl p-6 text-white shadow-sm"
-        style={{ background: 'linear-gradient(to right, #FF5E4A, #FA7C6B)' }}
-      >
-        <h1 className="text-xl md:text-2xl font-semibold">İş Akışı</h1>
-        <p className="mt-1 text-sm text-white/90">
-          İçerik üretim sürecindeki görevlerinizi kanban panosunda takip edin.
-        </p>
-      </header>
+    <div className="space-y-10 px-layout-x py-layout-y">
+      {/* Section Header */}
+      <SectionHeader
+        title="İş Akışı"
+        subtitle="İçerik üretim sürecindeki görevlerinizi kanban panosunda takip edin."
+        badge="Görev Yönetimi"
+        gradient
+      />
 
       {/* Bilgilendirme kutuları */}
       <Card
@@ -67,7 +65,7 @@ export default async function IsAkisiPage() {
         <div className="grid gap-4 lg:grid-cols-3">
           <div className="rounded-2xl bg-gray-50 p-5 text-sm text-gray-600 shadow-sm dark:bg-surface-dark/50 dark:text-gray-300">
             <span className="font-medium text-gray-800 dark:text-white">
-              🔄 Anında Senkronizasyon
+              Anında Senkronizasyon
             </span>
             <p className="mt-2">
               Kartları taşıdığınızda durumlar Supabase üzerinde anında güncellenir
@@ -76,7 +74,7 @@ export default async function IsAkisiPage() {
           </div>
           <div className="rounded-2xl bg-gray-50 p-5 text-sm text-gray-600 shadow-sm dark:bg-surface-dark/50 dark:text-gray-300">
             <span className="font-medium text-gray-800 dark:text-white">
-              ✅ Onay Süreçleri
+              Onay Süreçleri
             </span>
             <p className="mt-2">
               Revize ve Onay aşamalarını düzenli tutarak müşteri onay sürecini hızlandırabilirsiniz.
@@ -84,7 +82,7 @@ export default async function IsAkisiPage() {
           </div>
           <div className="rounded-2xl bg-gray-50 p-5 text-sm text-gray-600 shadow-sm dark:bg-surface-dark/50 dark:text-gray-300">
             <span className="font-medium text-gray-800 dark:text-white">
-              📊 Raporlama
+              Raporlama
             </span>
             <p className="mt-2">
               Paylaşıldı sütununa taşınan görevler raporlara otomatik olarak yansır.

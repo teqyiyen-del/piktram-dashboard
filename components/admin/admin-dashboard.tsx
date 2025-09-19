@@ -7,6 +7,7 @@ import { TaskStatus } from '@/lib/types'
 import { WeeklyCompletionChart, ProjectProgressDonut } from '@/components/dashboard/charts'
 import { TodayTasks } from '@/components/dashboard/today-tasks'
 import { Card } from '@/components/sections/card'
+import { FolderKanban, Users, FileText } from 'lucide-react'
 
 type UserRecord = { id: string; full_name: string | null; email: string | null; role: string | null; created_at: string }
 type ProjectRecord = { id: string; title: string; description: string | null; progress: number; due_date: string | null; user_id: string; created_at: string }
@@ -36,10 +37,10 @@ export default function AdminDashboard({
   const recentInvoices = useMemo(() => invoices.slice(-5).reverse(), [invoices])
 
   return (
-    <div className="mx-auto w-full max-w-7xl">
+    <div className="mx-auto w-full max-w-7xl px-6 md:px-10">
       {/* Header */}
       <header
-        className="rounded-2xl p-6 text-white mb-12"
+        className="rounded-2xl p-6 text-white mb-12 shadow-lg"
         style={{ background: "linear-gradient(to right, #FF5E4A, #FA7C6B)" }}
       >
         <h1 className="text-xl md:text-2xl font-semibold">
@@ -60,7 +61,7 @@ export default function AdminDashboard({
 
       {/* Bugünkü Görevler */}
       <section className="mb-12">
-        <Card title="Bugünkü Görevler" description="Tamamlanması gereken görevler" className="min-h-[200px]">
+        <Card title="Bugünkü Görevler" description="Tamamlanması gereken görevler" className="min-h-[220px]">
           <TodayTasks role="admin" tasks={tasks} />
         </Card>
       </section>
@@ -76,7 +77,7 @@ export default function AdminDashboard({
                   {p.due_date ? formatDate(p.due_date) : '—'}
                 </span>
               </li>
-            )) : <p className="text-sm text-gray-400">Henüz proje yok.</p>}
+            )) : <EmptyState icon={<FolderKanban className="h-5 w-5 text-gray-400" />} text="Henüz proje yok." />}
           </ul>
         </Card>
 
@@ -89,7 +90,7 @@ export default function AdminDashboard({
                   {c.created_at ? formatDate(c.created_at) : '—'}
                 </span>
               </li>
-            )) : <p className="text-sm text-gray-400">Henüz müşteri yok.</p>}
+            )) : <EmptyState icon={<Users className="h-5 w-5 text-gray-400" />} text="Henüz müşteri yok." />}
           </ul>
         </Card>
 
@@ -102,21 +103,21 @@ export default function AdminDashboard({
                   {inv.status === 'paid' ? 'Ödendi' : 'Bekliyor'}
                 </span>
               </li>
-            )) : <p className="text-sm text-gray-400">Henüz fatura yok.</p>}
+            )) : <EmptyState icon={<FileText className="h-5 w-5 text-gray-400" />} text="Henüz fatura yok." />}
           </ul>
         </Card>
       </section>
 
       {/* Chartlar */}
-      <section className="grid gap-6 lg:grid-cols-2 mb-12">
+      <section className="grid gap-8 lg:grid-cols-2 mb-12">
         <Card title="Görev Tamamlama Oranı" description="Haftalık genel görünüm">
-          <div className="h-72">
+          <div className="h-72 w-full rounded-lg bg-white dark:bg-gray-900">
             <WeeklyCompletionChart data={tasks.map((t) => ({ label: t.title, value: 1 }))} />
           </div>
         </Card>
 
         <Card title="Proje İlerleme" description="Tamamlanan vs kalan görevler">
-          <div className="h-72">
+          <div className="h-72 w-full rounded-lg bg-white dark:bg-gray-900">
             <ProjectProgressDonut
               completed={tasks.filter((t) => t.status === 'done').length}
               remaining={tasks.filter((t) => t.status !== 'done').length}
@@ -130,9 +131,18 @@ export default function AdminDashboard({
 
 function StatMini({ value, label }: { value: number; label: string }) {
   return (
-    <div className="rounded-lg bg-gradient-to-r from-[#FF5E4A] to-[#FA7C6B] p-4 text-center shadow-sm">
+    <div className="rounded-lg bg-gradient-to-r from-[#FF5E4A] to-[#FA7C6B] p-4 text-center shadow-md hover:scale-105 transition-transform">
       <p className="text-lg md:text-xl font-bold text-white">{value}</p>
       <p className="text-xs text-white/90">{label}</p>
+    </div>
+  )
+}
+
+function EmptyState({ icon, text }: { icon: React.ReactNode; text: string }) {
+  return (
+    <div className="flex flex-col items-center justify-center h-full text-gray-400 text-sm gap-2">
+      {icon}
+      <p>{text}</p>
     </div>
   )
 }
