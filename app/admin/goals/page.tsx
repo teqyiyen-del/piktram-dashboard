@@ -7,54 +7,37 @@ import { formatDate } from '@/lib/utils'
 import { PlusCircle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 
-type Client = {
-  id: string
-  full_name: string | null
-  email: string | null
-  company: string | null
-}
-
 export default function GoalsPage() {
   const supabase = createClientComponentClient<Database>()
   const [goals, setGoals] = useState<any[]>([])
-  const [clients, setClients] = useState<Client[]>([])
-  const [selectedClient, setSelectedClient] = useState<string | null>(null)
   const [showModal, setShowModal] = useState(false)
 
   // Form state
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
   const [dueDate, setDueDate] = useState('')
-  const [goalClient, setGoalClient] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
 
   useEffect(() => {
-    fetchClients()
     fetchGoals()
   }, [])
 
-  async function fetchClients() {
-    const { data } = await supabase.from('profiles').select('id, full_name, email, company')
-    setClients(data || [])
-  }
-
-  async function fetchGoals(clientId?: string | null) {
-    let query = supabase
+  async function fetchGoals() {
+    const { data, error } = await supabase
       .from('goals')
       .select('*, profiles(full_name, email, company)')
       .order('created_at', { ascending: false })
 
-    if (clientId) query = query.eq('user_id', clientId)
-
-    const { data } = await query
+    if (error) console.error('Hedefler alınamadı:', error.message)
     setGoals(data || [])
   }
 
   async function createGoal() {
-    if (!title.trim() || !goalClient) {
-      alert('Başlık ve müşteri seçimi zorunlu.')
+    if (!title.trim()) {
+      alert('Başlık zorunlu.')
       return
     }
+
     setLoading(true)
     const { error } = await supabase.from('goals').insert([
       {
@@ -62,13 +45,13 @@ export default function GoalsPage() {
         description,
         due_date: dueDate || null,
         is_completed: false,
-        user_id: goalClient
+        user_id: null // burada dilersen sabit admin'e bağlayabilirsin
       }
     ])
     setLoading(false)
     if (!error) {
       resetForm()
-      fetchGoals(selectedClient)
+      fetchGoals()
     } else {
       alert('Hedef eklenemedi: ' + error.message)
     }
@@ -76,14 +59,13 @@ export default function GoalsPage() {
 
   async function toggleComplete(id: string, current: boolean) {
     await supabase.from('goals').update({ is_completed: !current }).eq('id', id)
-    fetchGoals(selectedClient)
+    fetchGoals()
   }
 
   function resetForm() {
     setTitle('')
     setDescription('')
     setDueDate('')
-    setGoalClient(null)
     setShowModal(false)
   }
 
@@ -110,25 +92,6 @@ export default function GoalsPage() {
           Yeni Hedef
         </Button>
       </header>
-
-      {/* Filter */}
-      <div className="mb-4">
-        <select
-          value={selectedClient ?? ''}
-          onChange={(e) => {
-            setSelectedClient(e.target.value || null)
-            fetchGoals(e.target.value || null)
-          }}
-          className="w-64 rounded-md border px-2 py-1"
-        >
-          <option value="">Tüm Müşteriler</option>
-          {clients.map((c) => (
-            <option key={c.id} value={c.id}>
-              {c.full_name ?? c.email} {c.company ? `- ${c.company}` : ''}
-            </option>
-          ))}
-        </select>
-      </div>
 
       {/* Liste */}
       <div className="space-y-3">
@@ -192,18 +155,7 @@ export default function GoalsPage() {
                 onChange={(e) => setDueDate(e.target.value)}
                 className="w-full rounded-lg border px-3 py-2 text-sm"
               />
-              <select
-                value={goalClient ?? ''}
-                onChange={(e) => setGoalClient(e.target.value)}
-                className="w-full rounded-lg border px-3 py-2 text-sm"
-              >
-                <option value="">Müşteri seçin</option>
-                {clients.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.full_name ?? c.email} {c.company ? `- ${c.company}` : ''}
-                  </option>
-                ))}
-              </select>
+
               <div className="flex justify-end gap-2">
                 <Button
                   onClick={() => setShowModal(false)}

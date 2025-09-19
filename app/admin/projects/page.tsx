@@ -8,22 +8,11 @@ import { Card } from '@/components/sections/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Modal } from '@/components/ui/modal'
-import { Select, SelectItem } from '@/components/ui/select'
 import { FolderKanban, PlusCircle, Trash2, Pencil } from 'lucide-react'
-
-type Client = {
-  id: string
-  full_name: string | null
-  email: string | null
-  company: string | null
-}
 
 export default function ProjectsPage() {
   const supabase = createClientComponentClient<Database>()
   const [projects, setProjects] = useState<any[]>([])
-  const [clients, setClients] = useState<Client[]>([])
-  const [selectedClient, setSelectedClient] = useState<string | null>(null)
-
   const [showModal, setShowModal] = useState(false)
   const [editingProject, setEditingProject] = useState<any | null>(null)
 
@@ -32,42 +21,37 @@ export default function ProjectsPage() {
   const [description, setDescription] = useState('')
   const [dueDate, setDueDate] = useState('')
   const [progress, setProgress] = useState(0)
-  const [projectClient, setProjectClient] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
 
   useEffect(() => {
-    fetchClients()
     fetchProjects()
   }, [])
 
-  async function fetchClients() {
-    const { data } = await supabase.from('profiles').select('id, full_name, email, company')
-    setClients(data || [])
-  }
-
-  async function fetchProjects(clientId?: string | null) {
-    let query = supabase
+  async function fetchProjects() {
+    const { data, error } = await supabase
       .from('projects')
       .select('*, profiles(full_name, email, company)')
       .order('created_at', { ascending: false })
 
-    if (clientId) query = query.eq('user_id', clientId)
-
-    const { data, error } = await query
     if (error) console.error('Projeler alınamadı:', error.message)
     setProjects(data || [])
   }
 
   async function handleSaveProject() {
-    if (!title.trim() || !projectClient) {
-      alert('Başlık ve müşteri seçimi zorunlu.')
+    if (!title.trim()) {
+      alert('Başlık zorunlu.')
+      return
+    }
+
+    // ❗️ Eğer müşteri seçilmemişse uyarı
+    if (!projects.length || !projects[0]?.user_id) {
+      alert('Proje eklemek için önce müşteri seçmelisin!')
       return
     }
 
     setLoading(true)
 
     if (editingProject) {
-      // Güncelleme
       const { error } = await supabase
         .from('projects')
         .update({
@@ -75,20 +59,18 @@ export default function ProjectsPage() {
           description,
           due_date: dueDate || null,
           progress: progress || 0,
-          user_id: projectClient,
         })
         .eq('id', editingProject.id)
 
       if (error) alert('Proje güncellenemedi: ' + error.message)
     } else {
-      // Yeni ekleme
       const { error } = await supabase.from('projects').insert([
         {
           title,
           description,
           due_date: dueDate || null,
           progress: progress || 0,
-          user_id: projectClient,
+          user_id: projects[0].user_id, // mevcut müşteri
         },
       ])
       if (error) alert('Proje eklenemedi: ' + error.message)
@@ -96,14 +78,14 @@ export default function ProjectsPage() {
 
     setLoading(false)
     resetForm()
-    fetchProjects(selectedClient)
+    fetchProjects()
   }
 
   async function handleDeleteProject(id: string) {
     if (!confirm('Bu projeyi silmek istediğine emin misin?')) return
     const { error } = await supabase.from('projects').delete().eq('id', id)
     if (error) alert('Proje silinemedi: ' + error.message)
-    fetchProjects(selectedClient)
+    fetchProjects()
   }
 
   function resetForm() {
@@ -111,7 +93,6 @@ export default function ProjectsPage() {
     setDescription('')
     setDueDate('')
     setProgress(0)
-    setProjectClient(null)
     setEditingProject(null)
     setShowModal(false)
   }
@@ -122,7 +103,6 @@ export default function ProjectsPage() {
     setDescription(project.description || '')
     setDueDate(project.due_date || '')
     setProgress(project.progress || 0)
-    setProjectClient(project.user_id)
     setShowModal(true)
   }
 
@@ -151,27 +131,8 @@ export default function ProjectsPage() {
         </Button>
       </header>
 
-      {/* Filter */}
-      <Card title="Proje Listesi" description="Panelde kayıtlı tüm projeleri görüntüleyin.">
-        <div className="flex items-center justify-between mb-4">
-          <select
-            value={selectedClient ?? ''}
-            onChange={(e) => {
-              setSelectedClient(e.target.value || null)
-              fetchProjects(e.target.value || null)
-            }}
-            className="w-64 rounded-md border px-2 py-1"
-          >
-            <option value="">Tümü</option>
-            {clients.map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.full_name ?? c.email} {c.company ? `- ${c.company}` : ''}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        {/* Project List */}
+      {/* Project List */}
+      <Card>
         <div className="space-y-4">
           {projects.map((project) => (
             <div
@@ -246,20 +207,6 @@ export default function ProjectsPage() {
             onChange={(e) => setProgress(Number(e.target.value))}
             placeholder="İlerleme (%)"
           />
-
-          {/* ✅ Müşteri seçme alanı */}
-          <select
-            value={projectClient ?? ''}
-            onChange={(e) => setProjectClient(e.target.value)}
-            className="w-full rounded-md border px-2 py-1"
-          >
-            <option value="">Müşteri seçin</option>
-            {clients.map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.full_name ?? c.email} {c.company ? `- ${c.company}` : ''}
-              </option>
-            ))}
-          </select>
 
           <div className="flex justify-end gap-2">
             <Button variant="outline" onClick={() => resetForm()} disabled={loading}>

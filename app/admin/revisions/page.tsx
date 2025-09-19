@@ -5,38 +5,21 @@ import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
 import { Database } from '@/lib/supabase-types'
 import { formatDateTime } from '@/lib/utils'
 
-type Client = {
-  id: string
-  full_name: string | null
-  email: string | null
-  company: string | null
-}
-
 export default function RevisionsPage() {
   const supabase = createClientComponentClient<Database>()
   const [revisions, setRevisions] = useState<any[]>([])
-  const [clients, setClients] = useState<Client[]>([])
-  const [selectedClient, setSelectedClient] = useState<string | null>(null)
 
   useEffect(() => {
-    fetchClients()
     fetchRevisions()
   }, [])
 
-  async function fetchClients() {
-    const { data } = await supabase.from('profiles').select('id, full_name, email, company')
-    setClients(data || [])
-  }
-
-  async function fetchRevisions(clientId?: string | null) {
-    let query = supabase
+  async function fetchRevisions() {
+    const { data, error } = await supabase
       .from('revisions')
       .select('id, description, created_at, tasks(id, title, status), profiles(full_name, email, company)')
       .order('created_at', { ascending: false })
 
-    if (clientId) query = query.eq('user_id', clientId)
-
-    const { data } = await query
+    if (error) console.error('Revizyonlar alınamadı:', error.message)
     setRevisions(data || [])
   }
 
@@ -44,7 +27,11 @@ export default function RevisionsPage() {
     (rev) => rev.tasks?.status === 'revize' || rev.tasks?.status === 'in_review'
   )
   const pastRevisions = revisions.filter(
-    (rev) => rev.tasks?.status === 'approved' || rev.tasks?.status === 'published' || rev.tasks?.status === 'onaylandi' || rev.tasks?.status === 'paylasildi'
+    (rev) =>
+      rev.tasks?.status === 'approved' ||
+      rev.tasks?.status === 'published' ||
+      rev.tasks?.status === 'onaylandi' ||
+      rev.tasks?.status === 'paylasildi'
   )
 
   return (
@@ -62,21 +49,6 @@ export default function RevisionsPage() {
             Müşterilere ait revizyonları görüntüleyin.
           </p>
         </div>
-        <select
-          value={selectedClient ?? ''}
-          onChange={(e) => {
-            setSelectedClient(e.target.value || null)
-            fetchRevisions(e.target.value || null)
-          }}
-          className="rounded-lg border px-3 py-2 text-sm text-gray-900"
-        >
-          <option value="">Tüm Müşteriler</option>
-          {clients.map((c) => (
-            <option key={c.id} value={c.id}>
-              {c.full_name ?? c.email} {c.company ? `- ${c.company}` : ''}
-            </option>
-          ))}
-        </select>
       </header>
 
       {/* Aktif Revizyonlar */}

@@ -10,9 +10,7 @@ export default async function AjandaPage() {
     data: { session }
   } = await supabase.auth.getSession()
 
-  if (!session) {
-    return null
-  }
+  if (!session) return null
 
   const { data: profile } = await supabase
     .from('profiles')
@@ -30,5 +28,7 @@ export default async function AjandaPage() {
 
   const { data: eventsData } = await eventsQuery
 
-  return <AgendaClient initialEvents={(eventsData ?? []) as CalendarEvent[]} />
+  return (
+    <AgendaClient initialEvents={(eventsData ?? []) as CalendarEvent[]} hideHeader={false} />
+  )
 }

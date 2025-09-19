@@ -7,18 +7,9 @@ import { formatDate } from '@/lib/utils'
 import { PlusCircle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 
-type Client = {
-  id: string
-  full_name: string | null
-  email: string | null
-  company: string | null
-}
-
 export default function InvoicesPage() {
   const supabase = createClientComponentClient<Database>()
   const [invoices, setInvoices] = useState<any[]>([])
-  const [clients, setClients] = useState<Client[]>([])
-  const [selectedClient, setSelectedClient] = useState<string | null>(null)
   const [showModal, setShowModal] = useState(false)
 
   // form state
@@ -26,34 +17,27 @@ export default function InvoicesPage() {
   const [amount, setAmount] = useState<number | ''>('')
   const [currency, setCurrency] = useState('TRY')
   const [dueDate, setDueDate] = useState('')
-  const [invoiceClient, setInvoiceClient] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
 
   useEffect(() => {
-    fetchClients()
     fetchInvoices()
   }, [])
 
-  async function fetchClients() {
-    const { data } = await supabase.from('profiles').select('id, full_name, email, company')
-    setClients(data || [])
-  }
-
-  async function fetchInvoices(clientId?: string | null) {
-    let query = supabase
+  async function fetchInvoices() {
+    const { data, error } = await supabase
       .from('invoices')
-      .select('id, title, amount, currency, status, due_date, created_at, profiles(full_name, email, company)')
+      .select(
+        'id, title, amount, currency, status, due_date, created_at, profiles(full_name, email, company)'
+      )
       .order('created_at', { ascending: false })
 
-    if (clientId) query = query.eq('user_id', clientId)
-
-    const { data } = await query
+    if (error) console.error('Faturalar alınamadı:', error.message)
     setInvoices(data || [])
   }
 
   async function createInvoice() {
-    if (!title.trim() || !amount || !invoiceClient) {
-      alert('Başlık, tutar ve müşteri seçimi zorunlu.')
+    if (!title.trim() || !amount) {
+      alert('Başlık ve tutar zorunlu.')
       return
     }
 
@@ -64,7 +48,7 @@ export default function InvoicesPage() {
       currency,
       status: 'pending',
       due_date: dueDate || new Date().toISOString(),
-      user_id: invoiceClient
+      user_id: null // ❗ burada sabit müşteri/oturum bilgisine göre değiştirebilirsin
     })
 
     setLoading(false)
@@ -73,7 +57,7 @@ export default function InvoicesPage() {
       alert('Fatura eklenemedi: ' + error.message)
     } else {
       resetForm()
-      fetchInvoices(selectedClient)
+      fetchInvoices()
     }
   }
 
@@ -82,7 +66,6 @@ export default function InvoicesPage() {
     setAmount('')
     setCurrency('TRY')
     setDueDate('')
-    setInvoiceClient(null)
     setShowModal(false)
   }
 
@@ -107,25 +90,6 @@ export default function InvoicesPage() {
           Yeni Fatura
         </Button>
       </header>
-
-      {/* Filter */}
-      <div className="mb-4">
-        <select
-          value={selectedClient ?? ''}
-          onChange={(e) => {
-            setSelectedClient(e.target.value || null)
-            fetchInvoices(e.target.value || null)
-          }}
-          className="w-64 rounded-md border px-2 py-1"
-        >
-          <option value="">Tüm Müşteriler</option>
-          {clients.map((c) => (
-            <option key={c.id} value={c.id}>
-              {c.full_name ?? c.email} {c.company ? `- ${c.company}` : ''}
-            </option>
-          ))}
-        </select>
-      </div>
 
       {/* Liste */}
       <div className="overflow-hidden rounded-xl border bg-white shadow-sm">
@@ -212,29 +176,11 @@ export default function InvoicesPage() {
                 onChange={(e) => setDueDate(e.target.value)}
                 className="w-full rounded-lg border px-3 py-2 text-sm"
               />
-              <select
-                value={invoiceClient ?? ''}
-                onChange={(e) => setInvoiceClient(e.target.value)}
-                className="w-full rounded-lg border px-3 py-2 text-sm"
-              >
-                <option value="">Müşteri seçin</option>
-                {clients.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.full_name ?? c.email} {c.company ? `- ${c.company}` : ''}
-                  </option>
-                ))}
-              </select>
               <div className="flex justify-end gap-2">
-                <Button
-                  variant="secondary"
-                  onClick={() => setShowModal(false)}
-                >
+                <Button variant="secondary" onClick={() => setShowModal(false)}>
                   İptal
                 </Button>
-                <Button
-                  onClick={createInvoice}
-                  disabled={loading}
-                >
+                <Button onClick={createInvoice} disabled={loading}>
                   {loading ? 'Kaydediliyor...' : 'Kaydet'}
                 </Button>
               </div>

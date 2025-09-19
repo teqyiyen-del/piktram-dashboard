@@ -5,6 +5,7 @@ import { Card } from '@/components/sections/card'
 import { ChartContainer } from '@/components/sections/chart-container'
 import { InfoGrid } from '@/components/ui/info-grid'
 import { ListItem } from '@/components/sections/list-item'
+import { SectionHeader } from '@/components/layout/section-header'
 import { WeeklyReportsChart, MonthlyReportsChart } from '@/components/reports/reports-charts'
 import type { Report } from '@/lib/types'
 import { formatDate } from '@/lib/utils'
@@ -19,9 +20,7 @@ export default async function RaporlarPage() {
     data: { session }
   } = await supabase.auth.getSession()
 
-  if (!session) {
-    return null
-  }
+  if (!session) return null
 
   const { data: profile } = await supabase
     .from('profiles')
@@ -40,68 +39,45 @@ export default async function RaporlarPage() {
   const { data: reportsData } = await reportsQuery
 
   const reports = (reportsData ?? []) as Report[]
-  const weeklyReports = reports.filter((report) => report.period === 'weekly')
-  const monthlyReports = reports.filter((report) => report.period === 'monthly')
+  const weeklyReports = reports.filter((r) => r.period === 'weekly')
+  const monthlyReports = reports.filter((r) => r.period === 'monthly')
 
   const avgFollowersWeekly = weeklyReports.length
-    ? Math.round(weeklyReports.reduce((sum, report) => sum + report.followers, 0) / weeklyReports.length)
+    ? Math.round(weeklyReports.reduce((s, r) => s + r.followers, 0) / weeklyReports.length)
     : 0
   const avgLikesWeekly = weeklyReports.length
-    ? Math.round(weeklyReports.reduce((sum, report) => sum + report.likes, 0) / weeklyReports.length)
+    ? Math.round(weeklyReports.reduce((s, r) => s + r.likes, 0) / weeklyReports.length)
     : 0
   const avgPostsMonthly = monthlyReports.length
-    ? Math.round(monthlyReports.reduce((sum, report) => sum + report.posts, 0) / monthlyReports.length)
+    ? Math.round(monthlyReports.reduce((s, r) => s + r.posts, 0) / monthlyReports.length)
     : 0
   const avgEngagementMonthly = monthlyReports.length
-    ? (monthlyReports.reduce((sum, report) => sum + (report.engagement_rate ?? 0), 0) / monthlyReports.length).toFixed(1)
+    ? (monthlyReports.reduce((s, r) => s + (r.engagement_rate ?? 0), 0) / monthlyReports.length).toFixed(1)
     : '0.0'
 
   const summaryStats = [
-    {
-      label: 'Toplam Rapor',
-      value: reports.length.toString(),
-      helper: 'Haftalık ve aylık rapor sayısı'
-    },
-    {
-      label: 'Haftalık Ortalama Takipçi',
-      value: `${formatNumber(avgFollowersWeekly)} kişi`,
-      helper: 'Haftalık raporlardaki ortalama artış'
-    },
-    {
-      label: 'Haftalık Ortalama Beğeni',
-      value: `${formatNumber(avgLikesWeekly)}`,
-      helper: 'Etkileşim performansı'
-    },
-    {
-      label: 'Aylık Ortalama İçerik',
-      value: `${formatNumber(avgPostsMonthly)} gönderi`,
-      helper: 'Aylık içerik üretim temposu'
-    }
+    { label: 'Toplam Rapor', value: reports.length.toString(), helper: 'Haftalık + aylık toplam rapor' },
+    { label: 'Haftalık Ortalama Takipçi', value: `${formatNumber(avgFollowersWeekly)} kişi`, helper: 'Takipçi artış ortalaması' },
+    { label: 'Haftalık Ortalama Beğeni', value: `${formatNumber(avgLikesWeekly)}`, helper: 'Etkileşim performansı' },
+    { label: 'Aylık Ortalama İçerik', value: `${formatNumber(avgPostsMonthly)} gönderi`, helper: 'Üretim temposu' }
   ]
 
-  const weeklyChartData = weeklyReports
-    .slice()
-    .reverse()
-    .map((report) => ({
-      label: report.period_label ?? formatDate(report.created_at),
-      followers: report.followers,
-      likes: report.likes,
-      posts: report.posts
-    }))
+  const weeklyChartData = weeklyReports.slice().reverse().map((r) => ({
+    label: r.period_label ?? formatDate(r.created_at),
+    followers: r.followers,
+    likes: r.likes,
+    posts: r.posts
+  }))
 
-  const monthlyChartData = monthlyReports
-    .slice()
-    .reverse()
-    .map((report) => ({
-      label: report.period_label ?? formatDate(report.created_at),
-      followers: report.followers,
-      likes: report.likes,
-      posts: report.posts
-    }))
+  const monthlyChartData = monthlyReports.slice().reverse().map((r) => ({
+    label: r.period_label ?? formatDate(r.created_at),
+    followers: r.followers,
+    likes: r.likes,
+    posts: r.posts
+  }))
 
-  const renderDownloadLink = (url: string | null) => {
-    if (!url) return null
-    return (
+  const renderDownloadLink = (url: string | null) =>
+    url && (
       <a
         href={url}
         target="_blank"
@@ -111,18 +87,27 @@ export default async function RaporlarPage() {
         PDF İndir
       </a>
     )
-  }
 
   return (
     <div className="space-y-10">
+      {/* Gradient header */}
+      <SectionHeader
+        title="Raporlar"
+        subtitle="Haftalık ve aylık performans raporlarınızı tek ekrandan takip edin."
+        badge="Analiz Merkezi"
+        gradient
+      />
+
+      {/* Özet */}
       <Card title="Rapor Özeti" description="Ana metriklerinizi tek bakışta değerlendirin.">
         <InfoGrid items={summaryStats} columns={4} />
       </Card>
 
+      {/* Chartlar */}
       <div className="grid gap-6 xl:grid-cols-2">
         <ChartContainer
           title="Haftalık Performans"
-          description="Haftalık bazda takipçi artışı, beğeni ve paylaşım trendleri."
+          description="Haftalık takipçi artışı, beğeni ve paylaşım trendleri."
         >
           <WeeklyReportsChart data={weeklyChartData} />
         </ChartContainer>
@@ -135,24 +120,24 @@ export default async function RaporlarPage() {
         </ChartContainer>
       </div>
 
+      {/* Rapor listeleri */}
       <div className="grid gap-6 lg:grid-cols-2">
-        <Card
-          title="Haftalık Raporlar"
-          description="Son haftalarda yayınlanan raporlar ve öne çıkan notlar."
-        >
+        <Card title="Haftalık Raporlar" description="Son haftalarda yayınlanan raporlar.">
           <div className="space-y-4">
             {weeklyReports.length === 0 ? (
-              <p className="text-sm text-gray-500 dark:text-gray-400">Henüz haftalık rapor bulunmuyor.</p>
+              <p className="rounded-2xl border border-dashed border-gray-300 bg-gray-50 px-4 py-6 text-center text-sm text-gray-500 dark:border-gray-700 dark:bg-gray-900/40 dark:text-gray-300">
+                Henüz haftalık rapor bulunmuyor.
+              </p>
             ) : (
-              weeklyReports.map((report) => (
+              weeklyReports.map((r) => (
                 <ListItem
-                  key={report.id}
-                  title={report.title}
-                  description={report.summary ?? 'Özet bilgisi eklenmedi.'}
-                  meta={`${report.period_label ?? formatDate(report.created_at)} • Takipçi: ${formatNumber(report.followers)}`}
+                  key={r.id}
+                  title={r.title}
+                  description={r.summary ?? 'Özet bilgisi eklenmedi.'}
+                  meta={`${r.period_label ?? formatDate(r.created_at)} • Takipçi: ${formatNumber(r.followers)}`}
                   tone="violet"
                   icon={<span className="text-lg">📊</span>}
-                  rightSlot={renderDownloadLink(report.file_url)}
+                  rightSlot={renderDownloadLink(r.file_url)}
                 />
               ))
             )}
@@ -165,17 +150,19 @@ export default async function RaporlarPage() {
         >
           <div className="space-y-4">
             {monthlyReports.length === 0 ? (
-              <p className="text-sm text-gray-500 dark:text-gray-400">Henüz aylık rapor bulunmuyor.</p>
+              <p className="rounded-2xl border border-dashed border-gray-300 bg-gray-50 px-4 py-6 text-center text-sm text-gray-500 dark:border-gray-700 dark:bg-gray-900/40 dark:text-gray-300">
+                Henüz aylık rapor bulunmuyor.
+              </p>
             ) : (
-              monthlyReports.map((report) => (
+              monthlyReports.map((r) => (
                 <ListItem
-                  key={report.id}
-                  title={report.title}
-                  description={report.summary ?? 'Özet bilgisi eklenmedi.'}
-                  meta={`${report.period_label ?? formatDate(report.created_at)} • Beğeni: ${formatNumber(report.likes)}`}
+                  key={r.id}
+                  title={r.title}
+                  description={r.summary ?? 'Özet bilgisi eklenmedi.'}
+                  meta={`${r.period_label ?? formatDate(r.created_at)} • Beğeni: ${formatNumber(r.likes)}`}
                   tone="emerald"
                   icon={<span className="text-lg">📈</span>}
-                  rightSlot={renderDownloadLink(report.file_url)}
+                  rightSlot={renderDownloadLink(r.file_url)}
                 />
               ))
             )}

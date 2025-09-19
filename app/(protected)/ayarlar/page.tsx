@@ -1,28 +1,39 @@
 import { createServerComponentClient } from '@supabase/auth-helpers-nextjs'
 import { cookies } from 'next/headers'
 import { Database } from '@/lib/supabase-types'
-import { SettingsClient } from '@/components/settings/settings-client'
+import { SectionHeader } from '@/components/layout/section-header'
+import type { Profile } from '@/lib/types'
+import SettingsForm from './settings-form'  // ← burası önemli!
 
 export default async function SettingsPage() {
   const supabase = createServerComponentClient<Database>({ cookies })
+
   const {
-    data: { session }
+    data: { session },
+    error: sessionError
   } = await supabase.auth.getSession()
 
-  if (!session) {
-    return null
+  if (sessionError || !session) {
+    return null // oturum yoksa boş dön
   }
 
-  const { data: profile } = await supabase
+  const { data: profile, error: profileError } = await supabase
     .from('profiles')
     .select('*')
     .eq('id', session.user.id)
     .single()
 
-  const mergedProfile = {
+  if (profileError) {
+    console.error('Profil alınamadı:', profileError.message)
+  }
+
+  const mergedProfile: Profile = {
     id: session.user.id,
-    full_name: profile?.full_name ?? (session.user.user_metadata as Record<string, string | undefined>)?.full_name ?? '',
-    email: profile?.email ?? session.user.email!,
+    full_name:
+      profile?.full_name ??
+      (session.user.user_metadata as Record<string, string | undefined>)?.full_name ??
+      '',
+    email: profile?.email ?? session.user.email ?? '',
     avatar_url: profile?.avatar_url ?? null,
     theme: (profile?.theme as 'light' | 'dark' | null) ?? 'light',
     email_notifications: profile?.email_notifications ?? true,
@@ -31,5 +42,15 @@ export default async function SettingsPage() {
     role: (profile?.role as 'admin' | 'user' | null) ?? 'user'
   }
 
-  return <SettingsClient profile={mergedProfile} />
+  return (
+    <div className="space-y-10">
+      <SectionHeader
+        title="Ayarlar"
+        subtitle="Profil bilgilerinizi ve tercihlerinizi yönetin."
+        badge="Kişisel Alan"
+        gradient
+      />
+      <SettingsForm profile={mergedProfile} />
+    </div>
+  )
 }

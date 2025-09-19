@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { Profile } from '@/lib/types'
 import { Button } from '@/components/ui/button'
+import { Switch } from '@/components/ui/switch'
 import { useTheme } from '@/components/providers/theme-provider'
 import { useToast } from '@/components/providers/toast-provider'
 
@@ -87,7 +88,6 @@ export function SettingsClient({ profile }: SettingsClientProps) {
   const handleThemeChange = async (nextTheme: 'light' | 'dark') => {
     setTheme(nextTheme) // localStorage + html.class update
 
-    // API opsiyonel, hata verirse sadece toast göster
     try {
       const response = await fetch('/api/profile/preferences', {
         method: 'PUT',
@@ -132,7 +132,7 @@ export function SettingsClient({ profile }: SettingsClientProps) {
             <input
               value={fullName}
               onChange={(e) => setFullName(e.target.value)}
-              className="mt-1 w-full rounded-md border px-3 py-2 text-sm shadow-sm focus:border-accent focus:ring-accent"
+              className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-accent focus:ring-accent dark:border-gray-600"
               placeholder="Örn. Elif Aksoy"
             />
           </div>
@@ -142,7 +142,7 @@ export function SettingsClient({ profile }: SettingsClientProps) {
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="mt-1 w-full rounded-md border px-3 py-2 text-sm shadow-sm focus:border-accent focus:ring-accent"
+              className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-accent focus:ring-accent dark:border-gray-600"
             />
           </div>
         </div>
@@ -153,16 +153,18 @@ export function SettingsClient({ profile }: SettingsClientProps) {
       <section className="rounded-3xl border border-gray-200 bg-surface p-6 transition-colors duration-300 dark:border-gray-700 dark:bg-surface-dark">
         <h2 className="mb-4 text-lg font-semibold text-gray-900 dark:text-white">Bildirimler</h2>
         <div className="space-y-4">
-          {[
-            { label: 'E-posta Bildirimleri', checked: emailNotifications, onChange: setEmailNotifications },
-            { label: 'Anlık Bildirimler', checked: pushNotifications, onChange: setPushNotifications },
-            { label: 'Haftalık Özet', checked: weeklySummary, onChange: setWeeklySummary }
-          ].map((item) => (
-            <label key={item.label} className="flex items-center justify-between rounded-2xl border p-4">
-              <span className="text-sm text-gray-900 dark:text-white">{item.label}</span>
-              <input type="checkbox" checked={item.checked} onChange={(e) => item.onChange(e.target.checked)} />
-            </label>
-          ))}
+          <div className="flex items-center justify-between">
+            <span className="text-sm text-gray-900 dark:text-white">E-posta Bildirimleri</span>
+            <Switch checked={emailNotifications} onCheckedChange={setEmailNotifications} />
+          </div>
+          <div className="flex items-center justify-between">
+            <span className="text-sm text-gray-900 dark:text-white">Anlık Bildirimler</span>
+            <Switch checked={pushNotifications} onCheckedChange={setPushNotifications} />
+          </div>
+          <div className="flex items-center justify-between">
+            <span className="text-sm text-gray-900 dark:text-white">Haftalık Özet</span>
+            <Switch checked={weeklySummary} onCheckedChange={setWeeklySummary} />
+          </div>
         </div>
         <Button className="mt-6" variant="secondary" onClick={updateNotifications}>Tercihleri Kaydet</Button>
       </section>
@@ -170,13 +172,12 @@ export function SettingsClient({ profile }: SettingsClientProps) {
       {/* Theme Section */}
       <section className="rounded-3xl border border-gray-200 bg-surface p-6 dark:border-gray-700 dark:bg-surface-dark">
         <h2 className="mb-4 text-lg font-semibold text-gray-900 dark:text-white">Görünüm</h2>
-        <div className="flex gap-4">
-          <Button variant={theme === 'light' ? 'default' : 'secondary'} onClick={() => handleThemeChange('light')}>
-            Açık Tema
-          </Button>
-          <Button variant={theme === 'dark' ? 'default' : 'secondary'} onClick={() => handleThemeChange('dark')}>
-            Koyu Tema
-          </Button>
+        <div className="flex items-center justify-between">
+          <span className="text-sm text-gray-900 dark:text-white">Koyu Tema</span>
+          <Switch
+            checked={theme === 'dark'}
+            onCheckedChange={(checked) => handleThemeChange(checked ? 'dark' : 'light')}
+          />
         </div>
       </section>
     </div>

@@ -35,23 +35,22 @@ const config: Config = {
         border: '#E5E7EB',
       },
       boxShadow: {
-        'brand-sm': '0 12px 25px -10px rgba(255, 94, 74, 0.35)',
-        'brand-card': '0 24px 45px -30px rgba(15, 23, 42, 0.35)',
+        brand: '0 12px 25px -10px rgba(255, 94, 74, 0.35)', // header & accent areas
+        card: '0 24px 45px -30px rgba(15, 23, 42, 0.35)',   // cards & modals
       },
       borderRadius: {
-        xl: '1.25rem',
+        lg: '0.75rem',   // 12px → butonlar, inputlar
+        xl: '1rem',      // 16px → cardlar
+        '2xl': '1.5rem', // 24px → büyük header / section
       },
       fontFamily: {
         sans: ['Inter', 'sans-serif'],
       },
-      // spacing default zaten var, ama ek özel değer gerekiyorsa bırakabilirsin
       spacing: {
-        xs: '0.5rem',   // 8px
-        sm: '1rem',     // 16px
-        md: '1.5rem',   // 24px
-        lg: '2rem',     // 32px
-        xl: '3rem',     // 48px
-        '2xl': '4rem',  // 64px
+        section: '2rem',     // 32px → section gap
+        card: '1.5rem',      // 24px → card padding
+        headerX: '2rem',     // 32px → header yatay padding
+        headerY: '1.5rem',   // 24px → header dikey padding
       },
     },
   },

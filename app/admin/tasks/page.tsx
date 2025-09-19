@@ -10,20 +10,11 @@ import { Modal } from '@/components/ui/modal'
 import { FolderKanban, PlusCircle } from 'lucide-react'
 import KanbanBoard from '@/components/tasks/kanban-board'
 
-type Client = {
-  id: string
-  full_name: string | null
-  email: string | null
-  company: string | null
-}
-
 type Task = Database['public']['Tables']['tasks']['Row']
 
 export default function AdminTasksPage() {
   const supabase = createClientComponentClient<Database>()
   const [tasks, setTasks] = useState<Task[]>([])
-  const [clients, setClients] = useState<Client[]>([])
-  const [selectedClient, setSelectedClient] = useState<string | null>(null)
   const [showModal, setShowModal] = useState(false)
 
   // Form state
@@ -35,30 +26,21 @@ export default function AdminTasksPage() {
   const [loading, setLoading] = useState(false)
 
   useEffect(() => {
-    fetchClients()
     fetchTasks()
   }, [])
 
-  async function fetchClients() {
-    const { data } = await supabase.from('profiles').select('id, full_name, email, company')
-    setClients(data || [])
-  }
-
-  async function fetchTasks(clientId?: string | null) {
-    let query = supabase
+  async function fetchTasks() {
+    const { data } = await supabase
       .from('tasks')
       .select('*, profiles(full_name, email, company)')
       .order('created_at', { ascending: false })
 
-    if (clientId) query = query.eq('user_id', clientId)
-
-    const { data } = await query
     setTasks(data || [])
   }
 
   async function createTask() {
-    if (!title.trim() || !selectedClient) {
-      alert('Başlık ve müşteri seçimi zorunlu.')
+    if (!title.trim()) {
+      alert('Başlık zorunlu.')
       return
     }
     setLoading(true)
@@ -85,7 +67,6 @@ export default function AdminTasksPage() {
           description,
           due_date: dueDate || null,
           priority,
-          user_id: selectedClient,
           file_url: fileUrl,
           status: 'todo',
         },
@@ -157,26 +138,8 @@ export default function AdminTasksPage() {
         </Button>
       </header>
 
-      {/* Filter + Kanban Board */}
-      <Card title="Görev Listesi" description="Panelde kayıtlı tüm görevleri görüntüleyin.">
-        <div className="flex items-center justify-between mb-6">
-          <select
-            value={selectedClient ?? ''}
-            onChange={(e) => {
-              setSelectedClient(e.target.value || null)
-              fetchTasks(e.target.value || null)
-            }}
-            className="w-64 rounded-md border px-2 py-1"
-          >
-            <option value="">Tümü</option>
-            {clients.map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.full_name ?? c.email} {c.company ? `- ${c.company}` : ''}
-              </option>
-            ))}
-          </select>
-        </div>
-
+      {/* Kanban Board */}
+      <Card>
         <KanbanBoard tasks={tasks} onTaskMove={handleTaskMove} />
       </Card>
 
@@ -203,19 +166,6 @@ export default function AdminTasksPage() {
             <option value="low">Düşük</option>
             <option value="medium">Orta</option>
             <option value="high">Yüksek</option>
-          </select>
-
-          <select
-            value={selectedClient ?? ''}
-            onChange={(e) => setSelectedClient(e.target.value)}
-            className="w-full rounded-md border px-2 py-1"
-          >
-            <option value="">Müşteri seçin</option>
-            {clients.map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.full_name ?? c.email} {c.company ? `- ${c.company}` : ''}
-              </option>
-            ))}
           </select>
 
           <input

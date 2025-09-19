@@ -26,38 +26,45 @@ const announcements: Announcement[] = [
     description: '“Dijital PR’da 2024 Trendleri” başlıklı makale başarıyla yayınlandı. Sosyal medya dağıtımı planına eklendi.',
     date: new Date(new Date().setDate(new Date().getDate() - 2)).toISOString(),
     category: 'genel'
-  },
-  {
-    id: '4',
-    title: 'Yeni marka kılavuzu paylaşıldı',
-    description: 'ModaX markası için güncel logo seti ve kullanım rehberi İçerik Kütüphanesi > Logolar klasörüne eklendi.',
-    date: new Date(new Date().setDate(new Date().getDate() - 5)).toISOString(),
-    category: 'kampanya'
   }
 ]
 
-const categoryConfig: Record<Announcement['category'], { label: string; tone: 'accent' | 'blue' | 'emerald' | 'amber' | 'violet'; tagColor: 'accent' | 'info' | 'warning' | 'success' }> = {
+const categoryConfig: Record<
+  Announcement['category'],
+  { label: string; tone: 'accent' | 'blue' | 'emerald' | 'amber' | 'violet'; tagColor: 'accent' | 'info' | 'warning' | 'success' }
+> = {
   guncelleme: { label: 'Güncelleme', tone: 'accent', tagColor: 'accent' },
   hatirlatma: { label: 'Hatırlatma', tone: 'amber', tagColor: 'warning' },
   genel: { label: 'Genel Duyuru', tone: 'blue', tagColor: 'info' },
   kampanya: { label: 'Kampanya', tone: 'emerald', tagColor: 'success' }
 }
 
-const formatAnnouncementDate = (date: string) => format(new Date(date), 'd MMMM yyyy • HH:mm', { locale: tr })
+const formatAnnouncementDate = (date: string) =>
+  format(new Date(date), 'd MMMM yyyy • HH:mm', { locale: tr })
 
 export default function DuyurularPage() {
   const pinned = announcements.filter((item) => item.highlighted)
 
   return (
-    <div className="space-y-8">
-      <Card
-        title="Duyuru Akışı"
-        description="Takım içi bildirimleri ve müşterilere iletilecek notları takip edin."
+    <div className="space-y-10">
+      {/* Turuncu accent header */}
+      <div
+        className="rounded-2xl p-6 text-white shadow-sm"
+        style={{ background: 'linear-gradient(to right, #FF5E4A, #FA7C6B)' }}
       >
+        <h1 className="text-xl md:text-2xl font-semibold">Duyurular</h1>
+        <p className="mt-1 text-sm text-white/90">
+          Takım içi bildirimleri ve sizinle paylaşılan notları buradan
+          görüntüleyebilirsiniz.
+        </p>
+      </div>
+
+      {/* Genel Duyuru Akışı */}
+      <Card title="Duyuru Akışı" description="Tüm duyuruların listesi">
         <div className="space-y-3">
           {announcements.length === 0 ? (
             <p className="text-sm text-gray-500 dark:text-gray-400">
-              Henüz duyuru eklenmedi. Bir duyuru oluşturduğunuzda burada listelenecek.
+              Henüz duyuru eklenmedi.
             </p>
           ) : (
             announcements.map((announcement) => {
@@ -75,7 +82,9 @@ export default function DuyurularPage() {
                   compact
                   rightSlot={
                     announcement.highlighted ? (
-                      <span className="pill bg-white/80 text-accent dark:bg-surface-dark/80">Öne Çıkan</span>
+                      <span className="pill bg-white/80 text-accent dark:bg-surface-dark/80">
+                        Öne Çıkan
+                      </span>
                     ) : null
                   }
                 />
@@ -85,14 +94,12 @@ export default function DuyurularPage() {
         </div>
       </Card>
 
-      <Card
-        title="Sabitlenen Notlar"
-        description="Ekip tarafından sürekli görülmesi gereken duyuruları buraya sabitleyin."
-      >
+      {/* Sabitlenen Notlar */}
+      <Card title="Sabitlenen Notlar" description="Önemli sabitlenmiş duyurular">
         <div className="space-y-3">
           {pinned.length === 0 ? (
             <p className="text-sm text-gray-500 dark:text-gray-400">
-              Sabitlenmiş duyuru bulunmuyor. Bir duyuruyu sabitlemek için “Öne Çıkan” bayrağını aktif edin.
+              Şu anda sabitlenmiş duyuru yok.
             </p>
           ) : (
             pinned.map((announcement) => {
@@ -112,15 +119,6 @@ export default function DuyurularPage() {
               )
             })
           )}
-        </div>
-      </Card>
-
-      <Card
-        title="Planlanan Duyurular"
-        description="Önümüzdeki haftalarda paylaşılacak mesajları hazırlayın."
-      >
-        <div className="rounded-2xl border border-dashed border-gray-200 p-6 text-sm text-gray-500 dark:border-gray-700 dark:text-gray-400">
-          Takvim bağlantısını ekleyerek duyuruları otomatikleştirebilirsiniz. Supabase fonksiyonları üzerinden e-posta ve bildirim gönderimi kolayca entegre edilecek.
         </div>
       </Card>
     </div>

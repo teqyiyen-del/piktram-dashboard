@@ -1,112 +1,130 @@
+'use client'
+
+import { useState } from 'react'
 import { Card } from '@/components/sections/card'
-import { ListItem } from '@/components/sections/list-item'
 import { InfoGrid } from '@/components/ui/info-grid'
 import { ProgressList } from '@/components/ui/progress-list'
+import { Button } from '@/components/ui/button'
 
 const kpis = [
   {
-    title: 'İçerik Yayın Hızı',
+    title: 'Zamanında Yayın',
     value: 72,
-    targetLabel: "Hedef: Aylık yayın takviminin %85'i aktif",
-    description: 'Planlanan gönderilerin zamanında yayınlanma oranı',
+    targetLabel: 'Hedef: %85',
+    description: 'Planlanan gönderilerin zamanında paylaşılması',
     tone: 'accent' as const
   },
   {
-    title: 'Onay Süresi Kısaltma',
+    title: 'Onay Süresi',
     value: 64,
-    targetLabel: 'Hedef: Ortalama onay süresi 24 saatin altı',
-    description: 'Revize taleplerinin kapanma hızı',
-    tone: 'violet' as const
+    targetLabel: 'Hedef: 24 saatin altı',
+    description: 'Revizelerin kapanma hızı',
+    tone: 'accent' as const
   },
   {
-    title: 'Topluluk Etkileşimi',
+    title: 'Etkileşim',
     value: 58,
-    targetLabel: 'Hedef: Aylık ortalama %70 etkileşim artışı',
-    description: 'Sosyal medya gönderilerinin etkileşim puanı',
-    tone: 'emerald' as const
+    targetLabel: 'Hedef: %70 artış',
+    description: 'Gönderilerin ortalama etkileşimi',
+    tone: 'accent' as const
   },
   {
-    title: 'Rapora Dönüşen Kampanya',
+    title: 'Kampanya Raporu',
     value: 44,
-    targetLabel: "Hedef: Onaylanan kampanyaların %60'ı raporlandı",
-    description: 'Tamamlanan kampanyalardan raporlananların oranı',
-    tone: 'amber' as const
+    targetLabel: 'Hedef: %60 rapor',
+    description: 'Tamamlanan kampanyaların raporlanma oranı',
+    tone: 'accent' as const
   }
 ]
 
 const quarterHighlights = [
   {
-    label: 'Çeyrek Odak Başlığı',
-    value: 'Marka bilinirliği ve yeni müşteri edinimi'
+    label: 'Bu Çeyrek',
+    value: 'Marka bilinirliğini artırmak'
   },
   {
-    label: 'Öncelikli Segment',
-    value: 'Perakende ve e-ticaret iş ortakları'
+    label: 'Odak Müşteri',
+    value: 'Perakende ve e-ticaret'
   },
   {
-    label: 'Hedeflenen Kampanya Sayısı',
+    label: 'Planlanan Kampanya',
     value: '12',
-    helper: 'Her kampanya için minimum iki format planlanıyor.'
-  }
-]
-
-const initiatives = [
-  {
-    title: 'Instagram Reels Serisi',
-    description: 'Sosyal medya trafiğini %30 artıracak 6 bölümlük seri üretimi.',
-    meta: 'Sorumlu: Sosyal Medya Ekibi • Bitiş: 12 Nisan',
-    status: 'Devam ediyor'
-  },
-  {
-    title: 'İçerik Rehberi Revizyonu',
-    description: 'Marka tonuna uygun yeni içerik kitinin yayıma hazırlanması.',
-    meta: 'Sorumlu: İçerik Stratejisi • Bitiş: 30 Mart',
-    status: 'Taslak tamamlandı'
-  },
-  {
-    title: 'Müşteri Eğitim Oturumları',
-    description: 'Piktram panel kullanımını hızlandıracak eğitim dizisi.',
-    meta: 'Sorumlu: Müşteri Başarı • İlk oturum: 5 Nisan',
-    status: 'Takvimlendi'
+    helper: 'Her kampanya için en az 2 format'
   }
 ]
 
 export default function HedeflerPage() {
+  const [showModal, setShowModal] = useState(false)
+
   return (
-    <div className="space-y-10">
-      <Card
-        title="Çeyrek Yol Haritası"
-        description="Takımın bu çeyrek için belirlediği stratejik odağı ve öncelikleri gözden geçirin."
+    <div className="mx-auto w-full max-w-7xl space-y-10 px-6 pb-12">
+      {/* Header */}
+      <header
+        className="rounded-2xl p-6 flex items-center justify-between text-white shadow-sm"
+        style={{ background: 'linear-gradient(to right, #FF5E4A, #FA7C6B)' }}
       >
+        <div>
+          <h1 className="text-xl md:text-2xl font-semibold">Hedefler</h1>
+          <p className="mt-1 text-sm text-white/90">
+            Bu çeyrek için odak noktalarınızı ve ilerlemenizi takip edin.
+          </p>
+        </div>
+        <Button
+          onClick={() => setShowModal(true)}
+          className="bg-white text-[#FF5E4A] hover:bg-gray-100"
+        >
+          + Yeni Hedef
+        </Button>
+      </header>
+
+      {/* Yol Haritası */}
+      <Card title="Genel Yol Haritası" description="Bu dönem için belirlenen öncelikler.">
         <InfoGrid items={quarterHighlights} columns={3} />
       </Card>
 
-      <Card
-        title="Ana KPI'lar"
-        description="İlerleme çubukları hedeflere yaklaşımınızı gösterir. Veriler Supabase kaynaklı entegre olduğunda otomatik güncellenecektir."
-      >
+      {/* KPI'lar */}
+      <Card title="Ana Hedefler" description="İlerleme çubukları mevcut durumunuzu gösterir.">
         <ProgressList items={kpis} />
       </Card>
 
-      <Card
-        title="Öncelikli Girişimler"
-        description="Takımın hedefleri desteklemek için yürüttüğü ana aksiyonları takip edin."
-      >
-        <div className="space-y-4">
-          {initiatives.map((initiative) => (
-            <ListItem
-              key={initiative.title}
-              title={initiative.title}
-              description={initiative.description}
-              meta={initiative.meta}
-              tag={initiative.status}
-              tagColor="info"
-              tone="violet"
-              icon={<span className="text-lg">🎯</span>}
-            />
-          ))}
+      {/* Modal */}
+      {showModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-lg">
+            <h2 className="text-lg font-semibold">Yeni Hedef Ekle</h2>
+            <div className="mt-4 space-y-3">
+              <input
+                type="text"
+                placeholder="Başlık"
+                className="w-full rounded-lg border px-3 py-2 text-sm"
+              />
+              <textarea
+                placeholder="Açıklama"
+                className="w-full rounded-lg border px-3 py-2 text-sm"
+              />
+              <input
+                type="date"
+                className="w-full rounded-lg border px-3 py-2 text-sm"
+              />
+
+              <div className="flex justify-end gap-2">
+                <Button variant="outline" onClick={() => setShowModal(false)}>
+                  İptal
+                </Button>
+                <Button
+                  onClick={() => {
+                    // Burada Supabase insert işlemini bağlayacaksın
+                    alert('Hedef kaydedildi (dummy)')
+                    setShowModal(false)
+                  }}
+                >
+                  Kaydet
+                </Button>
+              </div>
+            </div>
+          </div>
         </div>
-      </Card>
+      )}
     </div>
   )
 }

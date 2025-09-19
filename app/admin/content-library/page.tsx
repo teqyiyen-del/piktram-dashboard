@@ -32,18 +32,21 @@ export default async function ContentLibraryAdminPage() {
   }
 
   return (
-    <div className="space-y-8">
-      {/* Admin başlığı */}
-      <header className="rounded-3xl bg-surface p-8 shadow-sm dark:bg-surface-dark">
-        <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">
+    <div className="mx-auto w-full max-w-7xl space-y-10 px-6 pb-12">
+      {/* Header */}
+      <header
+        className="rounded-2xl p-6 text-white shadow-sm"
+        style={{ background: 'linear-gradient(to right, #FF5E4A, #FA7C6B)' }}
+      >
+        <h1 className="text-xl md:text-2xl font-semibold">
           İçerik Kütüphanesi (Admin)
         </h1>
-        <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
+        <p className="mt-1 text-sm text-white/90">
           Marka ekiplerinin yüklediği dosyaları yönetin ve yenilerini ekleyin.
         </p>
       </header>
 
-      {/* Client component (dosya listeleme + yükleme modalı) */}
+      {/* Client component */}
       <AdminContentLibraryClient initialAssets={initialAssets} />
     </div>
   )

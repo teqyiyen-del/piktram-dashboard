@@ -33,42 +33,57 @@ export function SubscriptionPanel({ subscription, invoices, contracts }: Subscri
   const planDetails = useMemo(() => {
     if (!subscription) {
       return [
-        { label: 'Abonelik Durumu', value: 'Tanımlı plan bulunamadı', helper: 'Planınızı oluşturmak için destek ekibiyle iletişime geçin.' }
+        {
+          label: 'Abonelik',
+          value: 'Tanımlı plan yok',
+          helper: 'Plan oluşturmak için destek ekibimizle iletişime geçin.'
+        }
       ]
     }
     return [
       {
-        label: 'Abone Olunan Paket',
+        label: 'Paket',
         value: subscription.plan_name,
-        helper: 'Piktram içerik ve raporlama hizmet paketi'
+        helper: 'Aktif hizmet paketi'
       },
       {
-        label: 'Paket Fiyatı',
+        label: 'Ücret',
         value: formatCurrency(subscription.price, subscription.currency),
-        helper: 'KDV dahil aylık ücret'
+        helper: 'KDV dahil aylık fiyat'
       },
       {
-        label: 'Yenilenme Tarihi',
+        label: 'Yenilenme',
         value: subscription.renewal_date ? formatDate(subscription.renewal_date) : 'Belirtilmedi',
-        helper: 'Yenileme öncesi e-posta ile hatırlatılır.'
+        helper: 'Yenileme öncesi e-posta ile bilgilendirme yapılır.'
       },
       {
-        label: 'Hizmet Durumu',
-        value: subscription.status === 'aktif' ? 'Aktif' : subscription.status === 'beklemede' ? 'Beklemede' : 'İptal edildi',
-        helper: 'Durum değişiklikleri ekip tarafından izlenir.'
+        label: 'Durum',
+        value:
+          subscription.status === 'aktif'
+            ? 'Aktif'
+            : subscription.status === 'beklemede'
+            ? 'Beklemede'
+            : 'İptal edildi',
+        helper: 'Durum değişiklikleri kaydedilir.'
       }
     ]
   }, [subscription])
 
   return (
     <div className="space-y-8">
+      {/* Paket Özeti */}
       <div className="grid gap-6 xl:grid-cols-3">
         <Card
           title="Paket Özeti"
-          description="Abonelik planınızın temel detaylarını inceleyin ve ihtiyaç halinde hızlıca yükseltme talebi oluşturun."
+          description="Mevcut abonelik detaylarınız."
           actions={
-            <Button type="button" variant="secondary" onClick={() => setUpgradeModalOpen(true)} className="gap-2">
-              <ArrowUpRight className="h-4 w-4" /> Paketi Yükselt
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={() => setUpgradeModalOpen(true)}
+              className="gap-2"
+            >
+              <ArrowUpRight className="h-4 w-4" /> Yükselt
             </Button>
           }
           className="xl:col-span-2"
@@ -76,31 +91,35 @@ export function SubscriptionPanel({ subscription, invoices, contracts }: Subscri
           <InfoGrid items={planDetails} columns={2} />
         </Card>
 
-        <Card title="Faturalama & Destek" description="Ödeme yöntemleri ve destek taleplerinizi buradan yönetebilirsiniz.">
+        <Card
+          title="Faturalama"
+          description="Ödeme ve destek ayarları."
+        >
           <div className="space-y-4">
             <ListItem
               title="Otomatik Ödeme"
-              description="Kayıtlı kredi kartı ile her ay otomatik tahsilat yapılır."
+              description="Kayıtlı kart ile aylık otomatik tahsilat yapılır."
               icon={<CreditCard className="h-4 w-4" />}
               tag={subscription?.status === 'aktif' ? 'Etkin' : 'Pasif'}
               tagColor={subscription?.status === 'aktif' ? 'success' : 'warning'}
             />
             <ListItem
-              title="Faturalandırma Bildirimi"
-              description="Yeni fatura oluştuğunda muhasebe ekibine e-posta gönderilir."
+              title="Fatura Bildirimi"
+              description="Yeni fatura çıktığında e-posta gönderilir."
               icon={<Inbox className="h-4 w-4" />}
-              tone="violet"
+              tone="accent"
             />
           </div>
         </Card>
       </div>
 
+      {/* Faturalar & Sözleşmeler */}
       <div className="grid gap-6 lg:grid-cols-2">
-        <Card title="Faturalar" description="Fatura arşiviniz Supabase depolama ile senkronize edilir.">
+        <Card title="Faturalar" description="Geçmiş faturalarınız.">
           <div className="space-y-4">
             {invoices.length === 0 ? (
-              <p className="rounded-2xl border border-dashed border-gray-200 bg-gray-50 px-4 py-6 text-center text-xs text-gray-500 dark:border-gray-700 dark:bg-gray-900/40 dark:text-gray-300">
-                Kayıtlı fatura bulunamadı.
+              <p className="rounded-2xl border border-dashed border-gray-200 bg-gray-50 px-4 py-6 text-center text-sm text-gray-500 dark:border-gray-700 dark:bg-gray-900/40 dark:text-gray-300">
+                Henüz fatura bulunmuyor.
               </p>
             ) : (
               invoices.map((invoice) => (
@@ -128,18 +147,18 @@ export function SubscriptionPanel({ subscription, invoices, contracts }: Subscri
           </div>
         </Card>
 
-        <Card title="Sözleşmeler" description="İmzalı belgeleri ve ek sözleşmeleri tek noktadan takip edin.">
+        <Card title="Sözleşmeler" description="İmzalanan belgeler.">
           <div className="space-y-4">
             {contracts.length === 0 ? (
-              <p className="rounded-2xl border border-dashed border-gray-200 bg-gray-50 px-4 py-6 text-center text-xs text-gray-500 dark:border-gray-700 dark:bg-gray-900/40 dark:text-gray-300">
-                Kayıtlı sözleşme bulunamadı.
+              <p className="rounded-2xl border border-dashed border-gray-200 bg-gray-50 px-4 py-6 text-center text-sm text-gray-500 dark:border-gray-700 dark:bg-gray-900/40 dark:text-gray-300">
+                Henüz sözleşme bulunmuyor.
               </p>
             ) : (
               contracts.map((contract) => (
                 <ListItem
                   key={contract.id}
                   title={contract.name}
-                  description={contract.description ?? 'Sözleşme belgesi'}
+                  description={contract.description ?? 'Sözleşme'}
                   meta={`Güncelleme: ${formatDate(contract.created_at)}`}
                   icon={<FileSignature className="h-4 w-4" />}
                   rightSlot={
@@ -161,18 +180,22 @@ export function SubscriptionPanel({ subscription, invoices, contracts }: Subscri
         </Card>
       </div>
 
-      <Modal isOpen={upgradeModalOpen} onClose={() => setUpgradeModalOpen(false)} title="Paket yükseltme talebi">
+      {/* Modal */}
+      <Modal
+        isOpen={upgradeModalOpen}
+        onClose={() => setUpgradeModalOpen(false)}
+        title="Paket Yükselt"
+      >
         <p className="text-sm text-gray-600 dark:text-gray-300">
-          Piktram büyüme paketinden daha kapsamlı bir çözüme geçmek isterseniz müşteri başarı ekibimiz sizinle iletişime geçecektir.
-          Mevcut paketinizi, hedeflerinizi ve bütçe detaylarını paylaşmanız yeterli.
+          Daha kapsamlı bir pakete geçmek isterseniz ekibimiz sizinle iletişime geçecektir.
         </p>
         <div className="mt-6 flex flex-col gap-3 text-sm text-gray-500 dark:text-gray-400">
-          <p>• Premium raporlama modülleri</p>
-          <p>• İçerik üretim kapasitesinin artırılması</p>
-          <p>• Özel hesap yöneticisi desteği</p>
+          <p>• Premium raporlama</p>
+          <p>• Daha yüksek içerik kapasitesi</p>
+          <p>• Özel hesap yöneticisi</p>
         </div>
         <Button className="mt-6 w-full" onClick={() => setUpgradeModalOpen(false)}>
-          Talep oluşturuldu kabul et
+          Talep Oluştur
         </Button>
       </Modal>
     </div>

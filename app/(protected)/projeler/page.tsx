@@ -13,9 +13,7 @@ export default async function ProjelerPage() {
     data: { session }
   } = await supabase.auth.getSession()
 
-  if (!session) {
-    return null
-  }
+  if (!session) return null
 
   const { data: profile } = await supabase
     .from('profiles')
@@ -30,21 +28,28 @@ export default async function ProjelerPage() {
     .select('id, title, description, progress, due_date, user_id')
     .order('due_date', { ascending: true })
 
-  const tasksQuery = supabase.from('tasks').select('id, title, status, project_id, due_date, user_id')
+  const tasksQuery = supabase
+    .from('tasks')
+    .select('id, title, status, project_id, due_date, user_id')
 
   if (!isAdmin) {
     projectsQuery.eq('user_id', session.user.id)
     tasksQuery.eq('user_id', session.user.id)
   }
 
-  const [{ data: projectsData }, { data: tasksData }] = await Promise.all([projectsQuery, tasksQuery])
+  const [{ data: projectsData }, { data: tasksData }] = await Promise.all([
+    projectsQuery,
+    tasksQuery
+  ])
 
   const projects: Project[] = (projectsData ?? []) as Project[]
   const tasks: Task[] = (tasksData ?? []) as Task[]
 
   const completedStatuses = new Set<Task['status']>(['onaylandi', 'paylasildi'])
 
-  const tasksByProject = tasks.reduce<Record<string, { total: number; done: number; upcoming: number }>>((acc, task) => {
+  const tasksByProject = tasks.reduce<
+    Record<string, { total: number; done: number; upcoming: number }>
+  >((acc, task) => {
     if (!task.project_id) return acc
     if (!acc[task.project_id]) {
       acc[task.project_id] = { total: 0, done: 0, upcoming: 0 }
@@ -63,7 +68,11 @@ export default async function ProjelerPage() {
   }, {})
 
   const projectSummaries = projects.map((project) => {
-    const taskInfo = tasksByProject[project.id] ?? { total: 0, done: 0, upcoming: 0 }
+    const taskInfo = tasksByProject[project.id] ?? {
+      total: 0,
+      done: 0,
+      upcoming: 0
+    }
     return {
       ...project,
       tasksTotal: taskInfo.total,
@@ -90,24 +99,33 @@ export default async function ProjelerPage() {
   const highlightedCampaigns = [...campaigns, ...remaining].slice(0, 4)
 
   const totalProjects = projectSummaries.length
-  const activeProjects = projectSummaries.filter((project) => project.progress < 100).length
-  const completedProjects = projectSummaries.filter((project) => project.progress >= 100).length
-  const upcomingDeadlines = projectSummaries.filter((project) => {
-    if (!project.due_date) return false
-    const due = new Date(project.due_date)
+  const activeProjects = projectSummaries.filter((p) => p.progress < 100).length
+  const completedProjects = projectSummaries.filter((p) => p.progress >= 100).length
+  const upcomingDeadlines = projectSummaries.filter((p) => {
+    if (!p.due_date) return false
+    const due = new Date(p.due_date)
     return due >= today && due <= soonThreshold
   }).length
 
   return (
-    <div className="space-y-8">
-      <Card
-        title="Kampanyalar"
-        description="Yaklaşan teslim tarihleri ve marka kampanyalarınızı takip edin."
+    <div className="space-y-10">
+      {/* Gradient header */}
+      <header
+        className="rounded-2xl p-6 text-white shadow-sm"
+        style={{ background: 'linear-gradient(to right, #FF5E4A, #FA7C6B)' }}
       >
+        <h1 className="text-xl md:text-2xl font-semibold">Projeler</h1>
+        <p className="mt-1 text-sm text-white/90">
+          Kampanyalarınızı, teslim tarihlerini ve genel proje durumunu takip edin.
+        </p>
+      </header>
+
+      {/* Kampanyalar */}
+      <Card title="Kampanyalar" description="Yaklaşan teslim tarihleri ve öne çıkan projeler">
         <div className="space-y-4">
           {highlightedCampaigns.length === 0 ? (
             <p className="text-sm text-gray-500 dark:text-gray-400">
-              Kampanya bulunamadı. Yeni proje oluşturduğunuzda ajandaya ekleyebilirsiniz.
+              Henüz kampanya bulunmuyor.
             </p>
           ) : (
             highlightedCampaigns.map((campaign) => (
@@ -115,7 +133,7 @@ export default async function ProjelerPage() {
                 <ListItem
                   icon={<span className="text-lg">📣</span>}
                   title={campaign.title}
-                  description={campaign.description ?? 'Açıklama henüz eklenmedi.'}
+                  description={campaign.description ?? 'Açıklama eklenmedi.'}
                   meta={
                     campaign.due_date
                       ? `${formatDate(campaign.due_date)} • ${campaign.tasksTotal} görev`
@@ -125,12 +143,18 @@ export default async function ProjelerPage() {
                   tagColor="info"
                   tone="blue"
                   compact
-                  rightSlot={<span className="pill bg-white/80 text-gray-600 dark:bg-surface-dark/80">{campaign.progress}%</span>}
+                  rightSlot={
+                    <span className="pill bg-white/80 text-gray-700 dark:bg-surface-dark/80">
+                      %{campaign.progress}
+                    </span>
+                  }
                 />
                 <div className="h-2 w-full overflow-hidden rounded-full bg-gray-100 dark:bg-gray-800">
                   <div
                     className="h-full rounded-full bg-accent"
-                    style={{ width: `${Math.min(100, Math.max(0, campaign.progress))}%` }}
+                    style={{
+                      width: `${Math.min(100, Math.max(0, campaign.progress))}%`
+                    }}
                   />
                 </div>
               </div>
@@ -139,14 +163,12 @@ export default async function ProjelerPage() {
         </div>
       </Card>
 
-      <Card
-        title="Proje Listesi"
-        description="Tüm projelerin durumunu ve görev dağılımını görüntüleyin."
-      >
+      {/* Proje Listesi */}
+      <Card title="Proje Listesi" description="Tüm projelerinizin ilerleme durumları">
         <div className="space-y-4">
           {projectSummaries.length === 0 ? (
             <p className="text-sm text-gray-500 dark:text-gray-400">
-              Henüz proje oluşturulmadı. “Projeler” sekmesinden yeni proje ekleyebilirsiniz.
+              Henüz proje oluşturulmadı.
             </p>
           ) : (
             projectSummaries.map((project) => (
@@ -175,7 +197,9 @@ export default async function ProjelerPage() {
                 <div className="h-2 w-full overflow-hidden rounded-full bg-gray-100 dark:bg-gray-800">
                   <div
                     className="h-full rounded-full bg-accent"
-                    style={{ width: `${Math.min(100, Math.max(0, project.progress))}%` }}
+                    style={{
+                      width: `${Math.min(100, Math.max(0, project.progress))}%`
+                    }}
                   />
                 </div>
               </div>
@@ -184,30 +208,32 @@ export default async function ProjelerPage() {
         </div>
       </Card>
 
-      <Card
-        title="Durum Özeti"
-        description="Proje portföyünüzün genel performansına hızlı bakış."
-      >
+      {/* Durum Özeti */}
+      <Card title="Durum Özeti" description="Genel performans görünümü">
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <div className="rounded-2xl bg-white/80 p-4 text-sm shadow-sm dark:bg-surface-dark/80">
-            <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Toplam Proje</p>
-            <p className="mt-2 text-3xl font-semibold text-gray-900 dark:text-white">{totalProjects}</p>
-            <p className="text-xs text-gray-400 dark:text-gray-500">Çalışma alanınızda kayıtlı proje</p>
+          <div className="rounded-2xl bg-white/90 p-4 text-sm shadow-sm dark:bg-surface-dark/80">
+            <p className="text-xs font-semibold uppercase text-gray-500">Toplam Proje</p>
+            <p className="mt-2 text-3xl font-semibold text-gray-900 dark:text-white">
+              {totalProjects}
+            </p>
           </div>
-          <div className="rounded-2xl bg-white/80 p-4 text-sm shadow-sm dark:bg-surface-dark/80">
-            <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Aktif Proje</p>
-            <p className="mt-2 text-3xl font-semibold text-gray-900 dark:text-white">{activeProjects}</p>
-            <p className="text-xs text-gray-400 dark:text-gray-500">İlerlemesi %100’ün altında olan projeler</p>
+          <div className="rounded-2xl bg-white/90 p-4 text-sm shadow-sm dark:bg-surface-dark/80">
+            <p className="text-xs font-semibold uppercase text-gray-500">Aktif</p>
+            <p className="mt-2 text-3xl font-semibold text-gray-900 dark:text-white">
+              {activeProjects}
+            </p>
           </div>
-          <div className="rounded-2xl bg-white/80 p-4 text-sm shadow-sm dark:bg-surface-dark/80">
-            <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Tamamlanan</p>
-            <p className="mt-2 text-3xl font-semibold text-gray-900 dark:text-white">{completedProjects}</p>
-            <p className="text-xs text-gray-400 dark:text-gray-500">Teslimi kapanan projeler</p>
+          <div className="rounded-2xl bg-white/90 p-4 text-sm shadow-sm dark:bg-surface-dark/80">
+            <p className="text-xs font-semibold uppercase text-gray-500">Tamamlanan</p>
+            <p className="mt-2 text-3xl font-semibold text-gray-900 dark:text-white">
+              {completedProjects}
+            </p>
           </div>
-          <div className="rounded-2xl bg-white/80 p-4 text-sm shadow-sm dark:bg-surface-dark/80">
-            <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Yaklaşan Teslim</p>
-            <p className="mt-2 text-3xl font-semibold text-gray-900 dark:text-white">{upcomingDeadlines}</p>
-            <p className="text-xs text-gray-400 dark:text-gray-500">21 gün içinde teslim tarihi olan projeler</p>
+          <div className="rounded-2xl bg-white/90 p-4 text-sm shadow-sm dark:bg-surface-dark/80">
+            <p className="text-xs font-semibold uppercase text-gray-500">Yaklaşan Teslim</p>
+            <p className="mt-2 text-3xl font-semibold text-gray-900 dark:text-white">
+              {upcomingDeadlines}
+            </p>
           </div>
         </div>
       </Card>
