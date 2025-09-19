@@ -1,22 +1,23 @@
 'use client'
 
+import { useState } from 'react'
 import { useSupabaseClient } from '@supabase/auth-helpers-react'
 import { useRouter } from 'next/navigation'
-import { Menu, Search, LogOut } from 'lucide-react'
+import { Menu, LogOut, Bell } from 'lucide-react'
 import { getInitials } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
-import { NotificationDropdown } from '@/components/notifications/notification-dropdown'
 
 interface TopbarProps {
   fullName: string | null
   email: string
   role: 'admin' | 'user'
-  onMenuClick: () => void
+  onMenuClick?: () => void // ✅ opsiyonel hale getirildi
 }
 
 export default function Topbar({ fullName, email, onMenuClick }: TopbarProps) {
   const supabase = useSupabaseClient()
   const router = useRouter()
+  const [openNotif, setOpenNotif] = useState(false)
 
   const handleLogout = async () => {
     await supabase.auth.signOut()
@@ -24,65 +25,105 @@ export default function Topbar({ fullName, email, onMenuClick }: TopbarProps) {
   }
 
   return (
-    <header className="border-b border-gray-200/70 bg-white/70 px-6 py-5 shadow-sm backdrop-blur transition-colors duration-300 dark:border-gray-800/70 dark:bg-surface-dark/80">
-      <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-        {/* Sol kısım: Menü butonu + Search */}
-        <div className="flex w-full flex-1 items-center gap-3">
+    <header className="fixed top-0 left-0 right-0 z-30 h-16 border-b border-gray-200/60 bg-white/80 backdrop-blur-md dark:border-gray-800/60 dark:bg-surface-dark/80">
+      <div className="flex h-full items-center justify-between px-4 sm:px-6 lg:pl-[300px] lg:pr-8">
+        {/* Sol: Menü butonu sadece mobile */}
+        {onMenuClick && (
           <button
             type="button"
             onClick={onMenuClick}
-            className="inline-flex h-11 w-11 items-center justify-center rounded-2xl border border-gray-200 bg-white text-gray-600 shadow-sm transition hover:text-accent dark:border-gray-700 dark:bg-surface-dark dark:text-gray-300 dark:hover:text-accent lg:hidden"
+            className="inline-flex h-11 w-11 items-center justify-center rounded-xl border border-gray-200 bg-white text-gray-600 shadow-sm transition hover:bg-accent hover:text-white dark:border-gray-700 dark:bg-surface-dark dark:text-gray-300 lg:hidden"
             aria-label="Menüyü aç"
           >
             <Menu className="h-5 w-5" />
           </button>
-          <div className="relative w-full max-w-lg">
-            <Search className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" />
-            <input
-              className="w-full rounded-full border border-gray-200 bg-white py-3 pl-12 pr-4 text-sm shadow-sm dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100"
-              placeholder="Ara..."
-            />
-          </div>
-        </div>
+        )}
 
-        {/* Sağ kısım: Bildirimler + Kullanıcı + Logout */}
-        <div className="flex items-center gap-3 sm:justify-end">
-          <NotificationDropdown />
-          <div className="hidden min-w-[200px] items-center gap-3 rounded-2xl border border-gray-200 bg-white px-4 py-2 shadow-sm dark:border-gray-700 dark:bg-gray-900 lg:flex">
+        {/* Sağ: Bildirim + Kullanıcı + Logout */}
+        <div className="ml-auto flex items-center gap-4">
+          {/* Bildirim */}
+          <div className="relative">
+            <button
+              type="button"
+              onClick={() => setOpenNotif(!openNotif)}
+              className="group relative inline-flex h-11 w-11 items-center justify-center rounded-xl border border-gray-200 bg-white text-gray-600 shadow-sm transition dark:border-gray-700 dark:bg-surface-dark dark:text-gray-300 hover:bg-accent"
+            >
+              <Bell className="h-5 w-5 transition group-hover:text-white" />
+              <span className="absolute -top-1.5 -right-1.5 inline-flex h-4 w-4 items-center justify-center rounded-full bg-accent text-[10px] font-bold text-white shadow-sm">
+                3
+              </span>
+            </button>
+
+            {/* Dropdown */}
+            {openNotif && (
+              <div className="absolute right-0 mt-3 w-72 rounded-xl border border-gray-200 bg-white p-4 text-sm shadow-lg dark:border-gray-700 dark:bg-surface-dark">
+                <p className="mb-2 font-semibold text-gray-800 dark:text-gray-100">
+                  Bildirimler
+                </p>
+                <ul className="space-y-2">
+                  <li className="rounded-lg px-3 py-2 hover:bg-gray-50 dark:hover:bg-gray-800">
+                    Yeni proje eklendi 🎉
+                  </li>
+                  <li className="rounded-lg px-3 py-2 hover:bg-gray-50 dark:hover:bg-gray-800">
+                    2 içerik onay bekliyor
+                  </li>
+                  <li className="rounded-lg px-3 py-2 hover:bg-gray-50 dark:hover:bg-gray-800">
+                    Rapor hazırlandı 📊
+                  </li>
+                </ul>
+              </div>
+            )}
+          </div>
+
+          {/* Kullanıcı */}
+          <div className="hidden min-w-[220px] items-center gap-3 rounded-xl border border-gray-200 bg-white px-4 py-2 shadow-sm dark:border-gray-700 dark:bg-gray-900 lg:flex">
             <div className="flex h-10 w-10 items-center justify-center rounded-full bg-accent/15 text-sm font-semibold text-accent">
               {getInitials(fullName)}
             </div>
-            <div className="text-sm">
-              <p className="font-semibold text-gray-900 dark:text-white">{fullName ?? 'Takım Üyesi'}</p>
-              <p className="text-xs text-gray-500 dark:text-gray-400">{email}</p>
+            <div className="truncate text-sm">
+              <p className="font-semibold text-gray-900 dark:text-white">
+                {fullName ?? 'Takım Üyesi'}
+              </p>
+              <p className="truncate text-xs text-gray-500 dark:text-gray-400">
+                {email}
+              </p>
             </div>
           </div>
-          <Button variant="secondary" onClick={handleLogout} className="hidden gap-2 lg:inline-flex">
+
+          {/* Logout */}
+          <Button
+            variant="secondary"
+            onClick={handleLogout}
+            className="hidden gap-2 lg:inline-flex"
+          >
             <LogOut className="h-4 w-4" /> Çıkış Yap
           </Button>
         </div>
       </div>
 
-      {/* Mobile User Info */}
-      <div className="mt-4 flex items-center gap-3 lg:hidden">
-        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-accent/15 text-sm font-semibold text-accent">
-          {getInitials(fullName)}
+      {/* Mobil User Info */}
+      <div className="flex items-center justify-between border-t border-gray-200/70 px-4 py-3 dark:border-gray-800/70 lg:hidden">
+        <div className="flex items-center gap-3">
+          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-accent/15 text-sm font-semibold text-accent">
+            {getInitials(fullName)}
+          </div>
+          <div className="truncate text-sm">
+            <p className="font-semibold text-gray-900 dark:text-white">
+              {fullName ?? 'Takım Üyesi'}
+            </p>
+            <p className="truncate text-xs text-gray-500 dark:text-gray-400">
+              {email}
+            </p>
+          </div>
         </div>
-        <div className="text-sm">
-          <p className="font-semibold text-gray-900 dark:text-white">{fullName ?? 'Takım Üyesi'}</p>
-          <p className="text-xs text-gray-500 dark:text-gray-400">{email}</p>
-        </div>
-        <Button variant="ghost" onClick={handleLogout} className="gap-2">
+        <Button
+          variant="ghost"
+          onClick={handleLogout}
+          className="gap-2 text-gray-500 hover:text-accent"
+        >
           <LogOut className="h-4 w-4" />
         </Button>
       </div>
-
-      {/* Mobile Info Banner */}
-      <nav className="mt-4 flex gap-2 overflow-x-auto pb-1 lg:hidden">
-        <span className="pill whitespace-nowrap border border-transparent text-gray-500">
-          Menüyü kullanarak bölümler arasında gezinin
-        </span>
-      </nav>
     </header>
   )
 }

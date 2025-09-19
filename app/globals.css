@@ -73,3 +73,30 @@ label {
   @apply mb-1 block text-sm font-medium text-gray-600 dark:text-gray-300;
 }
 
+/* Custom Scrollbar - Modern */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  border-radius: 9999px;
+  background: linear-gradient(180deg, #FF5E4A, #FA7C6B);
+  background-clip: padding-box;
+  border: 3px solid transparent;
+  transition: all 0.3s ease;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, #FA7C6B, #FF5E4A);
+}
+
+/* Firefox */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #FF5E4A transparent;
+}
