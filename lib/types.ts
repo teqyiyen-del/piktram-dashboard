@@ -7,6 +7,7 @@ export type Profile = {
   email_notifications?: boolean
   push_notifications?: boolean
   weekly_summary?: boolean
+  role?: 'user' | 'admin'
 }
 
 export type Project = {
@@ -18,13 +19,213 @@ export type Project = {
   user_id: string
 }
 
+// --- Tek bir TaskStatus tipi ---
+// Türkçe'ye normalize edildi
+export type TaskStatus =
+  | 'yapiliyor'
+  | 'onay_surecinde'
+  | 'revize'
+  | 'onaylandi'
+  | 'paylasildi'
+  | 'todo'
+  | 'in_progress'
+  | 'in_review'
+  | 'revision'
+  | 'approved'
+  | 'published'
+  | 'tamamlandi'
+
+export const TASK_STATUS_LABELS: Record<TaskStatus, string> = {
+  yapiliyor: 'Yapılıyor',
+  onay_surecinde: 'Onay Sürecinde',
+  revize: 'Revize',
+  onaylandi: 'Onaylandı',
+  paylasildi: 'Paylaşıldı',
+  todo: 'Yapılacak',
+  in_progress: 'Devam Ediyor',
+  in_review: 'İncelemede',
+  revision: 'Revizyon',
+  approved: 'Onaylandı',
+  published: 'Yayınlandı',
+  tamamlandi: 'Tamamlandı'
+}
+
+export const TASK_STATUS_ORDER: TaskStatus[] = [
+  'todo',
+  'in_progress',
+  'in_review',
+  'revision',
+  'approved',
+  'published',
+  'tamamlandi'
+]
+
 export type Task = {
   id: string
   title: string
   description: string | null
-  status: 'todo' | 'in_progress' | 'done'
+  status: TaskStatus
   priority: 'low' | 'medium' | 'high'
   due_date: string | null
   project_id: string | null
   user_id: string
+  attachment_url: string | null
+}
+
+export type AnnouncementCategory = 'genel' | 'guncelleme' | 'hatirlatma' | 'kampanya'
+
+export type Announcement = {
+  id: string
+  title: string
+  description: string
+  date: string
+  category: AnnouncementCategory
+  highlighted?: boolean
+}
+
+export type Campaign = {
+  id: string
+  title: string
+  description: string | null
+  due_date: string | null
+  progress: number
+  owner: string
+}
+
+export type WorkflowStatus = TaskStatus
+
+export type WorkflowItem = {
+  id: string
+  title: string
+  brand?: string | null
+  owner?: string | null
+  deadline?: string | null
+  status: WorkflowStatus
+  priority?: Task['priority']
+  attachment_url?: string | null
+  description?: string | null
+}
+
+export type AgendaEventType = 'icerik' | 'toplanti' | 'odeme' | 'rapor'
+
+export type Event = {
+  id: string
+  title: string
+  description: string | null
+  event_date: string
+  event_type: AgendaEventType
+  related: string | null
+  user_id: string
+}
+
+export type AgendaEvent = {
+  id: string
+  title: string
+  description?: string | null
+  date: string
+  type: AgendaEventType
+  related?: string | null
+}
+
+export type ReportPeriod = 'weekly' | 'monthly'
+
+export type Report = {
+  id: string
+  title: string
+  period: ReportPeriod
+  period_label: string | null
+  followers: number
+  likes: number
+  posts: number
+  engagement_rate: number | null
+  summary: string | null
+  file_url: string | null
+  created_at: string
+  user_id: string
+}
+
+export type SubscriptionStatus = 'aktif' | 'beklemede' | 'iptal'
+
+export type Subscription = {
+  id: string
+  plan_name: string
+  price: number
+  currency: string
+  renewal_date: string | null
+  status: SubscriptionStatus
+  user_id: string
+  created_at: string
+}
+
+export type FileCategory = 'invoice' | 'contract' | 'logo' | 'post' | 'reel' | 'visual'
+
+export type StoredFile = {
+  id: string
+  name: string
+  bucket: string
+  path: string
+  url: string | null
+  category: FileCategory
+  description: string | null
+  user_id: string
+  created_at: string
+}
+
+export type MeetingStatus = 'beklemede' | 'onaylandi' | 'planlandi'
+
+export type Meeting = {
+  id: string
+  title: string
+  agenda: string | null
+  preferred_date: string | null
+  meeting_url: string | null
+  status: MeetingStatus
+  user_id: string
+  created_at: string
+}
+
+export type NotificationType = 'task' | 'report' | 'invoice' | 'meeting' | 'general'
+
+export type Notification = {
+  id: string
+  title: string
+  description: string | null
+  type: NotificationType
+  created_at: string
+  read_at: string | null
+  user_id: string
+}
+
+export type Comment = {
+  id: string
+  task_id: string
+  user_id: string
+  content: string
+  created_at: string
+  author?: {
+    full_name: string | null
+    email: string | null
+  }
+}
+
+export type Revision = {
+  id: string
+  task_id: string
+  user_id: string
+  comment_id: string | null
+  description: string
+  created_at: string
+  author?: {
+    full_name: string | null
+    email: string | null
+  }
+}
+
+export type Goal = {
+  id: string
+  title: string
+  description: string | null
+  is_completed: boolean
+  user_id: string
+  created_at?: string
 }

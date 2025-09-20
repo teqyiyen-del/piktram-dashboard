@@ -51,8 +51,8 @@ export function CalendarView({ tasks, onCreateTask }: CalendarViewProps) {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-xl font-semibold text-gray-900">Takvim</h2>
-          <p className="text-sm text-gray-500">Görevlerinizi aylık görünümde takip edin.</p>
+          <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Takvim</h2>
+          <p className="text-sm text-gray-500 dark:text-gray-400">Görevlerinizi aylık görünümde takip edin.</p>
         </div>
         <div className="flex items-center gap-2">
           <Button variant="secondary" onClick={() => setCurrentDate(addMonths(currentDate, -1))}>
@@ -67,13 +67,17 @@ export function CalendarView({ tasks, onCreateTask }: CalendarViewProps) {
           <Button onClick={onCreateTask}>Takvime Görev Ekle</Button>
         </div>
       </div>
-      <div className="grid grid-cols-7 gap-3 text-xs font-medium uppercase tracking-wide text-gray-500">
+
+      {/* Gün başlıkları */}
+      <div className="grid grid-cols-7 gap-3 text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">
         {['Pzt', 'Sal', 'Çar', 'Per', 'Cum', 'Cmt', 'Paz'].map((day) => (
           <div key={day} className="text-center">
             {day}
           </div>
         ))}
       </div>
+
+      {/* Günler */}
       <div className="grid grid-cols-7 gap-3">
         {days.map((day) => {
           const key = format(day, 'yyyy-MM-dd')
@@ -85,9 +89,11 @@ export function CalendarView({ tasks, onCreateTask }: CalendarViewProps) {
             <button
               key={key}
               onClick={() => setSelectedDate(day)}
-              className={`flex h-24 flex-col rounded-2xl border p-2 text-left transition ${
-                isCurrentMonth ? 'bg-white border-gray-200' : 'bg-gray-50 border-gray-100 text-gray-400'
-              } ${isToday ? 'ring-2 ring-accent' : ''}`}
+              className={`flex h-24 flex-col rounded-2xl border p-2 text-left transition 
+                ${isCurrentMonth
+                  ? 'bg-surface border-gray-200 text-gray-700 dark:border-gray-700 dark:bg-surface-dark dark:text-gray-200'
+                  : 'bg-gray-50 border-gray-100 text-gray-400 dark:border-gray-800 dark:bg-gray-900/40 dark:text-gray-600'} 
+                ${isToday ? 'ring-2 ring-accent' : ''}`}
             >
               <span className="text-sm font-semibold">{format(day, 'd', { locale: tr })}</span>
               <span className="mt-auto flex items-center gap-1">
@@ -100,20 +106,34 @@ export function CalendarView({ tasks, onCreateTask }: CalendarViewProps) {
         })}
       </div>
 
+      {/* Modal */}
       <Modal
         isOpen={!!selectedDate}
         onClose={() => setSelectedDate(null)}
-        title={selectedDate ? format(selectedDate, "d MMMM yyyy", { locale: tr }) : 'Görevler'}
+        title={selectedDate ? format(selectedDate, 'd MMMM yyyy', { locale: tr }) : 'Görevler'}
       >
         {selectedTasks.length === 0 ? (
-          <p className="text-sm text-gray-500">Bu tarih için görev bulunmuyor.</p>
+          <p className="text-sm text-gray-500 dark:text-gray-400">Bu tarih için görev bulunmuyor.</p>
         ) : (
           <div className="space-y-3">
             {selectedTasks.map((task) => (
-              <div key={task.id} className="rounded-xl border border-gray-200 p-3">
-                <p className="text-sm font-semibold text-gray-900">{task.title}</p>
-                <p className="text-xs text-gray-500">{task.description}</p>
-                <p className="mt-1 text-xs text-gray-400">Bitiş: {formatDate(task.due_date)}</p>
+              <div
+                key={task.id}
+                className="rounded-xl border border-gray-200 p-3 dark:border-gray-700"
+              >
+                <p className="text-sm font-semibold text-gray-900 dark:text-white">{task.title}</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400">{task.description}</p>
+                <p className="mt-1 text-xs text-gray-400 dark:text-gray-500">Bitiş: {formatDate(task.due_date)}</p>
+                {task.attachment_url && (
+                  <a
+                    href={task.attachment_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="mt-2 inline-flex items-center gap-1 text-xs font-medium text-accent"
+                  >
+                    📎 Ek dosyayı aç
+                  </a>
+                )}
               </div>
             ))}
           </div>

@@ -1,57 +1,65 @@
 import { NextResponse } from 'next/server'
-import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
-import { cookies } from 'next/headers'
 import { Database } from '@/lib/supabase-types'
+import { getSessionAndRole } from '@/lib/checkrole'
+import { updateProjectProgress } from './helpers'
 
+// ✅ GET - Tüm görevleri listele
 export async function GET() {
-  const supabase = createRouteHandlerClient<Database>({ cookies })
-  const {
-    data: { session }
-  } = await supabase.auth.getSession()
-
-  if (!session) {
-    return NextResponse.json({ error: 'Yetkisiz erişim' }, { status: 401 })
+  const { error, session, role, supabase } = await getSessionAndRole()
+  if (error || !session) {
+    return NextResponse.json({ error }, { status: 401 })
   }
 
-  const { data, error } = await supabase
-    .from('tasks')
-    .select('*')
-    .eq('user_id', session.user.id)
-    .order('due_date', { ascending: true })
+  let query = supabase.from('tasks').select('*').order('due_date', { ascending: true })
 
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 })
+  if (role !== 'admin') {
+    query = query.eq('user_id', session.user.id)
+  }
+
+  const { data, error: fetchError } = await query
+  if (fetchError) {
+    return NextResponse.json({ error: fetchError.message }, { status: 500 })
   }
 
   return NextResponse.json(data)
 }
 
+// ✅ POST - Yeni görev oluştur
 export async function POST(request: Request) {
-  const supabase = createRouteHandlerClient<Database>({ cookies })
+  const { error, session, supabase } = await getSessionAndRole()
+  if (error || !session) {
+    return NextResponse.json({ error }, { status: 401 })
+  }
+
   const body = await request.json()
 
-  const {
-    data: { session }
-  } = await supabase.auth.getSession()
-
-  if (!session) {
-    return NextResponse.json({ error: 'Yetkisiz erişim' }, { status: 401 })
-  }
-
-  const payload = {
+  const payload: Database['public']['Tables']['tasks']['Insert'] = {
     title: body.title,
-    description: body.description,
+    description: body.description ?? null,
     status: body.status ?? 'todo',
     priority: body.priority ?? 'medium',
-    due_date: body.due_date,
-    project_id: body.project_id,
-    user_id: session.user.id
+    due_date: body.due_date ?? null,
+    project_id: body.project_id || null,
+    attachment_url: body.attachment_url ?? null,
+    user_id: session.user.id,
   }
 
-  const { data, error } = await supabase.from('tasks').insert(payload).select('*').single()
+  const { data, error: insertError } = await supabase.from('tasks').insert(payload).select('*').single()
 
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 })
+  if (insertError) {
+    return NextResponse.json({ error: insertError.message }, { status: 500 })
+  }
+
+  if (data) {
+    await supabase.from('notifications').insert({
+      title: 'Yeni görev oluşturuldu',
+      description: `${data.title} görevi panoya eklendi`,
+      type: 'task',
+      user_id: session.user.id,
+      meta: { task_id: data.id },
+    })
+
+    await updateProjectProgress(supabase, data.project_id, session.user.id)
   }
 
   return NextResponse.json(data, { status: 201 })

@@ -5,6 +5,7 @@ import { ProjectsClient } from '@/components/projects/projects-client'
 
 export default async function ProjectsPage() {
   const supabase = createServerComponentClient<Database>({ cookies })
+
   const {
     data: { session }
   } = await supabase.auth.getSession()
@@ -13,11 +14,24 @@ export default async function ProjectsPage() {
     return null
   }
 
-  const { data: projectsData } = await supabase
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('role')
+    .eq('id', session.user.id)
+    .single()
+
+  const isAdmin = profile?.role === 'admin'
+
+  let query = supabase
     .from('projects')
     .select('*')
-    .eq('user_id', session.user.id)
     .order('due_date', { ascending: true })
+
+  if (!isAdmin) {
+    query = query.eq('user_id', session.user.id)
+  }
+
+  const { data: projectsData } = await query
 
   return <ProjectsClient initialProjects={projectsData ?? []} />
 }
