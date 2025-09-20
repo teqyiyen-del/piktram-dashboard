@@ -6,6 +6,9 @@ import { Button } from '@/components/ui/button'
 import { Switch } from '@/components/ui/switch'
 import { useTheme } from '@/components/providers/theme-provider'
 import { useToast } from '@/components/providers/toast-provider'
+import { useSupabaseClient } from '@supabase/auth-helpers-react'
+import { useRouter } from 'next/navigation'
+import { LogOut } from 'lucide-react'
 
 interface SettingsClientProps {
   profile: Profile
@@ -20,6 +23,14 @@ export function SettingsClient({ profile }: SettingsClientProps) {
 
   const { theme, setTheme } = useTheme()
   const { toast } = useToast()
+  const supabase = useSupabaseClient()
+  const router = useRouter()
+
+  // ✅ Logout
+  const handleLogout = async () => {
+    await supabase.auth.signOut()
+    router.replace('/auth/login')
+  }
 
   // ✅ Profil güncelleme
   const updateProfile = useCallback(async (e?: React.FormEvent) => {
@@ -180,6 +191,18 @@ export function SettingsClient({ profile }: SettingsClientProps) {
             onCheckedChange={(checked) => handleThemeChange(checked ? 'dark' : 'light')}
           />
         </div>
+      </section>
+
+      {/* Logout Section */}
+      <section className="rounded-3xl border border-red-200 bg-red-50 p-6 dark:border-red-700 dark:bg-red-950/30">
+        <h2 className="mb-4 text-lg font-semibold text-red-700 dark:text-red-400">Hesap</h2>
+        <Button
+          variant="destructive"
+          onClick={handleLogout}
+          className="flex items-center gap-2"
+        >
+          <LogOut className="h-4 w-4" /> Çıkış Yap
+        </Button>
       </section>
     </div>
   )

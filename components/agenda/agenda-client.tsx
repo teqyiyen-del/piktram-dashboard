@@ -79,16 +79,16 @@ export function AgendaClient({ initialEvents }: AgendaClientProps) {
       </Card>
 
       {/* Ajanda İpuçları */}
-      <Card title="Ajanda İpuçları" description="Takvimi ekiple senkron tutmak için hatırlatmalar.">
+      <Card title="Ajanda İpuçları">
         <div className="grid gap-4 md:grid-cols-3">
           <div className="rounded-2xl border border-dashed border-gray-200 p-4 text-sm text-gray-600 dark:border-gray-700 dark:text-gray-400">
-            Supabase fonksiyonları ile ajandayı otomatik bildirimlere bağlayarak ekip arkadaşlarınıza hatırlatma gönderebilirsiniz.
+            İçeriklerin ne zaman paylaşılacağını ajandanızdan kolayca takip edin.
           </div>
           <div className="rounded-2xl border border-dashed border-gray-200 p-4 text-sm text-gray-600 dark:border-gray-700 dark:text-gray-400">
-            Cal.com entegrasyonunu etkinleştirerek toplantıları doğrudan bu takvime aktarabilirsiniz.
+            Planlı toplantılarınızı ve rapor teslim tarihlerini tek ekranda görüntüleyin.
           </div>
           <div className="rounded-2xl border border-dashed border-gray-200 p-4 text-sm text-gray-600 dark:border-gray-700 dark:text-gray-400">
-            Ödeme hatırlatmalarını Supabase Edge Functions üzerinden planlayarak müşterilerinizi zamanında bilgilendirin.
+            Aboneliğinizin yenileme tarihini ajandanızdan takip edin, sürpriz yaşamayın.
           </div>
         </div>
       </Card>

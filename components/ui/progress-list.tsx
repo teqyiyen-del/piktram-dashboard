@@ -38,9 +38,7 @@ export function ProgressList({ items }: { items: ProgressItem[] }) {
                   </p>
                 ) : null}
               </div>
-              <span className="pill bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-300">
-                %{percentage.toFixed(0)}
-              </span>
+              {/* Yüzde yazısı kaldırıldı */}
             </div>
             <div className="h-2.5 overflow-hidden rounded-full bg-gray-200 dark:bg-gray-800">
               <div

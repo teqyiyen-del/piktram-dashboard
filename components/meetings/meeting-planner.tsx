@@ -89,8 +89,8 @@ export function MeetingPlanner({ initialMeetings, calUrl }: MeetingPlannerProps)
       ) : null}
 
       <Card
-        title="Cal.com Entegrasyonu"
-        description="Piktram toplantı takvimini Cal.com üzerinden senkronize ederek müşterilerinizin uygunluğuna göre otomatik randevu alın."
+        title="Takvimi kontrol edin."
+        description="Piktram toplantı takvimi ile otomatik toplantı planlayın alın."
       >
         {calUrl ? (
           <iframe
@@ -116,7 +116,7 @@ export function MeetingPlanner({ initialMeetings, calUrl }: MeetingPlannerProps)
       <div className="grid gap-6 lg:grid-cols-2">
         <Card
           title="Toplantı Talebi Oluştur"
-          description="Soruları Fin varsa veya yeni bir içerik çalışması planlıyorsanız hızlıca toplantı talebinde bulunun."
+          description="Sorularınız veya yeni bir içerik çalışması planlıyorsanız hızlıca toplantı talebinde bulunun."
         >
           <form className="space-y-4" onSubmit={handleSubmit}>
             <div className="space-y-2">
@@ -156,7 +156,7 @@ export function MeetingPlanner({ initialMeetings, calUrl }: MeetingPlannerProps)
 
         <Card
           title="Yaklaşan Toplantılar"
-          description="Planlanan görüşmeleri takip edin ve ekip üyeleriyle senkron kalın."
+          description="Planlanan görüşmeleri takip edin."
         >
           <div className="space-y-4">
             {sortedMeetings.length === 0 ? (

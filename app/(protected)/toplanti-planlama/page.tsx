@@ -38,8 +38,8 @@ export default async function ToplantiPlanlamaPage() {
       {/* Gradient Header */}
       <SectionHeader
         title="Toplantı Planlama"
-        subtitle="Müşteri toplantılarınızı organize edin, yaklaşan görüşmeleri takip edin."
-        badge="Ajanda"
+        subtitle="Toplantılarınızı organize edin, yaklaşan görüşmeleri takip edin."
+        badge="Takvim"
         gradient
       />
 

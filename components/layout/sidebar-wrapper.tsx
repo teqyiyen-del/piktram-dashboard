@@ -22,12 +22,16 @@ export default function ClientLayoutWrapper({
 
   return (
     <div className="flex min-h-screen bg-muted dark:bg-background-dark">
-      {/* Sidebar (her zaman sabit, z-50) */}
-      <Sidebar role={user.role} open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+      {/* Sidebar */}
+      <Sidebar
+        role={user.role}
+        open={sidebarOpen}
+        onClose={() => setSidebarOpen(false)}
+      />
 
       {/* Sağ taraf */}
       <div className="flex flex-1 flex-col">
-        {/* Topbar (fixed) */}
+        {/* Topbar */}
         <Topbar
           fullName={user.full_name}
           email={user.email}
@@ -35,7 +39,7 @@ export default function ClientLayoutWrapper({
           onMenuClick={() => setSidebarOpen(true)}
         />
 
-        {/* İçerik alanı — sadece offsetler */}
+        {/* İçerik */}
         <ProtectedClient user={user}>
           <main className="min-h-screen w-full pt-[var(--topbar-height)] lg:pl-[var(--sidebar-width)]">
             {children}

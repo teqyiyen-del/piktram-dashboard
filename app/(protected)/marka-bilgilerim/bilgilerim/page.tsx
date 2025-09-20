@@ -16,9 +16,9 @@ const addressInfo = [
 ]
 
 const contactInfo = [
-  { label: 'E-Posta', value: 'destek@piktram.com', helper: 'Genel iletişim adresi' },
-  { label: 'Müşteri Destek', value: '+90 (212) 555 12 34', helper: 'Hafta içi 09:00 - 18:00' },
-  { label: 'Basın & PR', value: 'iletisim@piktram.com', helper: 'Basın ve iş birliği' }
+  { label: 'E-Posta', value: 'info@piktram.com', },
+  { label: 'Müşteri Destek', value: '+90 (541) 129 09 04', helper: 'Hafta içi 09:00 - 18:00' },
+  { label: 'Sosyal Medya Hesaplarımız', value: '@piktram', helper: 'LinkedIn - Instagram - X' }
 ]
 
 const stakeholders = [
@@ -47,7 +47,7 @@ export default function BilgilerimPage() {
         <InfoGrid items={addressInfo} columns={3} />
       </Card>
 
-      <Card title="İletişim" description="Ekibinizle iletişim kanalları.">
+      <Card title="İletişim" description="Bize ulaşabileceğiniz kanallar.">
         <div className="grid gap-4 md:grid-cols-2">
           <InfoGrid
             items={contactInfo.map((c) => ({
@@ -78,22 +78,31 @@ export default function BilgilerimPage() {
         </div>
       </Card>
 
-      <Card title="Ana Paydaşlar" description="Güncel sorumlular.">
-        <div className="grid gap-4 md:grid-cols-2">
-          {stakeholders.map((s) => (
-            <ListItem
-              key={s.title}
-              title={s.title}
-              description={s.description}
-              meta={s.meta}
-              icon={s.icon}
-              tone="accent"
-              tag="Aktif"
-              tagColor="success"
-            />
-          ))}
+<Card title="Marka sorumluları" description="Güncel sorumlular.">
+  <div className="grid gap-4 md:grid-cols-2">
+    {stakeholders.map((s) => (
+      <div
+        key={s.title}
+        className="flex items-start gap-4 rounded-xl border bg-white p-4 shadow-sm transition hover:shadow-md dark:bg-surface-dark"
+      >
+        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-orange-100 text-orange-600 dark:bg-orange-500/20 dark:text-orange-400">
+          {s.icon}
         </div>
-      </Card>
+        <div className="flex-1">
+          <h3 className="text-sm font-semibold text-gray-900 dark:text-white">
+            {s.title}
+          </h3>
+          <p className="mt-0.5 text-sm text-gray-600 dark:text-gray-400">
+            {s.description}
+          </p>
+          <p className="mt-1 text-xs font-medium text-gray-500 dark:text-gray-400">
+            {s.meta}
+          </p>
+        </div>
+      </div>
+    ))}
+  </div>
+</Card>
     </div>
   )
 }

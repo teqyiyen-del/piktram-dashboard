@@ -39,7 +39,9 @@ export default function MarkaBilgilerimLayout({ children }: { children: ReactNod
         actions={
           <Button
             onClick={() => setShowModal(true)}
-            className="rounded-full bg-white px-6 py-2.5 text-sm font-semibold text-[#FF5E4A] shadow-md hover:bg-gray-100"
+            variant="secondary"
+            size="sm"
+            className="rounded-full text-[#FF5E4A] font-semibold"
           >
             + Bilgilerimi Güncelle
           </Button>
@@ -55,9 +57,10 @@ export default function MarkaBilgilerimLayout({ children }: { children: ReactNod
               key={item.href}
               href={item.href}
               className={`flex-1 rounded-xl px-8 py-3 text-center text-sm font-semibold transition 
-                ${isActive
-                  ? 'bg-accent text-white shadow-md'
-                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300'
+                ${
+                  isActive
+                    ? 'bg-accent text-white shadow-md'
+                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300'
                 }`}
             >
               {item.label}
@@ -69,7 +72,11 @@ export default function MarkaBilgilerimLayout({ children }: { children: ReactNod
       <div>{children}</div>
 
       {/* Modal */}
-      <Modal isOpen={showModal} onClose={() => setShowModal(false)} title="Adres Bilgilerini Güncelle">
+      <Modal
+        isOpen={showModal}
+        onClose={() => setShowModal(false)}
+        title="Adres Bilgilerini Güncelle"
+      >
         <div className="space-y-5">
           {[
             { key: 'merkez', label: 'Merkez Ofis' },
@@ -77,11 +84,15 @@ export default function MarkaBilgilerimLayout({ children }: { children: ReactNod
             { key: 'kargo', label: 'Kargo / Prodüksiyon' }
           ].map((field) => (
             <div key={field.key}>
-              <label className="text-sm font-medium text-gray-700 dark:text-gray-300">{field.label}</label>
+              <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                {field.label}
+              </label>
               <input
                 type="text"
                 value={(address as any)[field.key]}
-                onChange={(e) => setAddress({ ...address, [field.key]: e.target.value })}
+                onChange={(e) =>
+                  setAddress({ ...address, [field.key]: e.target.value })
+                }
                 className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-accent focus:ring-accent dark:border-gray-600 dark:bg-surface-dark dark:text-gray-100"
                 placeholder={`${field.label} girin`}
               />

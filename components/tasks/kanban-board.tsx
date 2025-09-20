@@ -73,13 +73,6 @@ function KanbanBoard({ initialTasks = [], projects = [] }: KanbanBoardProps) {
       }
       const data = (await response.json()) as Task[]
       setTasks((data ?? []).map((task) => ({ ...task, status: normalizeStatus(task.status) })))
-
-      if (selectedTask) {
-        const updated = data.find((item) => item.id === selectedTask.id)
-        if (updated) {
-          setSelectedTask({ ...updated, status: normalizeStatus(updated.status) })
-        }
-      }
     } catch (error) {
       toast({
         title: 'Görevler yenilenemedi',
@@ -87,15 +80,16 @@ function KanbanBoard({ initialTasks = [], projects = [] }: KanbanBoardProps) {
         variant: 'error'
       })
     }
-  }, [toast, selectedTask])
+  }, [toast])
 
   useEffect(() => {
-    setTasks((initialTasks ?? []).map((task) => ({ ...task, status: normalizeStatus(task.status) })))
-  }, [initialTasks])
+    if (initialTasks && initialTasks.length > 0) {
+      setTasks(initialTasks.map((task) => ({ ...task, status: normalizeStatus(task.status) })))
+    }
+  }, [JSON.stringify(initialTasks)])
 
   const handleDragEnd = async ({ destination, source, draggableId }: DropResult) => {
     if (!destination || destination.droppableId === source.droppableId) return
-
     const newStatus = destination.droppableId as ColumnKey
     const previous = structuredClone(tasks)
 
@@ -209,12 +203,12 @@ function KanbanBoard({ initialTasks = [], projects = [] }: KanbanBoardProps) {
             Görevleri sürükleyerek durumunu anında güncelleyin.
           </p>
         </div>
-        {/* ✅ Yeni Görev butonu kaldırıldı */}
       </div>
 
       {/* Kanban Columns */}
       <DragDropContext onDragEnd={handleDragEnd}>
-        <div className="flex flex-wrap gap-6">
+        {/* ✅ Mobilde alt alta, sm: ile wrap */}
+        <div className="flex flex-col gap-6 sm:flex-row sm:flex-wrap">
           {TASK_STATUS_ORDER.map((column) => (
             <Droppable droppableId={column} key={column}>
               {(provided, snapshot) => {
@@ -223,7 +217,7 @@ function KanbanBoard({ initialTasks = [], projects = [] }: KanbanBoardProps) {
                   <div
                     ref={provided.innerRef}
                     {...provided.droppableProps}
-                    className={`min-w-[310px] flex-1 flex flex-col gap-4 rounded-2xl border bg-transparent p-5 shadow-sm transition-colors duration-300
+                    className={`min-w-[280px] flex-1 flex flex-col gap-4 rounded-2xl border bg-transparent p-5 shadow-sm transition-colors duration-300
                       ${snapshot.isDraggingOver ? 'ring-2 ring-accent/40' : ''} ${columnStyles[column]}`}
                     style={{ minHeight: '280px' }}
                   >

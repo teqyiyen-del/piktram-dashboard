@@ -8,7 +8,16 @@ import { ListItem } from '@/components/sections/list-item'
 import { Modal } from '@/components/ui/modal'
 import { Button } from '@/components/ui/button'
 import type { FileCategory, StoredFile } from '@/lib/types'
-import { ImageIcon, LayoutGrid, Layers, Play, Sparkles, UploadCloud } from 'lucide-react'
+import {
+  ImageIcon,
+  LayoutGrid,
+  Layers,
+  Play,
+  Sparkles,
+  UploadCloud,
+  ArrowLeft,
+  Trash2
+} from 'lucide-react'
 
 type AssetCategory = Extract<FileCategory, 'logo' | 'post' | 'reel' | 'visual'>
 
@@ -54,11 +63,16 @@ export function AdminContentLibraryClient({ initialAssets }: AdminContentLibrary
   const supabase = useSupabaseClient<Database>()
   const [assets, setAssets] = useState<AssetsState>(initialAssets)
   const [isModalOpen, setIsModalOpen] = useState(false)
-  const [selectedCategory, setSelectedCategory] = useState<AssetCategory>('logo')
+  const [editModalOpen, setEditModalOpen] = useState(false)
+  const [selectedCategory, setSelectedCategory] = useState<AssetCategory | null>(null)
   const [description, setDescription] = useState('')
   const [file, setFile] = useState<File | null>(null)
   const [uploading, setUploading] = useState(false)
+  const [editingFile, setEditingFile] = useState<StoredFile | null>(null)
+  const [editDescription, setEditDescription] = useState('')
+  const [editCategory, setEditCategory] = useState<AssetCategory>('logo')
   const [toast, setToast] = useState<{ type: 'success' | 'error'; message: string } | null>(null)
+  const [selectedFiles, setSelectedFiles] = useState<StoredFile[]>([])
 
   const allAssets = useMemo(() => {
     return [...assets.logo, ...assets.post, ...assets.reel, ...assets.visual]
@@ -77,31 +91,24 @@ export function AdminContentLibraryClient({ initialAssets }: AdminContentLibrary
 
   const handleUpload = async (event: FormEvent) => {
     event.preventDefault()
-    if (!file) {
-      showToast('error', 'Lütfen bir dosya seçin')
-      return
-    }
+    if (!file) return showToast('error', 'Lütfen bir dosya seçin')
 
     try {
       setUploading(true)
       const {
         data: { user }
       } = await supabase.auth.getUser()
-
       if (!user) throw new Error('Oturum bulunamadı')
 
-      const config = categoryConfig[selectedCategory]
+      const config = categoryConfig[selectedCategory ?? 'logo']
       const filePath = `${config.folder}/user-${user.id}-${Date.now()}-${file.name}`
 
       const { error: uploadError } = await supabase.storage
         .from('brand-assets')
         .upload(filePath, file, { cacheControl: '3600', upsert: true })
-
       if (uploadError) throw uploadError
 
-      const { data: publicUrlData } = supabase.storage
-        .from('brand-assets')
-        .getPublicUrl(filePath)
+      const { data: publicUrlData } = supabase.storage.from('brand-assets').getPublicUrl(filePath)
 
       const response = await fetch('/api/files', {
         method: 'POST',
@@ -115,28 +122,113 @@ export function AdminContentLibraryClient({ initialAssets }: AdminContentLibrary
           description
         })
       })
-
-      if (!response.ok) {
-        const data = await response.json()
-        throw new Error(data.error ?? 'Dosya kaydedilemedi')
-      }
+      if (!response.ok) throw new Error('DB kaydı başarısız')
 
       const created = (await response.json()) as StoredFile
-
       setAssets((prev) => ({
         ...prev,
-        [selectedCategory]: [created, ...prev[selectedCategory]]
+        [selectedCategory ?? 'logo']: [created, ...prev[selectedCategory ?? 'logo']]
       }))
 
       setDescription('')
       setFile(null)
       setIsModalOpen(false)
-      showToast('success', 'Dosya başarıyla yüklendi ✅')
-    } catch (error) {
-      showToast('error', error instanceof Error ? error.message : 'Bir hata oluştu')
+      showToast('success', 'Dosya yüklendi ✅')
+    } catch (err) {
+      showToast('error', err instanceof Error ? err.message : 'Yükleme hatası')
     } finally {
       setUploading(false)
     }
+  }
+
+  const handleDelete = async (file: StoredFile) => {
+    try {
+      await supabase.storage.from('brand-assets').remove([file.path])
+      await fetch(`/api/files/${file.id}`, { method: 'DELETE' })
+
+      setAssets((prev) => ({
+        ...prev,
+        [file.category as AssetCategory]: prev[file.category as AssetCategory].filter(
+          (f) => f.id !== file.id
+        )
+      }))
+      showToast('success', 'Dosya silindi 🗑️')
+    } catch (err) {
+      showToast('error', err instanceof Error ? err.message : 'Silme hatası')
+    }
+  }
+
+  const handleBulkDelete = async () => {
+    try {
+      const paths = selectedFiles.map((f) => f.path)
+      const ids = selectedFiles.map((f) => f.id)
+
+      await supabase.storage.from('brand-assets').remove(paths)
+      await fetch(`/api/files/bulk-delete`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ids })
+      })
+
+      setAssets((prev) => {
+        const newState = { ...prev }
+        selectedFiles.forEach((f) => {
+          newState[f.category as AssetCategory] = newState[f.category as AssetCategory].filter(
+            (x) => x.id !== f.id
+          )
+        })
+        return newState
+      })
+
+      setSelectedFiles([])
+      showToast('success', 'Seçilen dosyalar silindi 🗑️')
+    } catch (err) {
+      showToast('error', err instanceof Error ? err.message : 'Toplu silme hatası')
+    }
+  }
+
+  const handleEdit = (file: StoredFile) => {
+    setEditingFile(file)
+    setEditDescription(file.description ?? '')
+    setEditCategory(file.category as AssetCategory)
+    setEditModalOpen(true)
+  }
+
+  const handleEditSave = async (e: FormEvent) => {
+    e.preventDefault()
+    if (!editingFile) return
+
+    try {
+      const res = await fetch(`/api/files/${editingFile.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          description: editDescription,
+          category: editCategory
+        })
+      })
+      if (!res.ok) throw new Error('Güncelleme başarısız')
+
+      const updated = (await res.json()) as StoredFile
+      setAssets((prev) => {
+        const newState = { ...prev }
+        newState[editingFile.category as AssetCategory] = prev[
+          editingFile.category as AssetCategory
+        ].filter((f) => f.id !== editingFile.id)
+        newState[editCategory] = [updated, ...newState[editCategory]]
+        return newState
+      })
+      setEditModalOpen(false)
+      showToast('success', 'Dosya güncellendi ✏️')
+    } catch (err) {
+      showToast('error', err instanceof Error ? err.message : 'Güncelleme hatası')
+    }
+  }
+
+  const toggleSelectFile = (file: StoredFile) => {
+    setSelectedFiles((prev) =>
+      prev.find((f) => f.id === file.id) ? prev.filter((f) => f.id !== file.id) : [...prev, file]
+    )
   }
 
   return (
@@ -157,60 +249,145 @@ export function AdminContentLibraryClient({ initialAssets }: AdminContentLibrary
         title="İçerik Kütüphanesi (Admin)"
         description="Marka ekiplerinin yüklediği dosyaları yönetin ve yenilerini ekleyin."
         actions={
-          <Button
-            onClick={() => setIsModalOpen(true)}
-            className="gap-2 bg-accent text-white hover:bg-accent/90"
-          >
-            <Sparkles className="h-4 w-4" />
-            Yeni içerik yükle
-          </Button>
+          <div className="flex gap-3">
+            {selectedFiles.length > 0 && (
+              <Button
+                onClick={handleBulkDelete}
+                variant="destructive"
+                className="gap-2"
+              >
+                <Trash2 className="h-4 w-4" /> Seçilenleri Sil ({selectedFiles.length})
+              </Button>
+            )}
+            <Button
+              onClick={() => setIsModalOpen(true)}
+              className="gap-2 bg-accent text-white hover:bg-accent/90"
+            >
+              <Sparkles className="h-4 w-4" />
+              Yeni içerik yükle
+            </Button>
+          </div>
         }
       >
-        <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-4">
-          {selectableCategories.map((category) => {
-            const config = categoryConfig[category]
-            const Icon = config.icon
-            const count = assets[category]?.length ?? 0
-            return (
-              <div
-                key={category}
-                className="flex h-full flex-col justify-between rounded-3xl border border-gray-200 bg-white p-6 shadow-sm transition hover:-translate-y-1 hover:shadow-md dark:border-gray-700 dark:bg-gray-900"
+        {selectedCategory ? (
+          <div className="space-y-6">
+            <div className="flex items-center justify-between">
+              <h2 className="text-lg font-semibold">
+                {categoryConfig[selectedCategory].title}
+              </h2>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setSelectedCategory(null)}
+                className="flex items-center gap-2"
               >
-                <div className="space-y-4">
-                  <span className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-accent/10 text-accent">
-                    <Icon className="h-5 w-5" />
-                  </span>
-                  <div>
-                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-                      {config.title}
-                    </h3>
-                    <p className="text-sm text-gray-500 dark:text-gray-400">
-                      {config.description}
-                    </p>
+                <ArrowLeft className="h-4 w-4" /> Geri dön
+              </Button>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+              {assets[selectedCategory].length === 0 ? (
+                <p className="col-span-full text-sm text-gray-500 text-center py-10 border border-dashed rounded-xl">
+                  Henüz içerik yok.
+                </p>
+              ) : (
+                assets[selectedCategory].map((file) => {
+                  const isImage = file.mimetype?.startsWith('image/')
+                  const isVideo = file.mimetype?.startsWith('video/')
+                  const isSelected = !!selectedFiles.find((f) => f.id === file.id)
+                  return (
+                    <div
+                      key={file.id}
+                      className={`rounded-xl border overflow-hidden shadow-sm transition relative ${
+                        isSelected ? 'ring-2 ring-accent' : ''
+                      }`}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={isSelected}
+                        onChange={() => toggleSelectFile(file)}
+                        className="absolute top-3 left-3 z-10 h-4 w-4"
+                      />
+                      <div className="aspect-video bg-gray-100 flex items-center justify-center">
+                        {isImage ? (
+                          <img src={file.url || ''} alt={file.name} className="object-cover w-full h-full" />
+                        ) : isVideo ? (
+                          <video controls className="w-full h-full object-cover">
+                            <source src={file.url || ''} type={file.mimetype || 'video/mp4'} />
+                          </video>
+                        ) : (
+                          <UploadCloud className="h-8 w-8 text-gray-400" />
+                        )}
+                      </div>
+                      <div className="p-4 space-y-2">
+                        <p className="text-sm font-medium line-clamp-1">{file.name}</p>
+                        <div className="flex items-center justify-between text-xs">
+                          <a
+                            href={file.url || '#'}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="font-semibold text-accent hover:underline"
+                          >
+                            İndir
+                          </a>
+                          <div className="flex gap-2">
+                            <Button size="sm" variant="outline" onClick={() => handleEdit(file)}>
+                              Düzenle
+                            </Button>
+                            <Button size="sm" variant="destructive" onClick={() => handleDelete(file)}>
+                              Sil
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )
+                })
+              )}
+            </div>
+          </div>
+        ) : (
+          <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-4">
+            {selectableCategories.map((category) => {
+              const config = categoryConfig[category]
+              const Icon = config.icon
+              const count = assets[category]?.length ?? 0
+              return (
+                <div
+                  key={category}
+                  className="flex h-full flex-col justify-between rounded-3xl border p-6 shadow-sm transition hover:-translate-y-1 hover:shadow-md"
+                >
+                  <div className="space-y-4">
+                    <span className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-accent/10 text-accent">
+                      <Icon className="h-5 w-5" />
+                    </span>
+                    <div>
+                      <h3 className="text-lg font-semibold">{config.title}</h3>
+                      <p className="text-sm text-gray-500">{config.description}</p>
+                    </div>
+                  </div>
+                  <div className="mt-6 flex items-center justify-between text-sm">
+                    <span className="text-gray-500">{count} varlık</span>
+                    <Button
+                      size="sm"
+                      className="bg-accent text-white hover:bg-accent/90"
+                      onClick={() => setSelectedCategory(category)}
+                    >
+                      Klasörü aç
+                    </Button>
                   </div>
                 </div>
-                <div className="mt-6 flex items-center justify-between text-sm">
-                  <span className="text-gray-500 dark:text-gray-400">{count} varlık</span>
-                  <Button
-                    size="sm"
-                    className="bg-accent text-white hover:bg-accent/90"
-                  >
-                    Klasörü aç
-                  </Button>
-                </div>
-              </div>
-            )
-          })}
-        </div>
+              )
+            })}
+          </div>
+        )}
       </Card>
 
-      <Card
-        title="Son Eklenen Dosyalar"
-        description="Takım arkadaşlarınız tarafından paylaşılan en güncel içerikleri görüntüleyin."
-      >
+      {/* Son Eklenenler */}
+      <Card title="Son Eklenen Dosyalar" description="En güncel içerikleri görüntüleyin.">
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
           {recentUploads.length === 0 ? (
-            <p className="rounded-2xl border border-dashed border-gray-200 bg-gray-50 px-4 py-6 text-center text-xs text-gray-500">
+            <p className="rounded-2xl border border-dashed px-4 py-6 text-center text-xs text-gray-500">
               Henüz içerik yüklenmedi.
             </p>
           ) : (
@@ -224,16 +401,14 @@ export function AdminContentLibraryClient({ initialAssets }: AdminContentLibrary
                 }`}
                 icon={<UploadCloud className="h-4 w-4" />}
                 rightSlot={
-                  upload.url && (
-                    <a
-                      href={upload.url}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="text-xs font-semibold text-accent hover:underline"
-                    >
-                      İndir
-                    </a>
-                  )
+                  <div className="flex gap-2">
+                    <Button size="sm" variant="outline" onClick={() => handleEdit(upload)}>
+                      Düzenle
+                    </Button>
+                    <Button size="sm" variant="destructive" onClick={() => handleDelete(upload)}>
+                      Sil
+                    </Button>
+                  </div>
                 }
               />
             ))
@@ -241,12 +416,13 @@ export function AdminContentLibraryClient({ initialAssets }: AdminContentLibrary
         </div>
       </Card>
 
+      {/* Upload Modal */}
       <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title="Yeni içerik yükle">
         <form className="space-y-4" onSubmit={handleUpload}>
           <div>
-            <label className="text-sm font-medium text-gray-700">Kategori</label>
+            <label className="text-sm font-medium">Kategori</label>
             <select
-              value={selectedCategory}
+              value={selectedCategory ?? 'logo'}
               onChange={(e) => setSelectedCategory(e.target.value as AssetCategory)}
               className="w-full rounded-xl border px-3 py-2 text-sm"
             >
@@ -257,9 +433,8 @@ export function AdminContentLibraryClient({ initialAssets }: AdminContentLibrary
               ))}
             </select>
           </div>
-
           <div>
-            <label className="text-sm font-medium text-gray-700">Açıklama</label>
+            <label className="text-sm font-medium">Açıklama</label>
             <textarea
               value={description}
               onChange={(e) => setDescription(e.target.value)}
@@ -267,9 +442,8 @@ export function AdminContentLibraryClient({ initialAssets }: AdminContentLibrary
               className="w-full rounded-xl border px-3 py-2 text-sm"
             />
           </div>
-
           <div>
-            <label className="text-sm font-medium text-gray-700">Dosya</label>
+            <label className="text-sm font-medium">Dosya</label>
             <input
               type="file"
               onChange={(e) => setFile(e.target.files?.[0] ?? null)}
@@ -277,13 +451,44 @@ export function AdminContentLibraryClient({ initialAssets }: AdminContentLibrary
               required
             />
           </div>
-
           <Button
             type="submit"
             className="w-full bg-accent text-white hover:bg-accent/90"
             disabled={uploading}
           >
             {uploading ? 'Yükleniyor...' : 'Yükle'}
+          </Button>
+        </form>
+      </Modal>
+
+      {/* Edit Modal */}
+      <Modal isOpen={editModalOpen} onClose={() => setEditModalOpen(false)} title="Dosya düzenle">
+        <form className="space-y-4" onSubmit={handleEditSave}>
+          <div>
+            <label className="text-sm font-medium">Kategori</label>
+            <select
+              value={editCategory}
+              onChange={(e) => setEditCategory(e.target.value as AssetCategory)}
+              className="w-full rounded-xl border px-3 py-2 text-sm"
+            >
+              {selectableCategories.map((option) => (
+                <option key={option} value={option}>
+                  {categoryConfig[option].title}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label className="text-sm font-medium">Açıklama</label>
+            <textarea
+              value={editDescription}
+              onChange={(e) => setEditDescription(e.target.value)}
+              rows={3}
+              className="w-full rounded-xl border px-3 py-2 text-sm"
+            />
+          </div>
+          <Button type="submit" className="w-full bg-accent text-white hover:bg-accent/90">
+            Kaydet
           </Button>
         </form>
       </Modal>

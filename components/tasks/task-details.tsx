@@ -8,7 +8,7 @@ import { getStatusLabel, normalizeStatus, TASK_STATUS_ORDER } from '@/lib/task-s
 import { useToast } from '@/components/providers/toast-provider'
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
 import { Database } from '@/lib/supabase-types'
-import { X } from 'lucide-react' // ✅ ikon
+import { X } from 'lucide-react'
 
 const priorityLabels: Record<Task['priority'], string> = {
   low: 'Düşük',
@@ -143,25 +143,25 @@ function TaskDetails({ task, projects, onClose, onTaskUpdated }: TaskDetailsProp
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-      <div className="relative h-[80vh] w-[90vw] max-w-5xl rounded-2xl bg-white shadow-2xl flex overflow-hidden">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-2 sm:px-4">
+      <div className="relative flex h-[95vh] w-[95vw] max-w-5xl flex-col rounded-2xl bg-white shadow-2xl sm:h-[80vh] sm:w-[90vw] sm:flex-row">
         
         {/* X kapatma butonu */}
         <button
           onClick={onClose}
-          className="absolute top-3 right-3 rounded-full p-2 hover:bg-red-100 text-gray-500 hover:text-red-600 transition"
+          className="absolute top-3 right-3 rounded-full bg-red-500 p-2 text-white hover:bg-red-600 transition"
         >
           <X size={20} />
         </button>
 
-        {/* Sol panel */}
-        <div className="flex-1 space-y-6 overflow-y-auto p-6">
+        {/* Sol panel (Task detayları + revizyonlar) */}
+        <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-6">
           <div className="space-y-4">
             <div>
               <h3 className="text-xl font-semibold text-gray-900">{currentTask.title}</h3>
               <p className="mt-1 text-sm text-gray-500">{currentTask.description}</p>
             </div>
-            <div className="grid gap-4 rounded-xl border border-gray-200 bg-gray-50 p-4 text-sm text-gray-600 md:grid-cols-3">
+            <div className="grid gap-4 rounded-xl border border-gray-200 bg-gray-50 p-4 text-sm text-gray-600 sm:grid-cols-3">
               <div>
                 <p className="text-xs uppercase text-gray-500">Proje</p>
                 <p className="font-medium text-gray-900">{projectName}</p>
@@ -225,10 +225,12 @@ function TaskDetails({ task, projects, onClose, onTaskUpdated }: TaskDetailsProp
           </div>
         </div>
 
-        {/* Sağ panel */}
-        <div className="w-96 flex flex-col border-l p-4">
-          <h4 className="text-sm font-semibold text-gray-900 mb-2">Yorumlar</h4>
-          <div className="flex-1 overflow-y-auto space-y-3 pr-1">
+        {/* Sağ panel (Yorumlar) */}
+        <div className="flex flex-col border-t sm:border-t-0 sm:border-l sm:w-96 h-[50vh] sm:h-auto">
+          <h4 className="mb-2 p-4 text-sm font-semibold text-gray-900">Yorumlar</h4>
+          
+          {/* Yorum listesi */}
+          <div className="flex-1 overflow-y-auto px-4 space-y-3">
             {comments.length === 0 ? (
               <p className="text-sm text-gray-500">Henüz yorum yok.</p>
             ) : (
@@ -256,7 +258,7 @@ function TaskDetails({ task, projects, onClose, onTaskUpdated }: TaskDetailsProp
           </div>
 
           {/* Yorum ekleme */}
-          <div className="border-t mt-3 pt-3">
+          <div className="p-4 border-t">
             <textarea
               rows={3}
               value={commentText}
@@ -275,7 +277,7 @@ function TaskDetails({ task, projects, onClose, onTaskUpdated }: TaskDetailsProp
                   className="hidden"
                 />
               </label>
-              {commentFile && <span className="text-xs text-gray-500 truncate">{commentFile.name}</span>}
+              {commentFile && <span className="truncate text-xs text-gray-500">{commentFile.name}</span>}
             </div>
 
             <Button className="mt-3 w-full" onClick={handleAddComment} disabled={isCommentLoading}>

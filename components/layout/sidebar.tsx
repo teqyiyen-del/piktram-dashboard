@@ -1,6 +1,5 @@
 'use client'
 
-import { useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import {
@@ -22,6 +21,8 @@ import { cn } from '@/lib/utils'
 
 type SidebarProps = {
   role?: 'admin' | 'user'
+  open: boolean
+  onClose: () => void
 }
 
 const baseNavigation = [
@@ -38,9 +39,8 @@ const baseNavigation = [
   { name: 'Ayarlar', href: '/ayarlar', icon: Settings2 }
 ]
 
-export default function Sidebar({ role = 'user' }: SidebarProps) {
+export default function Sidebar({ role = 'user', open, onClose }: SidebarProps) {
   const pathname = usePathname()
-  const [open, setOpen] = useState(false)
 
   const navigation =
     role === 'admin'
@@ -83,7 +83,7 @@ export default function Sidebar({ role = 'user' }: SidebarProps) {
 
   return (
     <>
-      {/* Desktop Sidebar (her zaman en üst katman, Topbar’ın üstünde) */}
+      {/* Desktop Sidebar */}
       <aside className="fixed top-0 left-0 z-50 hidden h-screen w-[280px] shrink-0 flex-col border-r border-gray-200/70 bg-gradient-to-b from-white via-white to-[#FFF5F3] px-6 py-6 shadow-xl transition-colors duration-300 dark:border-gray-800/70 dark:from-[#171717] dark:via-[#171717] dark:to-[#151515] lg:flex">
         {/* Logo */}
         <div className="mb-8 flex items-center gap-3">
@@ -92,7 +92,7 @@ export default function Sidebar({ role = 'user' }: SidebarProps) {
           </div>
           <div>
             <p className="text-lg font-semibold text-gray-900 dark:text-white">Piktram</p>
-            <p className="text-xs text-gray-500 dark:text-gray-400">Planlarınıza odaklanın</p>
+            <p className="text-xs text-gray-500 dark:text-gray-400">İş Akışınız.</p>
           </div>
         </div>
 
@@ -100,7 +100,7 @@ export default function Sidebar({ role = 'user' }: SidebarProps) {
 
         {/* Footer */}
         <div className="mt-auto rounded-xl bg-white/80 p-4 text-xs text-gray-600 shadow-sm backdrop-blur dark:bg-surface-dark/80 dark:text-gray-300">
-          <p className="font-semibold text-gray-900 dark:text-white">Pro ipucu</p>
+          <p className="font-semibold text-gray-900 dark:text-white">pucu</p>
           <p className="mt-1 leading-relaxed">
             Panonuzu kişiselleştirerek ekibinizin odağını artırabilirsiniz.
           </p>
@@ -108,38 +108,50 @@ export default function Sidebar({ role = 'user' }: SidebarProps) {
       </aside>
 
       {/* Mobile Sidebar */}
-      <div className={cn('fixed inset-0 z-50 flex lg:hidden', open ? 'pointer-events-auto' : 'pointer-events-none')}>
+      <div
+        className={cn(
+          'fixed inset-0 z-50 flex lg:hidden',
+          open ? 'pointer-events-auto' : 'pointer-events-none'
+        )}
+      >
+        {/* Overlay */}
         <div
-          className={cn('absolute inset-0 bg-gray-900/50 transition-opacity', open ? 'opacity-100' : 'opacity-0')}
+          className={cn(
+            'absolute inset-0 bg-gray-900/50 transition-opacity',
+            open ? 'opacity-100' : 'opacity-0'
+          )}
           aria-hidden="true"
-          onClick={() => setOpen(false)}
+          onClick={onClose} // dış boşluğa tıklayınca kapat
         />
+
         <aside
           className={cn(
             'relative flex h-full w-72 flex-col border-r border-gray-200/70 bg-gradient-to-b from-white via-white to-[#FFF5F3] px-6 py-8 shadow-lg transition-transform duration-300 dark:border-gray-800/70 dark:from-[#171717] dark:via-[#171717] dark:to-[#151515]',
             open ? 'translate-x-0' : '-translate-x-full'
           )}
         >
+          {/* Close button */}
           <button
             type="button"
-            onClick={() => setOpen(false)}
+            onClick={onClose}
             className="absolute right-4 top-4 inline-flex h-9 w-9 items-center justify-center rounded-full bg-white/80 text-gray-500 shadow-sm transition hover:text-accent dark:bg-surface-dark/80 dark:text-gray-300"
             aria-label="Menüyü kapat"
           >
             <X className="h-4 w-4" />
           </button>
 
+          {/* Logo */}
           <div className="mb-8 flex items-center gap-3">
             <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-accent text-lg font-bold text-white shadow-sm">
               P
             </div>
             <div>
               <p className="text-lg font-semibold text-gray-900 dark:text-white">Piktram</p>
-              <p className="text-xs text-gray-500 dark:text-gray-400">Kontrol merkeziniz</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400">İş Akışınız.</p>
             </div>
           </div>
 
-          {renderNav(() => setOpen(false))}
+          {renderNav(onClose)}
         </aside>
       </div>
     </>

@@ -12,22 +12,26 @@ import type { StoredFile, Subscription } from '@/lib/types'
 
 interface SubscriptionPanelProps {
   subscription: Subscription | null
-  invoices: StoredFile[]
-  contracts: StoredFile[]
+  invoices?: StoredFile[]
+  contracts?: StoredFile[]
 }
 
 function formatCurrency(value: number, currency: string) {
   try {
     return new Intl.NumberFormat('tr-TR', {
       style: 'currency',
-      currency
+      currency,
     }).format(value)
   } catch {
     return `${value.toFixed(2)} ${currency}`
   }
 }
 
-export function SubscriptionPanel({ subscription, invoices, contracts }: SubscriptionPanelProps) {
+export default function SubscriptionPanel({
+  subscription,
+  invoices = [],
+  contracts = [],
+}: SubscriptionPanelProps) {
   const [upgradeModalOpen, setUpgradeModalOpen] = useState(false)
 
   const planDetails = useMemo(() => {
@@ -36,25 +40,25 @@ export function SubscriptionPanel({ subscription, invoices, contracts }: Subscri
         {
           label: 'Abonelik',
           value: 'Tanımlı plan yok',
-          helper: 'Plan oluşturmak için destek ekibimizle iletişime geçin.'
-        }
+          helper: 'Plan oluşturmak için destek ekibimizle iletişime geçin.',
+        },
       ]
     }
     return [
       {
         label: 'Paket',
         value: subscription.plan_name,
-        helper: 'Aktif hizmet paketi'
+        helper: 'Aktif hizmet paketi',
       },
       {
         label: 'Ücret',
         value: formatCurrency(subscription.price, subscription.currency),
-        helper: 'KDV dahil aylık fiyat'
+        helper: 'KDV dahil aylık fiyat',
       },
       {
         label: 'Yenilenme',
         value: subscription.renewal_date ? formatDate(subscription.renewal_date) : 'Belirtilmedi',
-        helper: 'Yenileme öncesi e-posta ile bilgilendirme yapılır.'
+        helper: 'Yenileme öncesi e-posta ile bilgilendirme yapılır.',
       },
       {
         label: 'Durum',
@@ -64,8 +68,8 @@ export function SubscriptionPanel({ subscription, invoices, contracts }: Subscri
             : subscription.status === 'beklemede'
             ? 'Beklemede'
             : 'İptal edildi',
-        helper: 'Durum değişiklikleri kaydedilir.'
-      }
+        helper: 'Durum değişiklikleri kaydedilir.',
+      },
     ]
   }, [subscription])
 
@@ -91,10 +95,7 @@ export function SubscriptionPanel({ subscription, invoices, contracts }: Subscri
           <InfoGrid items={planDetails} columns={2} />
         </Card>
 
-        <Card
-          title="Faturalama"
-          description="Ödeme ve destek ayarları."
-        >
+        <Card title="Faturalama" description="Ödeme ve destek ayarları.">
           <div className="space-y-4">
             <ListItem
               title="Otomatik Ödeme"

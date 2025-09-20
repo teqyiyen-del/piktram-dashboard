@@ -3,53 +3,41 @@
 import { useState } from 'react'
 import { Card } from '@/components/sections/card'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
 import { Switch } from '@/components/ui/switch'
-import { Select, SelectItem } from '@/components/ui/select'
-import { Cog } from 'lucide-react'
+import { Cog, LogOut } from 'lucide-react'
+import { useSupabaseClient } from '@supabase/auth-helpers-react'
+import { useRouter } from 'next/navigation'
 
 export default function AdminSettingsPage() {
-  const [siteName, setSiteName] = useState('Piktram Admin Paneli')
-  const [defaultLang, setDefaultLang] = useState('tr')
-  const [defaultTheme, setDefaultTheme] = useState<'light' | 'dark'>('light')
+  const [darkMode, setDarkMode] = useState(false)
   const [twoFA, setTwoFA] = useState(false)
   const [emailAlerts, setEmailAlerts] = useState(true)
 
-  return (
-    <div className="space-y-10">
-      {/* Sayfa başlığı */}
-      <header className="rounded-3xl bg-surface p-8 shadow-sm dark:bg-surface-dark">
-        <h1 className="text-2xl font-semibold text-gray-900 dark:text-white flex items-center gap-2">
-          <Cog className="h-6 w-6 text-accent" />
-          Admin Ayarları
-        </h1>
-        <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
-          Sistem yapılandırmasını, kullanıcı yetkilerini ve güvenlik ayarlarını yönetin.
-        </p>
-      </header>
+  const supabase = useSupabaseClient()
+  const router = useRouter()
 
-      {/* Sistem Genel Ayarları */}
-      <Card
-        title="Sistem Genel Ayarları"
-        description="Panelin genel yapılandırmasını buradan düzenleyin."
+  const handleLogout = async () => {
+    await supabase.auth.signOut()
+    router.replace('/auth/login')
+  }
+
+  return (
+    <div className="mx-auto w-full max-w-7xl space-y-10 px-6 pb-12">
+      {/* Gradient Header */}
+      <header
+        className="rounded-2xl p-6 text-white shadow-sm"
+        style={{ background: 'linear-gradient(to right, #FF5E4A, #FA7C6B)' }}
       >
-        <div className="grid gap-4 md:grid-cols-2">
-          <div>
-            <label className="text-sm font-medium">Site Adı</label>
-            <Input value={siteName} onChange={(e) => setSiteName(e.target.value)} />
-          </div>
-          <div>
-            <label className="text-sm font-medium">Varsayılan Dil</label>
-            <Select value={defaultLang} onChange={(e) => setDefaultLang(e.target.value)}>
-              <SelectItem value="tr">Türkçe</SelectItem>
-              <SelectItem value="en">English</SelectItem>
-            </Select>
-          </div>
+        <div>
+          <h1 className="text-xl md:text-2xl font-semibold flex items-center gap-2">
+            <Cog className="h-6 w-6" />
+            Admin Ayarları
+          </h1>
+          <p className="mt-1 text-sm text-white/90">
+            Sistem yapılandırmasını, kullanıcı yetkilerini ve güvenlik ayarlarını yönetin.
+          </p>
         </div>
-        <div className="mt-4">
-          <Button>Kaydet</Button>
-        </div>
-      </Card>
+      </header>
 
       {/* Kullanıcı Yönetimi */}
       <Card
@@ -74,7 +62,7 @@ export default function AdminSettingsPage() {
       >
         <div className="flex items-center justify-between py-2">
           <span>İki Faktörlü Doğrulama (2FA)</span>
-          <Switch checked={twoFA} onChange={(e) => setTwoFA(e.target.checked)} />
+          <Switch checked={twoFA} onCheckedChange={setTwoFA} />
         </div>
         <div className="flex items-center justify-between py-2">
           <span>Aktif Oturumları Gör</span>
@@ -91,7 +79,7 @@ export default function AdminSettingsPage() {
       >
         <div className="flex items-center justify-between py-2">
           <span>Sistem E-postaları</span>
-          <Switch checked={emailAlerts} onChange={(e) => setEmailAlerts(e.target.checked)} />
+          <Switch checked={emailAlerts} onCheckedChange={setEmailAlerts} />
         </div>
         <div className="flex items-center justify-between py-2">
           <span>Kritik Hata Bildirimleri</span>
@@ -104,20 +92,21 @@ export default function AdminSettingsPage() {
         title="Tema"
         description="Panelin görünümünü kişiselleştirin."
       >
-        <div className="flex gap-3">
-          <Button
-            variant={defaultTheme === 'light' ? 'default' : 'outline'}
-            onClick={() => setDefaultTheme('light')}
-          >
-            Açık Tema
-          </Button>
-          <Button
-            variant={defaultTheme === 'dark' ? 'default' : 'outline'}
-            onClick={() => setDefaultTheme('dark')}
-          >
-            Koyu Tema
-          </Button>
+        <div className="flex items-center justify-between">
+          <span>Koyu Tema</span>
+          <Switch checked={darkMode} onCheckedChange={setDarkMode} />
         </div>
+      </Card>
+
+      {/* Logout */}
+      <Card title="Hesap" description="Oturumunuzu kapatın.">
+        <Button
+          variant="destructive"
+          onClick={handleLogout}
+          className="flex items-center gap-2"
+        >
+          <LogOut className="h-4 w-4" /> Çıkış Yap
+        </Button>
       </Card>
     </div>
   )

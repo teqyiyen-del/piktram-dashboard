@@ -8,10 +8,7 @@ import { Task } from '@/lib/types'
 
 export default async function IsAkisiPage() {
   const supabase = createServerComponentClient<Database>({ cookies })
-  const {
-    data: { session }
-  } = await supabase.auth.getSession()
-
+  const { data: { session } } = await supabase.auth.getSession()
   if (!session) return null
 
   const { data: profile } = await supabase
@@ -22,14 +19,8 @@ export default async function IsAkisiPage() {
 
   const isAdmin = profile?.role === 'admin'
 
-  const tasksQuery = supabase
-    .from('tasks')
-    .select('*')
-    .order('due_date', { ascending: true })
-
-  const projectsQuery = supabase
-    .from('projects')
-    .select('id, title, user_id')
+  const tasksQuery = supabase.from('tasks').select('*').order('due_date', { ascending: true })
+  const projectsQuery = supabase.from('projects').select('id, title, user_id')
 
   if (!isAdmin) {
     tasksQuery.eq('user_id', session.user.id)
@@ -42,13 +33,10 @@ export default async function IsAkisiPage() {
   ])
 
   const tasks = (tasksData ?? []) as unknown as Task[]
-  const projectOptions = (projectsData ?? []).map((p) => ({
-    id: p.id,
-    title: p.title
-  }))
+  const projectOptions = (projectsData ?? []).map((p) => ({ id: p.id, title: p.title }))
 
   return (
-    <div className="space-y-10 px-layout-x py-layout-y">
+    <div className="space-y-10 px-layout-x py-layout-y overflow-x-hidden">
       {/* Section Header */}
       <SectionHeader
         title="İş Akışı"
@@ -61,39 +49,39 @@ export default async function IsAkisiPage() {
       <Card
         title="Nasıl Çalışır?"
         description="Görevlerinizi sütunlar arasında sürükleyip bırakarak güncel tutabilirsiniz."
+        className="w-full min-w-0"
       >
-        <div className="grid gap-4 lg:grid-cols-3">
-          <div className="rounded-2xl bg-gray-50 p-5 text-sm text-gray-600 shadow-sm dark:bg-surface-dark/50 dark:text-gray-300">
-            <span className="font-medium text-gray-800 dark:text-white">
-              Anında Senkronizasyon
-            </span>
+        <div className="grid gap-6 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
+          <div className="rounded-2xl bg-gray-50 p-6 text-sm text-gray-600 shadow-sm dark:bg-surface-dark/50 dark:text-gray-300">
+            <span className="font-medium text-gray-800 dark:text-white">Görevleri Görüntüleyin</span>
+            <p className="mt-2">Tüm görevleri tek ekranda görün ve süreci kolayca takip edin.</p>
+          </div>
+          <div className="rounded-2xl bg-gray-50 p-6 text-sm text-gray-600 shadow-sm dark:bg-surface-dark/50 dark:text-gray-300">
+            <span className="font-medium text-gray-800 dark:text-white">Revize Edin veya Yorum Yapın</span>
             <p className="mt-2">
-              Kartları taşıdığınızda durumlar Supabase üzerinde anında güncellenir
-              ve ekip arkadaşlarınız bilgilendirilir.
+              Kartın üzerine tıklayarak yorum bırakabilir, gerekirse görsel ekleyebilirsiniz.
+              Onay vermek istediğinizde kartı Onaylandı sütununa sürüklemeniz yeterlidir.
             </p>
           </div>
-          <div className="rounded-2xl bg-gray-50 p-5 text-sm text-gray-600 shadow-sm dark:bg-surface-dark/50 dark:text-gray-300">
-            <span className="font-medium text-gray-800 dark:text-white">
-              Onay Süreçleri
-            </span>
+          <div className="rounded-2xl bg-gray-50 p-6 text-sm text-gray-600 shadow-sm dark:bg-surface-dark/50 dark:text-gray-300">
+            <span className="font-medium text-gray-800 dark:text-white">Tamamlananları Takip Edin</span>
             <p className="mt-2">
-              Revize ve Onay aşamalarını düzenli tutarak müşteri onay sürecini hızlandırabilirsiniz.
-            </p>
-          </div>
-          <div className="rounded-2xl bg-gray-50 p-5 text-sm text-gray-600 shadow-sm dark:bg-surface-dark/50 dark:text-gray-300">
-            <span className="font-medium text-gray-800 dark:text-white">
-              Raporlama
-            </span>
-            <p className="mt-2">
-              Paylaşıldı sütununa taşınan görevler raporlara otomatik olarak yansır.
+              Onaylanan ve paylaşılan görevler otomatik olarak raporlara yansır; fazladan işlem yapmanıza gerek kalmaz.
             </p>
           </div>
         </div>
       </Card>
 
       {/* Kanban Board */}
-      <Card>
-        <KanbanBoard initialTasks={tasks} projects={projectOptions} />
+      <Card
+        title="Görev Panosu"
+        description="Görevleri sürükleyerek durumunu anında güncelleyebilirsiniz."
+        className="w-full min-w-0"
+      >
+        {/* 🔑 scroll ve min-w kaldırıldı */}
+        <div className="w-full min-w-0">
+          <KanbanBoard initialTasks={tasks} projects={projectOptions} />
+        </div>
       </Card>
     </div>
   )

@@ -10,7 +10,9 @@ import { Modal } from '@/components/ui/modal'
 import { FolderKanban, PlusCircle } from 'lucide-react'
 import KanbanBoard from '@/components/tasks/kanban-board'
 
-type Task = Database['public']['Tables']['tasks']['Row']
+type Task = Database['public']['Tables']['tasks']['Row'] & {
+  profiles?: { full_name: string | null; email: string | null } | null
+}
 
 export default function AdminTasksPage() {
   const supabase = createClientComponentClient<Database>()
@@ -30,12 +32,17 @@ export default function AdminTasksPage() {
   }, [])
 
   async function fetchTasks() {
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from('tasks')
-      .select('*, profiles(full_name, email, company)')
+      .select(
+        `
+        id, title, description, status, due_date, priority, file_url, created_at, user_id,
+        profiles(full_name, email)
+        `
+      )
       .order('created_at', { ascending: false })
 
-    setTasks(data || [])
+    if (!error) setTasks(data || [])
   }
 
   async function createTask() {
@@ -71,7 +78,12 @@ export default function AdminTasksPage() {
           status: 'todo',
         },
       ])
-      .select('*')
+      .select(
+        `
+        id, title, description, status, due_date, priority, file_url, created_at, user_id,
+        profiles(full_name, email)
+        `
+      )
       .single()
 
     setLoading(false)
@@ -88,13 +100,12 @@ export default function AdminTasksPage() {
     }
   }
 
-  // ✅ Drag & Drop sonrası güncelleme
   async function handleTaskMove(taskId: string, newStatus: string) {
     const { data, error } = await supabase
       .from('tasks')
       .update({ status: newStatus })
       .eq('id', taskId)
-      .select('*')
+      .select('id, title, user_id, status')
       .single()
 
     if (!error && data) {
@@ -102,7 +113,6 @@ export default function AdminTasksPage() {
         prev.map((t) => (t.id === taskId ? { ...t, status: newStatus } : t))
       )
 
-      // ✅ Bildirim kaydı at
       await supabase.from('notifications').insert({
         title: 'Görev Güncellendi',
         description: `"${data.title}" görevi ${newStatus} durumuna taşındı.`,

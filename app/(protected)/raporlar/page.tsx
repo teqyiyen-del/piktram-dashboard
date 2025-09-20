@@ -56,10 +56,10 @@ export default async function RaporlarPage() {
     : '0.0'
 
   const summaryStats = [
-    { label: 'Toplam Rapor', value: reports.length.toString(), helper: 'Haftalık + aylık toplam rapor' },
-    { label: 'Haftalık Ortalama Takipçi', value: `${formatNumber(avgFollowersWeekly)} kişi`, helper: 'Takipçi artış ortalaması' },
-    { label: 'Haftalık Ortalama Beğeni', value: `${formatNumber(avgLikesWeekly)}`, helper: 'Etkileşim performansı' },
-    { label: 'Aylık Ortalama İçerik', value: `${formatNumber(avgPostsMonthly)} gönderi`, helper: 'Üretim temposu' }
+    { label: 'Toplam Rapor', value: reports.length.toString(), helper: 'adet toplam rapor.' },
+    { label: 'Bu hafta', value: `${formatNumber(avgFollowersWeekly)} kişi`, helper: 'takip etti.' },
+    { label: 'Beğeniler', value: `${formatNumber(avgLikesWeekly)}`, helper: 'bu hafta alındı.' },
+    { label: 'Bu ay', value: `${formatNumber(avgPostsMonthly)} gönderi`, helper: 'paylaşıldı.' }
   ]
 
   const weeklyChartData = weeklyReports.slice().reverse().map((r) => ({
@@ -90,7 +90,6 @@ export default async function RaporlarPage() {
 
   return (
     <div className="space-y-10">
-      {/* Gradient header */}
       <SectionHeader
         title="Raporlar"
         subtitle="Haftalık ve aylık performans raporlarınızı tek ekrandan takip edin."

@@ -70,7 +70,7 @@ export default function HedeflerPage() {
 
       {/* KPI'lar */}
       <Card title="Ana Hedefler" description="İlerleme çubukları mevcut durumunuzu gösterir.">
-        <ProgressList items={kpis} />
+        <ProgressList items={kpis} hidePercent />
       </Card>
     </div>
   )
