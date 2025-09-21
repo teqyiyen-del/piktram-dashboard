@@ -9,9 +9,12 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Modal } from '@/components/ui/modal'
 import { FolderKanban, PlusCircle, Trash2, Pencil } from 'lucide-react'
+import { useCustomer } from '@/components/providers/customer-provider'
 
 export default function ProjectsPage() {
   const supabase = createClientComponentClient<Database>()
+  const { selectedCustomer } = useCustomer()
+
   const [projects, setProjects] = useState<any[]>([])
   const [showModal, setShowModal] = useState(false)
   const [editingProject, setEditingProject] = useState<any | null>(null)
@@ -24,13 +27,18 @@ export default function ProjectsPage() {
   const [loading, setLoading] = useState(false)
 
   useEffect(() => {
-    fetchProjects()
-  }, [])
+    if (selectedCustomer) {
+      fetchProjects(selectedCustomer)
+    } else {
+      setProjects([]) // müşteri seçilmediyse boş göster
+    }
+  }, [selectedCustomer])
 
-  async function fetchProjects() {
+  async function fetchProjects(clientId: string) {
     const { data, error } = await supabase
       .from('projects')
       .select('*, profiles(full_name, email, company)')
+      .eq('client_id', clientId) // filtreyi bağladık
       .order('created_at', { ascending: false })
 
     if (error) console.error('Projeler alınamadı:', error.message)
@@ -43,8 +51,7 @@ export default function ProjectsPage() {
       return
     }
 
-    // ❗️ Eğer müşteri seçilmemişse uyarı
-    if (!projects.length || !projects[0]?.user_id) {
+    if (!selectedCustomer) {
       alert('Proje eklemek için önce müşteri seçmelisin!')
       return
     }
@@ -70,7 +77,7 @@ export default function ProjectsPage() {
           description,
           due_date: dueDate || null,
           progress: progress || 0,
-          user_id: projects[0].user_id, // mevcut müşteri
+          client_id: selectedCustomer, // müşteri seçimine bağladık
         },
       ])
       if (error) alert('Proje eklenemedi: ' + error.message)
@@ -78,14 +85,14 @@ export default function ProjectsPage() {
 
     setLoading(false)
     resetForm()
-    fetchProjects()
+    fetchProjects(selectedCustomer!)
   }
 
   async function handleDeleteProject(id: string) {
     if (!confirm('Bu projeyi silmek istediğine emin misin?')) return
     const { error } = await supabase.from('projects').delete().eq('id', id)
     if (error) alert('Proje silinemedi: ' + error.message)
-    fetchProjects()
+    if (selectedCustomer) fetchProjects(selectedCustomer)
   }
 
   function resetForm() {
@@ -119,11 +126,17 @@ export default function ProjectsPage() {
             Projeler
           </h1>
           <p className="mt-1 text-sm text-white/90">
-            Tüm projeleri yönetin, düzenleyin, silin veya yeni projeler ekleyin.
+            Seçili müşteri için projeleri yönetin, düzenleyin, silin veya yeni projeler ekleyin.
           </p>
         </div>
         <Button
-          onClick={() => setShowModal(true)}
+          onClick={() => {
+            if (!selectedCustomer) {
+              alert('Yeni proje eklemek için önce müşteri seçmelisin!')
+              return
+            }
+            setShowModal(true)
+          }}
           className="gap-2 bg-white text-[#FF5E4A] hover:bg-gray-100"
         >
           <PlusCircle className="h-4 w-4" />
@@ -134,7 +147,13 @@ export default function ProjectsPage() {
       {/* Project List */}
       <Card>
         <div className="space-y-4">
-          {projects.map((project) => (
+          {!selectedCustomer && (
+            <p className="text-sm text-gray-500 text-center py-6">
+              Projeleri görmek için bir müşteri seçmelisin.
+            </p>
+          )}
+
+          {selectedCustomer && projects.map((project) => (
             <div
               key={project.id}
               className="rounded-xl border bg-white p-4 shadow-sm hover:shadow-md transition"
@@ -178,7 +197,8 @@ export default function ProjectsPage() {
               </div>
             </div>
           ))}
-          {projects.length === 0 && (
+
+          {selectedCustomer && projects.length === 0 && (
             <p className="text-sm text-gray-500 text-center py-6">Henüz proje eklenmedi.</p>
           )}
         </div>

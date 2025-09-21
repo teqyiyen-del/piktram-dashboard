@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 import {
   LayoutDashboard,
   Users,
@@ -14,7 +14,8 @@ import {
   Settings,
   BookOpen,
   UserCircle2,
-  ChevronDown
+  ChevronDown,
+  Check
 } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
@@ -44,6 +45,7 @@ const settingsLink = { href: '/admin/settings', label: 'Ayarlar', icon: Settings
 
 export default function AdminSidebar() {
   const pathname = usePathname()
+  const router = useRouter()
   const supabase = createClientComponentClient<Database>()
 
   let customerCtx
@@ -67,6 +69,11 @@ export default function AdminSidebar() {
     fetchClients()
   }, [supabase])
 
+  const displayName = (c: Client | undefined) => {
+    if (!c) return 'Tüm Müşteriler'
+    return c.company || c.full_name || c.email || 'Müşteri'
+  }
+
   const activeCustomer = clients.find((c) => c.id === selectedCustomer)
 
   const isActive = (href: string) => {
@@ -74,6 +81,18 @@ export default function AdminSidebar() {
       return pathname === '/admin'
     }
     return pathname === href || pathname.startsWith(href + '/')
+  }
+
+  // ✅ müşteri seçimini mevcut sayfa üzerinden yap
+  function handleSelectClient(clientId: string | null) {
+    if (clientId) {
+      setSelectedCustomer(clientId)
+      router.push(`${pathname}?client=${clientId}`)
+    } else {
+      setSelectedCustomer(null)
+      router.push(pathname) // query temizlenir
+    }
+    setIsOpen(false)
   }
 
   return (
@@ -87,13 +106,13 @@ export default function AdminSidebar() {
       <div className="px-4 mb-6 relative">
         <button
           onClick={() => setIsOpen(!isOpen)}
-          className="w-full flex items-center justify-between rounded-xl border border-gray-200/60 bg-gray-50/80 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 dark:border-gray-700 dark:bg-gray-900/50 dark:text-gray-300"
+          className="w-full flex items-center justify-between rounded-xl bg-accent text-white px-3 py-2 text-sm font-medium hover:bg-accent-dark transition-colors"
         >
           <span className="flex items-center gap-2 truncate">
             <UserCircle2 className="h-4 w-4 shrink-0" />
-            {activeCustomer
-              ? activeCustomer.full_name || activeCustomer.email
-              : 'Tüm Müşteriler'} 
+            {selectedCustomer
+              ? displayName(activeCustomer)
+              : '🌍 Tüm Müşteriler'}
           </span>
           <ChevronDown
             className={`h-4 w-4 transition-transform ${
@@ -104,29 +123,32 @@ export default function AdminSidebar() {
 
         {isOpen && (
           <div className="absolute z-50 mt-2 left-0 right-0 max-h-60 overflow-y-auto rounded-lg border border-gray-200/60 bg-white shadow-md dark:border-gray-700 dark:bg-gray-900">
+            {/* Global seçeneği */}
             <button
-              onClick={() => {
-                setSelectedCustomer(null)
-                setIsOpen(false)
-              }}
-              className={`w-full text-left px-3 py-2 text-sm rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 ${
-                selectedCustomer === null ? 'bg-accent/10 text-accent' : ''
-              }`}
+              onClick={() => handleSelectClient(null)}
+              className={`flex items-center justify-between w-full text-left px-3 py-2 text-sm rounded-md transition-colors ${
+                selectedCustomer === null
+                  ? 'bg-accent text-white'
+                  : 'bg-gray-100 text-gray-800'
+              } hover:bg-gray-300 hover:text-gray-900`}
             >
               🌍 Tüm Müşteriler
+              {selectedCustomer === null && <Check className="h-4 w-4" />}
             </button>
+
+            {/* Müşteri listesi */}
             {clients.map((c) => (
               <button
                 key={c.id}
-                onClick={() => {
-                  setSelectedCustomer(c.id)
-                  setIsOpen(false)
-                }}
-                className={`w-full text-left px-3 py-2 text-sm rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 ${
-                  selectedCustomer === c.id ? 'bg-accent/10 text-accent' : ''
-                }`}
+                onClick={() => handleSelectClient(c.id)}
+                className={`flex items-center justify-between w-full text-left px-3 py-2 text-sm rounded-md transition-colors ${
+                  selectedCustomer === c.id
+                    ? 'bg-accent text-white'
+                    : 'bg-gray-100 text-gray-800'
+                } hover:bg-gray-300 hover:text-gray-900`}
               >
-                {c.full_name ?? c.email} {c.company ? `- ${c.company}` : ''}
+                {displayName(c)}
+                {selectedCustomer === c.id && <Check className="h-4 w-4" />}
               </button>
             ))}
           </div>

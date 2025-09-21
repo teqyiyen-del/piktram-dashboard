@@ -8,72 +8,87 @@ import type { Database } from '@/lib/supabase-types'
 export default async function AdminPage() {
   const supabase = createServerComponentClient<Database>({ cookies })
 
-  // Session kontrolü
+  // ---- Session ----
   const {
     data: { session },
+    error: sessionError,
   } = await supabase.auth.getSession()
 
-  if (!session) {
-    redirect('/login')
+  if (sessionError) {
+    console.error('Session error:', sessionError)
   }
+  if (!session) redirect('/login')
 
-  // Kullanıcı bilgisi (mevcut admin)
-  const { data: currentUser } = await supabase
+  // ---- Current user ----
+  const { data: currentUser, error: profileError } = await supabase
     .from('profiles')
-    .select('*')
+    .select('id, full_name, email, role')
     .eq('id', session.user.id)
     .maybeSingle()
 
+  if (profileError) {
+    console.error('Profile fetch error:', profileError)
+  }
+
   if (!currentUser) {
+    console.error('No profile row found for user id:', session.user.id)
     redirect('/login')
   }
+
   if (currentUser.role !== 'admin') {
+    console.warn('Access denied: not admin', currentUser)
     redirect('/')
   }
 
-  // --- Tüm verileri paralel çek ---
+  // ---- Queries ----
+  const usersQ = supabase
+    .from('profiles')
+    .select('id, full_name, email, role, created_at, company')
+  const projectsQ = supabase.from('projects').select('*')
+  const tasksQ = supabase.from('tasks').select('*')
+  const goalsQ = supabase.from('goals').select('*')
+  const revisionsQ = supabase.from('revisions').select('*')
+  const invoicesQ = supabase.from('invoices').select('*')
+  const announcementsQ = supabase.from('announcements').select('*')
+
+  // ---- Parallel fetch ----
   const [
-    { data: usersData },
-    { data: projectsData },
-    { data: tasksData },
-    { data: goalsData },
-    { data: revisionsData },
-    { data: invoicesData },
+    { data: usersData, error: usersError },
+    { data: projectsData, error: projectsError },
+    { data: tasksData, error: tasksError },
+    { data: goalsData, error: goalsError },
+    { data: revisionsData, error: revisionsError },
+    { data: invoicesData, error: invoicesError },
+    { data: announcementsData, error: announcementsError },
   ] = await Promise.all([
-    supabase.from('profiles').select('*'),
-    supabase.from('projects').select('*'),
-    supabase.from('tasks').select('*'),
-    supabase.from('goals').select('*'),
-    supabase.from('revisions').select('*'),
-    supabase.from('invoices').select('*'),
+    usersQ,
+    projectsQ,
+    tasksQ,
+    goalsQ,
+    revisionsQ,
+    invoicesQ,
+    announcementsQ,
   ])
 
-  const users = usersData ?? []
-  const projects = projectsData ?? []
-  const tasks = tasksData ?? []
-  const goals = goalsData ?? []
-  const revisions = revisionsData ?? []
-  const invoices = invoicesData ?? []
-
-  // Kullanıcı eşleme (ownerMap)
-  const ownerMap = Object.fromEntries(
-    users.map((u: any) => [
-      u.id,
-      { full_name: u.full_name ?? '', email: u.email ?? '' },
-    ])
-  )
+  // ---- Error logs ----
+  if (usersError) console.error('Users error:', usersError)
+  if (projectsError) console.error('Projects error:', projectsError)
+  if (tasksError) console.error('Tasks error:', tasksError)
+  if (goalsError) console.error('Goals error:', goalsError)
+  if (revisionsError) console.error('Revisions error:', revisionsError)
+  if (invoicesError) console.error('Invoices error:', invoicesError)
+  if (announcementsError) console.error('Announcements error:', announcementsError)
 
   return (
     <div className="p-6">
       <AdminDashboard
         currentUser={currentUser}
-        users={users}
-        projects={projects}
-        tasks={tasks}
-        goals={goals}
-        revisions={revisions}
-        invoices={invoices}
-        ownerMap={ownerMap}
+        users={usersData ?? []}
+        projects={projectsData ?? []}
+        tasks={tasksData ?? []}
+        goals={goalsData ?? []}
+        invoices={invoicesData ?? []}
+        announcements={announcementsData ?? []}
       />
     </div>
   )

@@ -1,4 +1,3 @@
-// components/admin/admin-dashboard.tsx
 'use client'
 
 import { useMemo } from 'react'
@@ -7,13 +6,14 @@ import { TaskStatus } from '@/lib/types'
 import { WeeklyCompletionChart, ProjectProgressDonut } from '@/components/dashboard/charts'
 import { TodayTasks } from '@/components/dashboard/today-tasks'
 import { Card } from '@/components/sections/card'
-import { FolderKanban, Users, FileText } from 'lucide-react'
+import { FolderKanban, Users, FileText, Megaphone } from 'lucide-react'
 
 type UserRecord = { id: string; full_name: string | null; email: string | null; role: string | null; created_at: string }
 type ProjectRecord = { id: string; title: string; description: string | null; progress: number; due_date: string | null; user_id: string; created_at: string }
 type TaskRecord = { id: string; title: string; status: TaskStatus; priority: 'low' | 'medium' | 'high'; due_date: string | null; user_id: string; attachment_url: string | null; created_at: string }
 type GoalRecord = { id: string; title: string; description: string | null; is_completed: boolean; user_id: string; created_at: string }
 type InvoiceRecord = { id: string; user_id: string; title: string; amount: number; currency: string; status: string; due_date: string | null; created_at: string }
+type AnnouncementRecord = { id: string; title: string; content: string; created_at: string }
 
 interface AdminDashboardProps {
   currentUser: UserRecord
@@ -22,6 +22,7 @@ interface AdminDashboardProps {
   tasks: TaskRecord[]
   goals: GoalRecord[]
   invoices: InvoiceRecord[]
+  announcements: AnnouncementRecord[]
 }
 
 export default function AdminDashboard({
@@ -31,10 +32,12 @@ export default function AdminDashboard({
   tasks = [],
   goals = [],
   invoices = [],
+  announcements = [],
 }: AdminDashboardProps) {
   const recentClients = useMemo(() => users.slice(-5).reverse(), [users])
   const recentProjects = useMemo(() => projects.slice(-5).reverse(), [projects])
   const recentInvoices = useMemo(() => invoices.slice(-5).reverse(), [invoices])
+  const recentAnnouncements = useMemo(() => announcements.slice(-5).reverse(), [announcements])
 
   return (
     <div className="mx-auto w-full max-w-7xl px-6 md:px-10">
@@ -47,7 +50,7 @@ export default function AdminDashboard({
           Hoş geldin, {currentUser?.full_name ?? 'Admin'} 👋
         </h1>
         <p className="mt-1 text-sm text-white/90">
-          Onay bekleyen içeriklerini gözden geçir, ajandanı planla ve işlerini yönet.
+          Genel görünümü takip et, ajandanı planla ve işlerini yönet.
         </p>
       </header>
 
@@ -104,6 +107,22 @@ export default function AdminDashboard({
                 </span>
               </li>
             )) : <EmptyState icon={<FileText className="h-5 w-5 text-gray-400" />} text="Henüz fatura yok." />}
+          </ul>
+        </Card>
+      </section>
+
+      {/* Duyurular */}
+      <section className="mb-12">
+        <Card title="Duyurular" description="Son 5 duyuru" className="h-[300px] flex flex-col">
+          <ul className="space-y-3 overflow-y-auto pr-2 flex-1">
+            {recentAnnouncements.length > 0 ? recentAnnouncements.map((a) => (
+              <li key={a.id} className="flex justify-between text-sm">
+                <span>{a.title}</span>
+                <span className="text-xs text-gray-400">
+                  {a.created_at ? formatDate(a.created_at) : '—'}
+                </span>
+              </li>
+            )) : <EmptyState icon={<Megaphone className="h-5 w-5 text-gray-400" />} text="Henüz duyuru yok." />}
           </ul>
         </Card>
       </section>
