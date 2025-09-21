@@ -1,3 +1,5 @@
+// /lib/types.ts
+
 export type Profile = {
   id: string
   full_name: string | null
@@ -8,6 +10,12 @@ export type Profile = {
   push_notifications?: boolean
   weekly_summary?: boolean
   role?: 'user' | 'admin'
+  created_at?: string
+  data?: Record<string, any>
+  // Admin müşteri yönetimi için:
+  company?: string | null
+  tax_no?: string | null
+  sector?: string | null
 }
 
 export type Project = {
@@ -17,10 +25,14 @@ export type Project = {
   progress: number
   due_date: string | null
   user_id: string
+  created_at?: string
+  status?: string
+  // Dashboard & müşteri sayfasında kullandıklarımız:
+  type?: 'proje' | 'reklam' | null
+  is_completed?: boolean | null
+  client_id?: string | null
 }
 
-// --- Tek bir TaskStatus tipi ---
-// Türkçe'ye normalize edildi
 export type TaskStatus =
   | 'yapiliyor'
   | 'onay_surecinde'
@@ -47,7 +59,7 @@ export const TASK_STATUS_LABELS: Record<TaskStatus, string> = {
   revision: 'Revizyon',
   approved: 'Onaylandı',
   published: 'Yayınlandı',
-  tamamlandi: 'Tamamlandı'
+  tamamlandi: 'Tamamlandı',
 }
 
 export const TASK_STATUS_ORDER: TaskStatus[] = [
@@ -57,7 +69,7 @@ export const TASK_STATUS_ORDER: TaskStatus[] = [
   'revision',
   'approved',
   'published',
-  'tamamlandi'
+  'tamamlandi',
 ]
 
 export type Task = {
@@ -69,7 +81,14 @@ export type Task = {
   due_date: string | null
   project_id: string | null
   user_id: string
-  attachment_url: string | null
+  // müşteri filtreleri için:
+  client_id?: string | null
+  // dosya alanları:
+  file_url?: string | null
+  attachment_url?: string | null
+  mimetype?: string | null
+  size?: number | null
+  created_at?: string
 }
 
 export type AnnouncementCategory = 'genel' | 'guncelleme' | 'hatirlatma' | 'kampanya'
@@ -102,12 +121,14 @@ export type WorkflowItem = {
   deadline?: string | null
   status: WorkflowStatus
   priority?: Task['priority']
-  attachment_url?: string | null
+  file_url?: string | null
   description?: string | null
+  created_at?: string
 }
 
 export type AgendaEventType = 'icerik' | 'toplanti' | 'odeme' | 'rapor'
 
+// Eski 'Event' tablon için (ileride meeting/payment/report bağlayınca kullanacağız)
 export type Event = {
   id: string
   title: string
@@ -116,15 +137,19 @@ export type Event = {
   event_type: AgendaEventType
   related: string | null
   user_id: string
+  created_at?: string
 }
 
+// AJANDA İÇİN KULLANACAĞIMIZ TİP (şimdilik task’lerden besleniyor)
+// Not: 'date' yerine due_date kullanıyoruz ki task ile birebir uyumlu olsun
 export type AgendaEvent = {
   id: string
   title: string
   description?: string | null
-  date: string
-  type: AgendaEventType
+  due_date: string           // 👈 task.due_date ile aynı
+  type: 'task' | 'event'     // şimdilik 'task' kullanıyoruz
   related?: string | null
+  created_at?: string
 }
 
 export type ReportPeriod = 'weekly' | 'monthly'
@@ -169,6 +194,8 @@ export type StoredFile = {
   description: string | null
   user_id: string
   created_at: string
+  mimetype?: string | null
+  size?: number | null
 }
 
 export type MeetingStatus = 'beklemede' | 'onaylandi' | 'planlandi'
@@ -202,6 +229,7 @@ export type Comment = {
   user_id: string
   content: string
   created_at: string
+  file_url?: string | null
   author?: {
     full_name: string | null
     email: string | null
@@ -228,4 +256,6 @@ export type Goal = {
   is_completed: boolean
   user_id: string
   created_at?: string
+  due_date?: string | null
+  progress?: number | null
 }

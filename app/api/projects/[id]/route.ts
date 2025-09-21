@@ -13,11 +13,13 @@ export async function PUT(request: Request, { params }: { params: { id: string }
   const updates: Database['public']['Tables']['projects']['Update'] = {}
 
   if ('title' in body) updates.title = body.title
-  if ('description' in body) updates.description = body.description
+  if ('description' in body) updates.description = body.description ?? null
   if ('progress' in body && body.progress !== undefined) {
     updates.progress = Number(body.progress)
   }
   if ('due_date' in body) updates.due_date = body.due_date ?? null
+  if ('client_id' in body) updates.client_id = body.client_id ?? null // 🔑 müşteri bağlama/güncelleme
+  if ('type' in body) updates.type = body.type ?? 'project'           // 🔑 proje/campaign seçimi
 
   if (Object.keys(updates).length === 0) {
     return NextResponse.json({ error: 'Güncellenecek alan bulunamadı' }, { status: 400 })

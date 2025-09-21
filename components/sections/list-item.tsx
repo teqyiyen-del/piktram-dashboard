@@ -17,13 +17,12 @@ const toneMap = {
 } as const
 
 type TagColor = keyof typeof tagColorMap
-
 type Tone = keyof typeof toneMap
 
 interface ListItemProps {
-  title: string
-  description?: string
-  meta?: string
+  title: ReactNode
+  description?: ReactNode
+  meta?: ReactNode
   icon?: ReactNode
   tag?: string
   tagColor?: TagColor
@@ -64,18 +63,32 @@ export function ListItem({
             {icon}
           </div>
         ) : null}
+
         <div className="flex-1 space-y-1">
           <div className="flex flex-wrap items-center gap-2">
-            <p className="text-sm font-semibold text-gray-900 dark:text-white">{title}</p>
+            <div className="text-sm font-semibold text-gray-900 dark:text-white">
+              {title}
+            </div>
             {tag ? (
               <span className={cn('pill', tagColorMap[tagColor])}>{tag}</span>
             ) : null}
           </div>
-          {description ? <p className="text-sm text-gray-500 dark:text-gray-400">{description}</p> : null}
-          {meta ? <p className="text-xs text-gray-400 dark:text-gray-500">{meta}</p> : null}
+
+          {description ? (
+            <div className="text-sm text-gray-500 dark:text-gray-400">{description}</div>
+          ) : null}
+
+          {meta ? (
+            <div className="text-xs text-gray-400 dark:text-gray-500">{meta}</div>
+          ) : null}
         </div>
       </div>
-      {rightSlot ? <div className="flex shrink-0 items-center text-xs text-gray-500 dark:text-gray-400">{rightSlot}</div> : null}
+
+      {rightSlot ? (
+        <div className="flex shrink-0 items-center text-xs text-gray-500 dark:text-gray-400">
+          {rightSlot}
+        </div>
+      ) : null}
     </div>
   )
 }

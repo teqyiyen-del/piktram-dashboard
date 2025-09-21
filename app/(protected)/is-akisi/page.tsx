@@ -78,9 +78,9 @@ export default async function IsAkisiPage() {
         description="Görevleri sürükleyerek durumunu anında güncelleyebilirsiniz."
         className="w-full min-w-0"
       >
-        {/* 🔑 scroll ve min-w kaldırıldı */}
-        <div className="w-full min-w-0">
-          <KanbanBoard initialTasks={tasks} projects={projectOptions} />
+        <div className="w-full">
+          {/* ✅ burada initialTasks değil tasks prop'u kullanıyoruz */}
+          <KanbanBoard tasks={tasks} projects={projectOptions} />
         </div>
       </Card>
     </div>

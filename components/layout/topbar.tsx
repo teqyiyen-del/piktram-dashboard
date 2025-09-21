@@ -2,25 +2,60 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
+import { Database } from '@/lib/supabase-types'
 import { Menu, Bell } from 'lucide-react'
-import { getInitials } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
-import { useNotificationCenter } from '@/components/providers/notification-provider'
 
 interface TopbarProps {
-  fullName: string | null
-  email: string
-  role: 'admin' | 'user'
   onMenuClick?: () => void
 }
 
-export default function Topbar({ fullName, email, onMenuClick }: TopbarProps) {
+export default function Topbar({ onMenuClick }: TopbarProps) {
   const router = useRouter()
+  const supabase = createClientComponentClient<Database>()
   const [openNotif, setOpenNotif] = useState(false)
-  const { notifications, unreadCount, markAsRead } = useNotificationCenter()
+  const [notifications, setNotifications] = useState<Database['public']['Tables']['notifications']['Row'][]>([])
+  const [unreadCount, setUnreadCount] = useState(0)
   const wrapperRef = useRef<HTMLDivElement | null>(null)
 
-  // dışarı tıklayınca kapat
+  // İlk yüklemede bildirimleri çek
+  useEffect(() => {
+    const fetchNotifications = async () => {
+      const { data, error } = await supabase
+        .from('notifications')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(20)
+
+      if (!error && data) {
+        setNotifications(data)
+        setUnreadCount(data.filter((n) => !n.read).length)
+      }
+    }
+
+    fetchNotifications()
+
+    // Realtime dinleme
+    const channel = supabase
+      .channel('notifications')
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'notifications' },
+        (payload) => {
+          const newNotif = payload.new as Database['public']['Tables']['notifications']['Row']
+          setNotifications((prev) => [newNotif, ...prev])
+          setUnreadCount((prev) => prev + 1)
+        }
+      )
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(channel)
+    }
+  }, [supabase])
+
+  // dışarı tıklayınca dropdown kapat
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       if (wrapperRef.current && !wrapperRef.current.contains(e.target as Node)) {
@@ -31,43 +66,32 @@ export default function Topbar({ fullName, email, onMenuClick }: TopbarProps) {
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
 
-  // zil butonu
-  const handleBellClick = async () => {
+  const handleBellClick = () => {
+    setOpenNotif(!openNotif)
     if (!openNotif) {
-      const unreadIds = notifications.filter((n) => !n.read_at).map((n) => n.id)
-      if (unreadIds.length) {
-        // 🔑 Optimistik update: hemen okunmuş gibi işaretle
-        const now = new Date().toISOString()
-        notifications.forEach((n) => {
-          if (unreadIds.includes(n.id)) {
-            n.read_at = now
-          }
-        })
-
-        // backend'e gönder
-        await markAsRead(unreadIds)
+      // açıldığında unread sıfırlansın
+      const unreadIds = notifications.filter((n) => !n.read).map((n) => n.id)
+      if (unreadIds.length > 0) {
+        supabase.from('notifications').update({ read: true }).in('id', unreadIds)
+        setNotifications((prev) =>
+          prev.map((n) => (unreadIds.includes(n.id) ? { ...n, read: true } : n))
+        )
+        setUnreadCount(0)
       }
-      setOpenNotif(true)
-    } else {
-      setOpenNotif(false)
     }
   }
 
-  const handleClick = async (
-    id: string,
-    type?: string,
-    targetUrl?: string
-  ) => {
-    await markAsRead([id])
-
-    if (targetUrl) {
-      router.push(targetUrl)
-    } else {
-      if (type === 'announcement') router.push('/duyurular')
-      else if (type === 'task_update') router.push('/is-akisi')
-      else if (type === 'revision') router.push('/revizyonlar')
+  const handleClick = (n: Database['public']['Tables']['notifications']['Row']) => {
+    // yönlendirme
+    if (n.type === 'revision' && n.task_id) {
+      router.push(`/admin/tasks/${n.task_id}`)
+    } else if (n.type === 'announcement') {
+      router.push('/duyurular')
+    } else if (n.type === 'task_update') {
+      router.push('/is-akisi')
+    } else if (n.target_url) {
+      router.push(n.target_url)
     }
-
     setOpenNotif(false)
   }
 
@@ -90,7 +114,6 @@ export default function Topbar({ fullName, email, onMenuClick }: TopbarProps) {
 
         {/* Sağ kısım */}
         <div className="ml-auto flex items-center gap-4">
-          {/* Bildirim */}
           <div className="relative" ref={wrapperRef}>
             <Button
               type="button"
@@ -119,15 +142,9 @@ export default function Topbar({ fullName, email, onMenuClick }: TopbarProps) {
                       <li
                         key={n.id}
                         className={`cursor-pointer rounded-lg px-3 py-2 hover:bg-gray-50 dark:hover:bg-gray-800 ${
-                          n.read_at ? 'opacity-60' : 'font-semibold'
+                          n.read ? 'opacity-60' : 'font-semibold'
                         }`}
-                        onClick={() =>
-                          handleClick(
-                            n.id,
-                            (n as any).type,
-                            (n as any).target_url
-                          )
-                        }
+                        onClick={() => handleClick(n)}
                       >
                         <p className="font-medium text-gray-800 dark:text-gray-100">
                           {n.title ?? 'Yeni bildirim'}
@@ -147,21 +164,6 @@ export default function Topbar({ fullName, email, onMenuClick }: TopbarProps) {
                 </ul>
               </div>
             )}
-          </div>
-
-          {/* Kullanıcı bilgisi */}
-          <div className="hidden min-w-[220px] items-center gap-3 rounded-xl border border-gray-200 bg-white px-4 py-2 shadow-sm dark:border-gray-700 dark:bg-gray-900 lg:flex">
-            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-accent/15 text-sm font-semibold text-accent">
-              {getInitials(fullName)}
-            </div>
-            <div className="truncate text-sm">
-              <p className="font-semibold text-gray-900 dark:text-white">
-                {fullName ?? 'Takım Üyesi'}
-              </p>
-              <p className="truncate text-xs text-gray-500 dark:text-gray-400">
-                {email}
-              </p>
-            </div>
           </div>
         </div>
       </div>

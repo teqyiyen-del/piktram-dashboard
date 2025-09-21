@@ -7,6 +7,7 @@ type CustomerContextType = {
   setSelectedCustomer: (id: string | null) => void
 }
 
+// Context'i undefined başlatıyoruz
 const CustomerContext = createContext<CustomerContextType | undefined>(undefined)
 
 export function CustomerProvider({ children }: { children: ReactNode }) {
@@ -21,6 +22,10 @@ export function CustomerProvider({ children }: { children: ReactNode }) {
 
 export function useCustomer() {
   const ctx = useContext(CustomerContext)
-  if (!ctx) throw new Error('useCustomer must be used within CustomerProvider')
+  if (!ctx) {
+    throw new Error(
+      '❌ useCustomer hatası: Bu hook sadece <CustomerProvider> içinde kullanılabilir.'
+    )
+  }
   return ctx
 }

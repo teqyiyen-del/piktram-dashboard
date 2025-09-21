@@ -5,6 +5,7 @@ import { cookies } from 'next/headers'
 import { Database } from '@/lib/supabase-types'
 import AdminSidebar from '@/components/admin/admin-sidebar'
 import { CustomerProvider } from '@/components/providers/customer-provider'
+import Topbar from '@/components/layout/topbar' // 🔥 Topbar import ettik
 
 export default async function AdminLayout({ children }: { children: ReactNode }) {
   const supabase = createServerComponentClient<Database>({ cookies })
@@ -32,9 +33,6 @@ export default async function AdminLayout({ children }: { children: ReactNode })
     console.error("❌ Profile query error:", profileError.message)
   }
 
-  console.log("🔑 Session user id:", session.user.id)
-  console.log("👤 Profile found:", profile)
-
   const role = (profile?.role as 'admin' | 'user' | null) ?? 'user'
 
   // ✅ Admin değilse anasayfaya at
@@ -43,16 +41,29 @@ export default async function AdminLayout({ children }: { children: ReactNode })
     redirect('/anasayfa')
   }
 
+  const user = {
+    id: profile?.id ?? session.user.id,
+    full_name: profile?.full_name ?? session.user.email,
+    email: profile?.email ?? session.user.email,
+    role,
+  }
+
   return (
     <CustomerProvider>
       <div className="flex h-screen bg-gray-50 dark:bg-gray-900">
         {/* Sidebar */}
         <AdminSidebar />
 
-        {/* İçerik Alanı */}
-        <main className="flex-1 overflow-y-auto p-8">
-          {children}
-        </main>
+        {/* Sağ taraf (Topbar + İçerik) */}
+        <div className="flex-1 flex flex-col">
+          {/* 🔥 Topbar entegre edildi */}
+          <Topbar user={user} />
+
+          {/* İçerik Alanı */}
+          <main className="flex-1 overflow-y-auto p-8 pt-20">
+            {children}
+          </main>
+        </div>
       </div>
     </CustomerProvider>
   )

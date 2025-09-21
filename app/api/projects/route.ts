@@ -5,7 +5,7 @@ import { Database } from '@/lib/supabase-types'
 import { COMPLETED_STATUSES, normalizeStatus } from '@/lib/task-status'
 import { TaskStatus } from '@/lib/types'
 
-export async function GET() {
+export async function GET(request: Request) {
   const supabase = createRouteHandlerClient<Database>({ cookies })
   const {
     data: { session }
@@ -21,7 +21,9 @@ export async function GET() {
     .eq('id', session.user.id)
     .single()
 
-  // Projeleri getir
+  const { searchParams } = new URL(request.url)
+  const clientId = searchParams.get('client')
+
   let query = supabase
     .from('projects')
     .select('*')
@@ -29,6 +31,8 @@ export async function GET() {
 
   if (profile?.role !== 'admin') {
     query = query.eq('user_id', session.user.id)
+  } else if (clientId) {
+    query = query.eq('client_id', clientId)
   }
 
   const { data: projects, error } = await query
@@ -40,7 +44,6 @@ export async function GET() {
   const projectsWithProgress = [...(projects ?? [])]
   const projectIds = projectsWithProgress.map((p) => p.id)
 
-  // Eğer projeler varsa görevlerden progress hesapla
   if (projectIds.length > 0) {
     const { data: tasksData } = await supabase
       .from('tasks')
@@ -60,7 +63,6 @@ export async function GET() {
       grouped.set(task.project_id, entry)
     })
 
-    // Progresleri güncelle
     await Promise.all(
       projectsWithProgress.map(async (project) => {
         const entry = grouped.get(project.id) ?? { total: 0, completed: 0 }
@@ -71,7 +73,7 @@ export async function GET() {
             .from('projects')
             .update({ progress })
             .eq('id', project.id)
-            .eq('user_id', session.user.id)
+            .eq('user_id', project.user_id)
         }
         project.progress = progress
       })
@@ -98,10 +100,17 @@ export async function POST(request: Request) {
     description: body.description ?? null,
     progress: body.progress !== undefined ? Number(body.progress) : 0,
     due_date: body.due_date ?? null,
-    user_id: session.user.id
+    user_id: session.user.id,
+    client_id: body.client_id ?? null,   // 🔑 müşteri bağlama
+    type: body.type ?? 'project',        // 🔑 varsayılan project, istenirse campaign
+    created_at: new Date().toISOString() // eksikse supabase otomatik doldursun diye
   }
 
-  const { data, error } = await supabase.from('projects').insert(payload).select('*').single()
+  const { data, error } = await supabase
+    .from('projects')
+    .insert(payload)
+    .select('*')
+    .single()
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 })

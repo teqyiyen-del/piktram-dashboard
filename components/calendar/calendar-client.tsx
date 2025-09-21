@@ -1,11 +1,18 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useMemo } from 'react'
 import { CalendarView } from './calendar-view'
 import { Task } from '@/lib/types'
 import { Modal } from '@/components/ui/modal'
 import { TaskForm } from '@/components/tasks/task-form'
 import { useToast } from '@/components/providers/toast-provider'
+
+// CalendarView'e geçecek event tipi
+interface CalendarEvent {
+  id: string
+  title: string
+  date: string
+}
 
 interface CalendarClientProps {
   initialTasks: Task[]
@@ -29,7 +36,7 @@ export function CalendarClient({ initialTasks, projects }: CalendarClientProps) 
         toast({
           title: 'Görevler yenilenemedi',
           description: data.error ?? 'Bir hata oluştu.',
-          variant: 'error'
+          variant: 'error',
         })
         return
       }
@@ -39,14 +46,28 @@ export function CalendarClient({ initialTasks, projects }: CalendarClientProps) 
       toast({
         title: 'Görevler yenilenemedi',
         description: error instanceof Error ? error.message : 'Bir hata oluştu.',
-        variant: 'error'
+        variant: 'error',
       })
     }
   }
 
+  // Taskleri calendar eventlerine map’le
+  const calendarEvents: CalendarEvent[] = useMemo(() => {
+    return tasks
+      .filter((t) => t.due_date) // tarihi olanları al
+      .map((t) => ({
+        id: t.id,
+        title: t.title,
+        date: t.due_date as string,
+      }))
+  }, [tasks])
+
   return (
     <div className="space-y-6">
-      <CalendarView tasks={tasks} onCreateTask={() => setIsModalOpen(true)} />
+      <CalendarView
+        events={calendarEvents} // artık due_date tarihleri gönderiyoruz
+        onCreateTask={() => setIsModalOpen(true)}
+      />
       <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title="Takvime Görev Ekle">
         <TaskForm
           projects={projects}

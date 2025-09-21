@@ -3,186 +3,20 @@ export type Json =
   | number
   | boolean
   | null
-  | { [key: string]: Json | undefined }
+  | { [key: string]: Json }
   | Json[]
 
-export type Database = {
+export interface Database {
   public: {
     Tables: {
-      profiles: {
-        Row: {
-          id: string
-          full_name: string | null
-          email: string | null
-          avatar_url: string | null
-          theme: 'light' | 'dark' | null
-          email_notifications: boolean | null
-          push_notifications: boolean | null
-          weekly_summary: boolean | null
-          created_at: string
-          role: 'user' | 'admin' | null
-        }
-        Insert: {
-          id: string
-          full_name?: string | null
-          email?: string | null
-          avatar_url?: string | null
-          theme?: 'light' | 'dark' | null
-          email_notifications?: boolean | null
-          push_notifications?: boolean | null
-          weekly_summary?: boolean | null
-          role?: 'user' | 'admin' | null
-        }
-        Update: Partial<Database['public']['Tables']['profiles']['Insert']>
-      }
-
-      projects: {
-        Row: {
-          id: string
-          title: string
-          description: string | null
-          progress: number
-          due_date: string | null
-          user_id: string
-          created_at: string
-        }
-        Insert: {
-          id?: string
-          title: string
-          description?: string | null
-          progress?: number
-          due_date?: string | null
-          user_id: string
-        }
-        Update: Partial<Database['public']['Tables']['projects']['Insert']>
-      }
-
       tasks: {
         Row: {
           id: string
           title: string
           description: string | null
-          status:
-            | 'yapiliyor'
-            | 'onay_surecinde'
-            | 'revize'
-            | 'onaylandi'
-            | 'paylasildi'
-            | 'todo'
-            | 'in_progress'
-            | 'in_review'
-            | 'revision'
-            | 'approved'
-            | 'published'
-            | 'done'
-          priority: 'low' | 'medium' | 'high'
+          status: string              // örn: 'todo' | 'in_progress' | 'done'
           due_date: string | null
-          project_id: string | null
-          user_id: string
-          created_at: string
-          attachment_url: string | null
-        }
-        Insert: {
-          id?: string
-          title: string
-          description?: string | null
-          status?:
-            | 'yapiliyor'
-            | 'onay_surecinde'
-            | 'revize'
-            | 'onaylandi'
-            | 'paylasildi'
-            | 'todo'
-            | 'in_progress'
-            | 'in_review'
-            | 'revision'
-            | 'approved'
-            | 'published'
-            | 'done'
-          priority?: 'low' | 'medium' | 'high'
-          due_date?: string | null
-          project_id?: string | null
-          user_id: string
-          attachment_url?: string | null
-        }
-        Update: Partial<Database['public']['Tables']['tasks']['Insert']>
-      }
-
-      comments: {
-        Row: {
-          id: string
-          task_id: string
-          user_id: string
-          content: string
-          created_at: string
-        }
-        Insert: {
-          id?: string
-          task_id: string
-          user_id: string
-          content: string
-          created_at?: string
-        }
-        Update: Partial<Database['public']['Tables']['comments']['Insert']>
-      }
-
-      revisions: {
-        Row: {
-          id: string
-          task_id: string
-          user_id: string
-          comment_id: string | null
-          description: string
-          created_at: string
-        }
-        Insert: {
-          id?: string
-          task_id: string
-          user_id: string
-          comment_id?: string | null
-          description: string
-          created_at?: string
-        }
-        Update: Partial<Database['public']['Tables']['revisions']['Insert']>
-      }
-
-      goals: {
-        Row: {
-          id: string
-          title: string
-          description: string | null
-          event_date: string
-          event_type: 'icerik' | 'toplanti' | 'odeme' | 'rapor'
-          related: string | null
-          is_completed: boolean
-          user_id: string
-          created_at: string
-        }
-        Insert: {
-          id?: string
-          title: string
-          description?: string | null
-          event_date: string
-          event_type: 'icerik' | 'toplanti' | 'odeme' | 'rapor'
-          related?: string | null
-          is_completed?: boolean
-          user_id: string
-          created_at?: string
-        }
-        Update: Partial<Database['public']['Tables']['goals']['Insert']>
-      }
-
-      reports: {
-        Row: {
-          id: string
-          title: string
-          period: 'weekly' | 'monthly'
-          period_label: string | null
-          followers: number
-          likes: number
-          posts: number
-          engagement_rate: number | null
-          summary: string | null
+          priority: string | null
           file_url: string | null
           user_id: string
           created_at: string
@@ -190,111 +24,128 @@ export type Database = {
         Insert: {
           id?: string
           title: string
-          period: 'weekly' | 'monthly'
-          period_label?: string | null
-          followers: number
-          likes: number
-          posts: number
-          engagement_rate?: number | null
-          summary?: string | null
+          description?: string | null
+          status?: string
+          due_date?: string | null
+          priority?: string | null
           file_url?: string | null
           user_id: string
+          created_at?: string
         }
-        Update: Partial<Database['public']['Tables']['reports']['Insert']>
+        Update: Partial<Database['public']['Tables']['tasks']['Row']>
       }
 
-      subscriptions: {
+      projects: {
         Row: {
           id: string
-          plan_name: string
-          price: number
-          currency: string
-          renewal_date: string | null
-          status: 'aktif' | 'beklemede' | 'iptal'
-          user_id: string
-          created_at: string
-        }
-        Insert: {
-          id?: string
-          plan_name: string
-          price: number
-          currency?: string
-          renewal_date?: string | null
-          status?: 'aktif' | 'beklemede' | 'iptal'
-          user_id: string
-        }
-        Update: Partial<Database['public']['Tables']['subscriptions']['Insert']>
-      }
-
-      files: {
-        Row: {
-          id: string
-          name: string
-          bucket: string
-          path: string
-          url: string | null
-          category: 'invoice' | 'contract' | 'logo' | 'post' | 'reel' | 'visual'
+          title: string
           description: string | null
+          type: string | null          // proje türü: kampanya, proje vs.
+          progress: number | null
+          is_completed: boolean | null
+          due_date: string | null
           user_id: string
           created_at: string
         }
-        Insert: {
+        Insert: Omit<Database['public']['Tables']['projects']['Row'], 'id' | 'created_at'> & {
           id?: string
-          name: string
-          bucket: string
-          path: string
-          url?: string | null
-          category: 'invoice' | 'contract' | 'logo' | 'post' | 'reel' | 'visual'
-          description?: string | null
-          user_id: string
+          created_at?: string
         }
-        Update: Partial<Database['public']['Tables']['files']['Insert']>
+        Update: Partial<Database['public']['Tables']['projects']['Row']>
       }
 
-      meetings: {
+      goals: {
         Row: {
           id: string
           title: string
-          agenda: string | null
-          preferred_date: string | null
-          meeting_url: string | null
-          status: 'beklemede' | 'onaylandi' | 'planlandi'
+          description: string | null
+          due_date: string | null
+          progress: number | null
+          is_completed: boolean | null
           user_id: string
           created_at: string
         }
+        Insert: Omit<Database['public']['Tables']['goals']['Row'], 'id' | 'created_at'> & {
+          id?: string
+          created_at?: string
+        }
+        Update: Partial<Database['public']['Tables']['goals']['Row']>
+      }
+
+      profiles: {
+        Row: {
+          id: string
+          full_name: string | null
+          email: string | null
+          company: string | null
+          role: string | null
+          tax_no: string | null        // ✅ eklendi
+          sector: string | null        // ✅ eklendi
+          created_at: string | null    // ✅ opsiyonel hale getirildi
+        }
         Insert: {
           id?: string
-          title: string
-          agenda?: string | null
-          preferred_date?: string | null
-          meeting_url?: string | null
-          status?: 'beklemede' | 'onaylandi' | 'planlandi'
-          user_id: string
+          full_name?: string | null
+          email?: string | null
+          company?: string | null
+          role?: string | null
+          tax_no?: string | null
+          sector?: string | null
+          created_at?: string | null
         }
-        Update: Partial<Database['public']['Tables']['meetings']['Insert']>
+        Update: {
+          full_name?: string | null
+          email?: string | null
+          company?: string | null
+          role?: string | null
+          tax_no?: string | null
+          sector?: string | null
+          created_at?: string | null
+        }
+      }
+
+      invoices: {
+        Row: {
+          id: string
+          user_id: string
+          amount: number
+          status: string               // örn: 'pending' | 'paid' | 'overdue'
+          attachment_url: string | null
+          created_at: string
+        }
+        Insert: Omit<Database['public']['Tables']['invoices']['Row'], 'id' | 'created_at'> & {
+          id?: string
+          created_at?: string
+        }
+        Update: Partial<Database['public']['Tables']['invoices']['Row']>
       }
 
       notifications: {
         Row: {
           id: string
+          user_id: string
+          task_id: string | null
+          from_user: string | null
+          type: 'announcement' | 'task_update' | 'revision'
           title: string
           description: string | null
-          type: 'task' | 'report' | 'invoice' | 'meeting' | 'general'
+          target_url: string | null
+          read: boolean | null
           created_at: string
-          read_at: string | null
-          user_id: string
-          meta: Json | null
         }
         Insert: {
           id?: string
+          user_id: string
+          task_id?: string | null
+          from_user?: string | null
+          type: 'announcement' | 'task_update' | 'revision'
           title: string
           description?: string | null
-          type: 'task' | 'report' | 'invoice' | 'meeting' | 'general'
-          read_at?: string | null
-          user_id: string
-          meta?: Json | null
+          target_url?: string | null
+          read?: boolean | null
+          created_at?: string
         }
-        Update: Partial<Database['public']['Tables']['notifications']['Insert']>
+        Update: Partial<Database['public']['Tables']['notifications']['Row']>
       }
     }
   }

@@ -7,28 +7,31 @@ import type { Event as CalendarEvent } from '@/lib/types'
 export default async function AjandaPage() {
   const supabase = createServerComponentClient<Database>({ cookies })
   const {
-    data: { session }
+    data: { session },
   } = await supabase.auth.getSession()
 
   if (!session) return null
 
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('role')
-    .eq('id', session.user.id)
-    .single()
+  // Sadece onaylanmış görevleri al
+  const { data: tasks } = await supabase
+    .from('tasks')
+    .select('id, title, description, due_date, user_id, status')
+    .eq('status', 'approved')
+    .order('due_date', { ascending: true })
 
-  const isAdmin = profile?.role === 'admin'
-
-  const eventsQuery = supabase.from('events').select('*').order('event_date', { ascending: true })
-
-  if (!isAdmin) {
-    eventsQuery.eq('user_id', session.user.id)
-  }
-
-  const { data: eventsData } = await eventsQuery
+  // Taskleri CalendarEvent formatına map’le
+  const eventsData: CalendarEvent[] = (tasks ?? []).map((task) => ({
+    id: task.id,
+    title: task.title,
+    description: task.description ?? undefined,
+    event_date: task.due_date,
+    event_type: 'task',
+    related: task.status,
+  }))
 
   return (
-    <AgendaClient initialEvents={(eventsData ?? []) as CalendarEvent[]} hideHeader={false} />
+    <AgendaClient
+      initialEvents={eventsData}
+    />
   )
 }

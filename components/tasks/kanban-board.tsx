@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd'
 import { Task, TaskStatus, TASK_STATUS_LABELS, TASK_STATUS_ORDER } from '@/lib/types'
 import TaskCard from './task-card'
@@ -12,8 +12,10 @@ import TaskDetails from './task-details'
 import { useToast } from '@/components/providers/toast-provider'
 
 interface KanbanBoardProps {
-  initialTasks?: Task[]
+  tasks: Task[]
   projects?: { id: string; title: string }[]
+  onTaskMove?: (taskId: string, newStatus: string) => Promise<void> | void
+  onRefresh?: () => Promise<void> | void
 }
 
 type ColumnKey = (typeof TASK_STATUS_ORDER)[number]
@@ -33,9 +35,9 @@ const columnStyles: Record<TaskStatus, string> = {
   tamamlandi: 'border-gray-500 bg-transparent dark:border-gray-600'
 }
 
-function KanbanBoard({ initialTasks = [], projects = [] }: KanbanBoardProps) {
-  const [tasks, setTasks] = useState<Task[]>(() =>
-    (initialTasks ?? []).map((task) => ({ ...task, status: normalizeStatus(task.status) }))
+function KanbanBoard({ tasks, projects = [], onTaskMove, onRefresh }: KanbanBoardProps) {
+  const [data, setData] = useState<Task[]>(
+    (tasks ?? []).map(t => ({ ...t, status: normalizeStatus(t.status) }))
   )
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [editingTask, setEditingTask] = useState<Task | null>(null)
@@ -44,101 +46,51 @@ function KanbanBoard({ initialTasks = [], projects = [] }: KanbanBoardProps) {
   const { refresh: refreshNotifications } = useNotificationCenter()
   const { toast } = useToast()
 
+  // dışarıdan gelen liste değiştiğinde senkronize et
+  useEffect(() => {
+    setData((tasks ?? []).map(t => ({ ...t, status: normalizeStatus(t.status) })))
+  }, [JSON.stringify(tasks)])
+
   const groupedTasks = useMemo(() => {
-    const base = TASK_STATUS_ORDER.reduce(
-      (acc, status) => {
-        acc[status] = [] as Task[]
-        return acc
-      },
-      {} as Record<ColumnKey, Task[]>
-    )
-    tasks.forEach((task) => {
+    const base = {} as Record<ColumnKey, Task[]>
+    TASK_STATUS_ORDER.forEach(status => {
+      base[status] = []
+    })
+
+    data.forEach(task => {
       const normalized = normalizeStatus(task.status)
+      if (!base[normalized]) base[normalized] = []
       base[normalized].push({ ...task, status: normalized })
     })
     return base
-  }, [tasks])
-
-  const refreshTasks = useCallback(async () => {
-    try {
-      const response = await fetch('/api/tasks')
-      if (!response.ok) {
-        const data = await response.json()
-        toast({
-          title: 'Görevler yenilenemedi',
-          description: data.error ?? 'Bir hata oluştu.',
-          variant: 'error'
-        })
-        return
-      }
-      const data = (await response.json()) as Task[]
-      setTasks((data ?? []).map((task) => ({ ...task, status: normalizeStatus(task.status) })))
-    } catch (error) {
-      toast({
-        title: 'Görevler yenilenemedi',
-        description: error instanceof Error ? error.message : 'Bir hata oluştu.',
-        variant: 'error'
-      })
-    }
-  }, [toast])
-
-  useEffect(() => {
-    if (initialTasks && initialTasks.length > 0) {
-      setTasks(initialTasks.map((task) => ({ ...task, status: normalizeStatus(task.status) })))
-    }
-  }, [JSON.stringify(initialTasks)])
+  }, [data])
 
   const handleDragEnd = async ({ destination, source, draggableId }: DropResult) => {
     if (!destination || destination.droppableId === source.droppableId) return
     const newStatus = destination.droppableId as ColumnKey
-    const previous = structuredClone(tasks)
+    const previous = structuredClone(data)
 
-    setTasks((prev) =>
-      prev.map((task) =>
-        task.id === draggableId ? { ...task, status: normalizeStatus(newStatus) } : task
-      )
-    )
-
+    setData(prev => prev.map(t => String(t.id) === draggableId ? { ...t, status: normalizeStatus(newStatus) } : t))
     try {
-      const response = await fetch(`/api/tasks/${draggableId}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status: newStatus })
-      })
-
-      if (!response.ok) {
-        const data = await response.json()
-        toast({
-          title: 'Durum güncellenemedi',
-          description: data.error ?? 'Bir hata oluştu.',
-          variant: 'error'
-        })
-        setTasks(previous)
-        return
-      }
-
+      await onTaskMove?.(draggableId, newStatus)
       toast({
         title: 'Durum güncellendi',
         description: `${getStatusLabel(newStatus)} aşamasına taşındı.`,
         variant: 'success'
       })
-      refreshTasks()
+      await onRefresh?.()
       void refreshNotifications()
-    } catch (error) {
-      toast({
-        title: 'Durum güncellenemedi',
-        description: error instanceof Error ? error.message : 'Bir hata oluştu.',
-        variant: 'error'
-      })
-      setTasks(previous)
+    } catch (e) {
+      setData(previous)
+      toast({ title: 'Durum güncellenemedi', variant: 'error' })
     }
   }
 
   const handleDelete = async (task: Task) => {
     try {
-      const response = await fetch(`/api/tasks/${task.id}`, { method: 'DELETE' })
-      if (!response.ok) {
-        const data = await response.json()
+      const res = await fetch(`/api/tasks/${task.id}`, { method: 'DELETE' })
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}))
         toast({
           title: 'Görev silinemedi',
           description: data.error ?? 'Bir hata oluştu.',
@@ -146,27 +98,23 @@ function KanbanBoard({ initialTasks = [], projects = [] }: KanbanBoardProps) {
         })
         return
       }
-      toast({ title: 'Görev silindi', description: 'Görev başarıyla kaldırıldı.', variant: 'success' })
-      refreshTasks()
-    } catch (error) {
-      toast({
-        title: 'Görev silinemedi',
-        description: error instanceof Error ? error.message : 'Bir hata oluştu.',
-        variant: 'error'
-      })
+      setData(prev => prev.filter(t => t.id !== task.id))
+      toast({ title: 'Görev silindi', variant: 'success' })
+      await onRefresh?.()
+    } catch (e) {
+      toast({ title: 'Görev silinemedi', variant: 'error' })
     }
   }
 
   const handleInlineUpdate = async (taskId: string, payload: Partial<Task>) => {
     try {
-      const response = await fetch(`/api/tasks/${taskId}`, {
+      const res = await fetch(`/api/tasks/${taskId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
       })
-
-      if (!response.ok) {
-        const data = await response.json().catch(() => ({}))
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}))
         toast({
           title: 'Görev güncellenemedi',
           description: data.error ?? 'Bir hata oluştu.',
@@ -174,17 +122,15 @@ function KanbanBoard({ initialTasks = [], projects = [] }: KanbanBoardProps) {
         })
         return
       }
-
-      const updated = (await response.json()) as Task
-      setTasks((prev) => prev.map((task) => (task.id === taskId ? updated : task)))
-      toast({ title: 'Görev güncellendi', description: 'Değişiklikler kaydedildi.', variant: 'success' })
+      const updated = (await res.json()) as Task
+      setData(prev =>
+        prev.map(t => String(t.id) === taskId ? { ...updated, status: normalizeStatus(updated.status) } : t)
+      )
+      toast({ title: 'Görev güncellendi', variant: 'success' })
+      await onRefresh?.()
       void refreshNotifications()
-    } catch (error) {
-      toast({
-        title: 'Görev güncellenemedi',
-        description: error instanceof Error ? error.message : 'Bir hata oluştu.',
-        variant: 'error'
-      })
+    } catch (e) {
+      toast({ title: 'Görev güncellenemedi', variant: 'error' })
     }
   }
 
@@ -195,21 +141,9 @@ function KanbanBoard({ initialTasks = [], projects = [] }: KanbanBoardProps) {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Görev Panosu</h2>
-          <p className="text-sm text-gray-500 dark:text-gray-400">
-            Görevleri sürükleyerek durumunu anında güncelleyin.
-          </p>
-        </div>
-      </div>
-
-      {/* Kanban Columns */}
       <DragDropContext onDragEnd={handleDragEnd}>
-        {/* ✅ Mobilde alt alta, sm: ile wrap */}
         <div className="flex flex-col gap-6 sm:flex-row sm:flex-wrap">
-          {TASK_STATUS_ORDER.map((column) => (
+          {TASK_STATUS_ORDER.map(column => (
             <Droppable droppableId={column} key={column}>
               {(provided, snapshot) => {
                 const columnTasks = groupedTasks[column] ?? []
@@ -217,8 +151,8 @@ function KanbanBoard({ initialTasks = [], projects = [] }: KanbanBoardProps) {
                   <div
                     ref={provided.innerRef}
                     {...provided.droppableProps}
-                    className={`min-w-[280px] flex-1 flex flex-col gap-4 rounded-2xl border bg-transparent p-5 shadow-sm transition-colors duration-300
-                      ${snapshot.isDraggingOver ? 'ring-2 ring-accent/40' : ''} ${columnStyles[column]}`}
+                    className={`min-w-[280px] flex-1 flex flex-col gap-4 rounded-2xl border bg-transparent p-5 shadow-sm transition-colors
+                    ${snapshot.isDraggingOver ? 'ring-2 ring-accent/40' : ''} ${columnStyles[column]}`}
                     style={{ minHeight: '280px' }}
                   >
                     <div className="flex items-center justify-between">
@@ -229,45 +163,49 @@ function KanbanBoard({ initialTasks = [], projects = [] }: KanbanBoardProps) {
                         {columnTasks.length} görev
                       </span>
                     </div>
-                    {columnTasks.map((task, index) => (
-                      <Draggable draggableId={task.id} index={index} key={task.id}>
-                        {(dragProvided, dragSnapshot) => (
-                          <div
-                            ref={dragProvided.innerRef}
-                            {...dragProvided.draggableProps}
-                            {...dragProvided.dragHandleProps}
-                            style={{
-                              ...dragProvided.draggableProps.style,
-                              transition: dragSnapshot.isDragging
-                                ? 'transform 0.18s ease, box-shadow 0.18s ease'
-                                : 'transform 0.35s ease',
-                              boxShadow: dragSnapshot.isDragging
-                                ? '0 24px 30px -18px rgba(17, 24, 39, 0.35)'
-                                : undefined
-                            }}
-                            className={dragSnapshot.isDragging ? 'rotate-1' : ''}
-                          >
-                            <TaskCard
-                              task={task}
-                              onDelete={handleDelete}
-                              onUpdate={handleInlineUpdate}
-                              onEdit={(selected) => {
-                                setEditingTask(selected)
-                                setIsModalOpen(true)
+
+                    {columnTasks.map((task, index) => {
+                      const idStr = String(task.id)
+                      return (
+                        <Draggable draggableId={idStr} index={index} key={idStr}>
+                          {(dragProvided, dragSnapshot) => (
+                            <div
+                              ref={dragProvided.innerRef}
+                              {...dragProvided.draggableProps}
+                              {...dragProvided.dragHandleProps}
+                              style={{
+                                ...dragProvided.draggableProps.style,
+                                transition: dragSnapshot.isDragging
+                                  ? 'transform 0.18s ease, box-shadow 0.18s ease'
+                                  : 'transform 0.35s ease',
+                                boxShadow: dragSnapshot.isDragging
+                                  ? '0 24px 30px -18px rgba(17, 24, 39, 0.35)'
+                                  : undefined
                               }}
-                              onOpenDetails={handleOpenDetails}
-                              onStatusChange={async (id, status) =>
-                                handleInlineUpdate(id, { status: normalizeStatus(status) })
-                              }
-                            />
-                          </div>
-                        )}
-                      </Draggable>
-                    ))}
+                              className={dragSnapshot.isDragging ? 'rotate-1' : ''}
+                            >
+                              <TaskCard
+                                task={task}
+                                onDelete={handleDelete}
+                                onUpdate={handleInlineUpdate}
+                                onEdit={(selected) => {
+                                  setEditingTask(selected)
+                                  setIsModalOpen(true)
+                                }}
+                                onOpenDetails={handleOpenDetails}
+                                onStatusChange={async (id, status) =>
+                                  handleInlineUpdate(id, { status: normalizeStatus(status) })
+                                }
+                              />
+                            </div>
+                          )}
+                        </Draggable>
+                      )
+                    })}
                     {provided.placeholder}
                     {columnTasks.length === 0 && (
                       <p className="mt-auto text-center text-xs text-gray-400 dark:text-gray-600">
-                        Bu sütunda görev bulunmuyor.
+                        Bu sütunda görev yok.
                       </p>
                     )}
                   </div>
@@ -278,47 +216,38 @@ function KanbanBoard({ initialTasks = [], projects = [] }: KanbanBoardProps) {
         </div>
       </DragDropContext>
 
-      {/* Görev Form Modal */}
       <Modal
         isOpen={isModalOpen}
-        onClose={() => {
-          setIsModalOpen(false)
-          setEditingTask(null)
-        }}
+        onClose={() => { setIsModalOpen(false); setEditingTask(null) }}
         title={editingTask ? 'Görevi Düzenle' : 'Yeni Görev Oluştur'}
       >
         <TaskForm
           projects={projects}
           initialData={editingTask ?? undefined}
-          onSuccess={() => {
+          onSuccess={async () => {
             setIsModalOpen(false)
             setEditingTask(null)
-            refreshTasks()
+            await onRefresh?.()
           }}
         />
       </Modal>
 
-      {/* Görev Detayları Modal */}
       <Modal
         isOpen={isDetailsOpen && !!selectedTask}
-        onClose={() => {
-          setIsDetailsOpen(false)
-          setSelectedTask(null)
-        }}
+        onClose={() => { setIsDetailsOpen(false); setSelectedTask(null) }}
         title="Görev Detayları"
       >
         {selectedTask && (
           <TaskDetails
             task={selectedTask}
             projects={projects}
-            onClose={() => {
-              setIsDetailsOpen(false)
-              setSelectedTask(null)
-            }}
-            onTaskUpdated={(updated) => {
-              setTasks((prev) => prev.map((t) => (t.id === updated.id ? updated : t)))
+            onClose={() => { setIsDetailsOpen(false); setSelectedTask(null) }}
+            onTaskUpdated={async (updated) => {
+              setData(prev =>
+                prev.map(t => t.id === updated.id ? { ...updated, status: normalizeStatus(updated.status) } : t)
+              )
               setSelectedTask(updated)
-              refreshTasks()
+              await onRefresh?.()
             }}
           />
         )}

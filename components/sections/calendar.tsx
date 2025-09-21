@@ -19,7 +19,10 @@ import { Modal } from '@/components/ui/modal'
 import { ListItem } from './list-item'
 import { cn } from '@/lib/utils'
 
-const eventTypeConfig: Record<AgendaEvent['type'], { label: string; dot: string; tone: 'accent' | 'blue' | 'emerald' | 'amber' | 'violet' }> = {
+const eventTypeConfig: Record<
+  AgendaEvent['type'],
+  { label: string; dot: string; tone: 'accent' | 'blue' | 'emerald' | 'amber' | 'violet' }
+> = {
   icerik: { label: 'İçerik Yayını', dot: 'bg-accent', tone: 'accent' },
   toplanti: { label: 'Toplantı', dot: 'bg-blue-500', tone: 'blue' },
   odeme: { label: 'Ödeme Günü', dot: 'bg-amber-500', tone: 'amber' },
@@ -41,7 +44,13 @@ interface CalendarProps {
   pendingEventId?: string | null
 }
 
-export function Calendar({ events, onCreateEvent, onEditEvent, onDeleteEvent, pendingEventId }: CalendarProps) {
+export function Calendar({
+  events,
+  onCreateEvent,
+  onEditEvent,
+  onDeleteEvent,
+  pendingEventId
+}: CalendarProps) {
   const [currentDate, setCurrentDate] = useState(new Date())
   const [selectedDate, setSelectedDate] = useState<Date | null>(null)
 
@@ -53,7 +62,10 @@ export function Calendar({ events, onCreateEvent, onEditEvent, onDeleteEvent, pe
 
   const eventsByDate = useMemo(() => {
     return events.reduce<Record<string, AgendaEvent[]>>((acc, event) => {
-      const key = format(new Date(event.date), 'yyyy-MM-dd')
+      if (!event.date) return acc
+      const d = new Date(event.date)
+      if (isNaN(d.getTime())) return acc // 🔥 geçersiz tarihleri atla
+      const key = format(d, 'yyyy-MM-dd')
       if (!acc[key]) acc[key] = []
       acc[key].push(event)
       return acc
@@ -65,10 +77,15 @@ export function Calendar({ events, onCreateEvent, onEditEvent, onDeleteEvent, pe
 
   return (
     <div className="space-y-6">
+      {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.3em] text-gray-500 dark:text-gray-400">Aylık Ajanda</p>
-          <h2 className="text-xl font-semibold text-gray-900 dark:text-white">{format(currentDate, 'LLLL yyyy', { locale: tr })}</h2>
+          <p className="text-xs font-semibold uppercase tracking-[0.3em] text-gray-500 dark:text-gray-400">
+            Aylık Ajanda
+          </p>
+          <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
+            {format(currentDate, 'LLLL yyyy', { locale: tr })}
+          </h2>
         </div>
         <div className="flex items-center gap-2">
           <Button variant="secondary" onClick={() => setCurrentDate(addMonths(currentDate, -1))}>
@@ -83,6 +100,7 @@ export function Calendar({ events, onCreateEvent, onEditEvent, onDeleteEvent, pe
         </div>
       </div>
 
+      {/* Gün başlıkları */}
       <div className="grid grid-cols-7 gap-3 text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
         {['Pzt', 'Sal', 'Çar', 'Per', 'Cum', 'Cmt', 'Paz'].map((day) => (
           <div key={day} className="text-center">
@@ -91,6 +109,7 @@ export function Calendar({ events, onCreateEvent, onEditEvent, onDeleteEvent, pe
         ))}
       </div>
 
+      {/* Günler */}
       <div className="grid grid-cols-7 gap-3">
         {days.map((day) => {
           const key = format(day, 'yyyy-MM-dd')
@@ -112,7 +131,9 @@ export function Calendar({ events, onCreateEvent, onEditEvent, onDeleteEvent, pe
                 today ? 'ring-2 ring-accent ring-offset-2 dark:ring-offset-surface-dark' : ''
               )}
             >
-              <span className="text-sm font-semibold">{format(day, 'd', { locale: tr })}</span>
+              <span className="text-sm font-semibold">
+                {format(day, 'd', { locale: tr })}
+              </span>
               <div className="mt-auto flex flex-wrap items-center gap-1">
                 {dayEvents.slice(0, 3).map((event) => (
                   <span
@@ -122,7 +143,9 @@ export function Calendar({ events, onCreateEvent, onEditEvent, onDeleteEvent, pe
                   ></span>
                 ))}
                 {dayEvents.length > 3 ? (
-                  <span className="text-[10px] font-semibold text-gray-400">+{dayEvents.length - 3}</span>
+                  <span className="text-[10px] font-semibold text-gray-400">
+                    +{dayEvents.length - 3}
+                  </span>
                 ) : null}
               </div>
             </button>
@@ -130,6 +153,7 @@ export function Calendar({ events, onCreateEvent, onEditEvent, onDeleteEvent, pe
         })}
       </div>
 
+      {/* Legend */}
       <div className="flex flex-wrap items-center gap-3 text-xs text-gray-500 dark:text-gray-400">
         {Object.entries(eventTypeConfig).map(([type, config]) => (
           <div key={type} className="flex items-center gap-2">
@@ -139,6 +163,7 @@ export function Calendar({ events, onCreateEvent, onEditEvent, onDeleteEvent, pe
         ))}
       </div>
 
+      {/* Modal */}
       <Modal
         isOpen={!!selectedDate}
         onClose={() => setSelectedDate(null)}
@@ -153,16 +178,20 @@ export function Calendar({ events, onCreateEvent, onEditEvent, onDeleteEvent, pe
       >
         {selectedEvents.length === 0 ? (
           <p className="text-sm text-gray-500 dark:text-gray-400">
-            Bu tarih için planlanmış etkinlik bulunmuyor. {onCreateEvent ? 'Yeni bir etkinlik eklemek için yukarıdaki butonu kullanabilirsiniz.' : ''}
+            Bu tarih için planlanmış etkinlik bulunmuyor.{' '}
+            {onCreateEvent ? 'Yeni bir etkinlik eklemek için yukarıdaki butonu kullanabilirsiniz.' : ''}
           </p>
         ) : (
           <div className="space-y-3">
             {selectedEvents.map((event) => {
-              const eventDate = new Date(event.date)
+              if (!event.date) return null
+              const d = new Date(event.date)
+              if (isNaN(d.getTime())) return null // geçersizse gösterme
+
               const metaLabel =
-                eventDate.getHours() === 0 && eventDate.getMinutes() === 0
+                d.getHours() === 0 && d.getMinutes() === 0
                   ? 'Tüm Gün Etkinlik'
-                  : format(eventDate, 'HH:mm', { locale: tr })
+                  : format(d, 'HH:mm', { locale: tr })
 
               return (
                 <ListItem

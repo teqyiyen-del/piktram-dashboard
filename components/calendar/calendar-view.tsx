@@ -33,9 +33,11 @@ export function CalendarView({ tasks, onCreateTask }: CalendarViewProps) {
     return eachDayOfInterval({ start, end })
   }, [currentDate])
 
+  // 🔥 Sadece due_date + onaylandı olanları al
   const tasksByDate = useMemo(() => {
     return tasks.reduce<Record<string, Task[]>>((acc, task) => {
       if (!task.due_date) return acc
+      if (task.status !== 'approved') return acc
       const key = format(new Date(task.due_date), 'yyyy-MM-dd')
       if (!acc[key]) acc[key] = []
       acc[key].push(task)
@@ -49,10 +51,13 @@ export function CalendarView({ tasks, onCreateTask }: CalendarViewProps) {
 
   return (
     <div className="space-y-4">
+      {/* Üst bar */}
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Takvim</h2>
-          <p className="text-sm text-gray-500 dark:text-gray-400">Görevlerinizi aylık görünümde takip edin.</p>
+          <p className="text-sm text-gray-500 dark:text-gray-400">
+            Onaylanan görevlerinizi aylık görünümde takip edin.
+          </p>
         </div>
         <div className="flex items-center gap-2">
           <Button variant="secondary" onClick={() => setCurrentDate(addMonths(currentDate, -1))}>
@@ -89,16 +94,29 @@ export function CalendarView({ tasks, onCreateTask }: CalendarViewProps) {
             <button
               key={key}
               onClick={() => setSelectedDate(day)}
-              className={`flex h-24 flex-col rounded-2xl border p-2 text-left transition 
+              className={`
+                flex h-24 flex-col rounded-2xl border p-2 text-left transition-colors
                 ${isCurrentMonth
                   ? 'bg-surface border-gray-200 text-gray-700 dark:border-gray-700 dark:bg-surface-dark dark:text-gray-200'
-                  : 'bg-gray-50 border-gray-100 text-gray-400 dark:border-gray-800 dark:bg-gray-900/40 dark:text-gray-600'} 
-                ${isToday ? 'ring-2 ring-accent' : ''}`}
+                  : 'bg-gray-50 border-gray-100 text-gray-400 dark:border-gray-800 dark:bg-gray-900/40 dark:text-gray-600'}
+                ${isToday ? 'ring-2 ring-accent' : ''}
+                hover:bg-accent hover:text-white
+              `}
             >
-              <span className="text-sm font-semibold">{format(day, 'd', { locale: tr })}</span>
-              <span className="mt-auto flex items-center gap-1">
+              {/* Gün numarası */}
+              <span
+                className={`
+                  text-sm font-semibold transition-colors
+                  ${dayTasks.length > 0 ? 'bg-accent text-white rounded-full px-2' : ''}
+                `}
+              >
+                {format(day, 'd', { locale: tr })}
+              </span>
+
+              {/* Görev nokta göstergeleri */}
+              <span className="mt-auto flex flex-wrap gap-1">
                 {dayTasks.map((task) => (
-                  <span key={task.id} className="h-2 w-2 rounded-full bg-accent"></span>
+                  <span key={task.id} className="h-1.5 w-1.5 rounded-full bg-accent"></span>
                 ))}
               </span>
             </button>
@@ -113,7 +131,9 @@ export function CalendarView({ tasks, onCreateTask }: CalendarViewProps) {
         title={selectedDate ? format(selectedDate, 'd MMMM yyyy', { locale: tr }) : 'Görevler'}
       >
         {selectedTasks.length === 0 ? (
-          <p className="text-sm text-gray-500 dark:text-gray-400">Bu tarih için görev bulunmuyor.</p>
+          <p className="text-sm text-gray-500 dark:text-gray-400">
+            Bu tarih için onaylanmış görev bulunmuyor.
+          </p>
         ) : (
           <div className="space-y-3">
             {selectedTasks.map((task) => (
@@ -123,7 +143,9 @@ export function CalendarView({ tasks, onCreateTask }: CalendarViewProps) {
               >
                 <p className="text-sm font-semibold text-gray-900 dark:text-white">{task.title}</p>
                 <p className="text-xs text-gray-500 dark:text-gray-400">{task.description}</p>
-                <p className="mt-1 text-xs text-gray-400 dark:text-gray-500">Bitiş: {formatDate(task.due_date)}</p>
+                <p className="mt-1 text-xs text-gray-400 dark:text-gray-500">
+                  Bitiş: {formatDate(task.due_date)}
+                </p>
                 {task.attachment_url && (
                   <a
                     href={task.attachment_url}

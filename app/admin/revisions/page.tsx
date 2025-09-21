@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
 import { Database } from '@/lib/supabase-types'
 import { formatDateTime } from '@/lib/utils'
+import Link from 'next/link'
 
 export default function RevisionsPage() {
   const supabase = createClientComponentClient<Database>()
@@ -15,8 +16,24 @@ export default function RevisionsPage() {
 
   async function fetchRevisions() {
     const { data, error } = await supabase
-      .from('revisions')
-      .select('id, description, created_at, tasks(id, title, status), profiles(full_name, email, company)')
+      .from('comments')
+      .select(
+        `
+        id,
+        content,
+        created_at,
+        tasks (
+          id,
+          title,
+          status
+        ),
+        profiles (
+          full_name,
+          email,
+          company
+        )
+      `
+      )
       .order('created_at', { ascending: false })
 
     if (error) console.error('Revizyonlar alınamadı:', error.message)
@@ -69,11 +86,21 @@ export default function RevisionsPage() {
                   </span>
                   <span>{formatDateTime(rev.created_at)}</span>
                 </div>
-                <p className="mt-1 text-sm text-gray-700">{rev.description}</p>
+                <p className="mt-1 text-sm text-gray-700">{rev.content}</p>
                 <p className="mt-1 text-xs text-gray-400">
                   Müşteri: {rev.profiles?.full_name ?? rev.profiles?.email}{' '}
                   {rev.profiles?.company ? `(${rev.profiles.company})` : ''}
                 </p>
+
+                {/* Task Detay Linki */}
+                {rev.tasks?.id && (
+                  <Link
+                    href={`/admin/tasks/${rev.tasks.id}`}
+                    className="mt-3 inline-block text-sm font-medium text-accent hover:underline"
+                  >
+                    Task Detayına Git →
+                  </Link>
+                )}
               </div>
             ))}
           </div>
@@ -98,11 +125,21 @@ export default function RevisionsPage() {
                   </span>
                   <span>{formatDateTime(rev.created_at)}</span>
                 </div>
-                <p className="mt-1 text-sm text-gray-700">{rev.description}</p>
+                <p className="mt-1 text-sm text-gray-700">{rev.content}</p>
                 <p className="mt-1 text-xs text-gray-400">
                   Müşteri: {rev.profiles?.full_name ?? rev.profiles?.email}{' '}
                   {rev.profiles?.company ? `(${rev.profiles.company})` : ''}
                 </p>
+
+                {/* Task Detay Linki */}
+                {rev.tasks?.id && (
+                  <Link
+                    href={`/admin/tasks/${rev.tasks.id}`}
+                    className="mt-3 inline-block text-sm font-medium text-accent hover:underline"
+                  >
+                    Task Detayına Git →
+                  </Link>
+                )}
               </div>
             ))}
           </div>

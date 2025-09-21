@@ -17,9 +17,7 @@ import {
   ChevronDown,
   Check
 } from 'lucide-react'
-import { useEffect, useState } from 'react'
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
-import { Database } from '@/lib/supabase-types'
+import { useEffect, useState, useRef } from 'react'
 import { useCustomer } from '@/components/providers/customer-provider'
 
 type Client = {
@@ -46,7 +44,7 @@ const settingsLink = { href: '/admin/settings', label: 'Ayarlar', icon: Settings
 export default function AdminSidebar() {
   const pathname = usePathname()
   const router = useRouter()
-  const supabase = createClientComponentClient<Database>()
+  const dropdownRef = useRef<HTMLDivElement>(null)
 
   let customerCtx
   try {
@@ -61,13 +59,32 @@ export default function AdminSidebar() {
 
   useEffect(() => {
     const fetchClients = async () => {
-      const { data } = await supabase
-        .from('profiles')
-        .select('id, full_name, email, company')
-      setClients(data || [])
+      try {
+        const res = await fetch('/api/clients')
+        if (!res.ok) throw new Error('API hatası')
+        const data = await res.json()
+        setClients(data)
+      } catch (err) {
+        console.error('❌ Müşteri listesi hatası:', err)
+      }
     }
     fetchClients()
-  }, [supabase])
+  }, [])
+
+  useEffect(() => {
+    const saved = localStorage.getItem('selectedClient')
+    if (saved) setSelectedCustomer(saved)
+  }, [setSelectedCustomer])
+
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        setIsOpen(false)
+      }
+    }
+    if (isOpen) document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [isOpen])
 
   const displayName = (c: Client | undefined) => {
     if (!c) return 'Tüm Müşteriler'
@@ -77,20 +94,19 @@ export default function AdminSidebar() {
   const activeCustomer = clients.find((c) => c.id === selectedCustomer)
 
   const isActive = (href: string) => {
-    if (href === '/admin') {
-      return pathname === '/admin'
-    }
+    if (href === '/admin') return pathname === '/admin'
     return pathname === href || pathname.startsWith(href + '/')
   }
 
-  // ✅ müşteri seçimini mevcut sayfa üzerinden yap
   function handleSelectClient(clientId: string | null) {
     if (clientId) {
       setSelectedCustomer(clientId)
+      localStorage.setItem('selectedClient', clientId)
       router.push(`${pathname}?client=${clientId}`)
     } else {
       setSelectedCustomer(null)
-      router.push(pathname) // query temizlenir
+      localStorage.removeItem('selectedClient')
+      router.push(pathname)
     }
     setIsOpen(false)
   }
@@ -103,40 +119,37 @@ export default function AdminSidebar() {
       </div>
 
       {/* Global müşteri seçici */}
-      <div className="px-4 mb-6 relative">
+      <div className="px-4 mb-6 relative" ref={dropdownRef}>
         <button
           onClick={() => setIsOpen(!isOpen)}
-          className="w-full flex items-center justify-between rounded-xl bg-accent text-white px-3 py-2 text-sm font-medium hover:bg-accent-dark transition-colors"
+          className="w-full flex items-center justify-between rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 dark:bg-gray-800 dark:text-gray-200 dark:border-gray-700"
         >
           <span className="flex items-center gap-2 truncate">
-            <UserCircle2 className="h-4 w-4 shrink-0" />
-            {selectedCustomer
-              ? displayName(activeCustomer)
-              : '🌍 Tüm Müşteriler'}
+            <UserCircle2 className="h-4 w-4 shrink-0 text-accent" />
+            {selectedCustomer ? displayName(activeCustomer) : 'Tüm Müşteriler'}
           </span>
           <ChevronDown
-            className={`h-4 w-4 transition-transform ${
-              isOpen ? 'rotate-180' : ''
-            }`}
+            className={`h-4 w-4 transition-transform ${isOpen ? 'rotate-180' : ''}`}
           />
         </button>
 
         {isOpen && (
-          <div className="absolute z-50 mt-2 left-0 right-0 max-h-60 overflow-y-auto rounded-lg border border-gray-200/60 bg-white shadow-md dark:border-gray-700 dark:bg-gray-900">
-            {/* Global seçeneği */}
+          <div className="absolute z-50 mt-2 left-0 right-0 rounded-lg border border-gray-200 bg-white shadow-md dark:border-gray-700 dark:bg-gray-900">
             <button
               onClick={() => handleSelectClient(null)}
               className={`flex items-center justify-between w-full text-left px-3 py-2 text-sm rounded-md transition-colors ${
                 selectedCustomer === null
                   ? 'bg-accent text-white'
-                  : 'bg-gray-100 text-gray-800'
-              } hover:bg-gray-300 hover:text-gray-900`}
+                  : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700'
+              }`}
             >
-              🌍 Tüm Müşteriler
+              Tüm Müşteriler
               {selectedCustomer === null && <Check className="h-4 w-4" />}
             </button>
 
-            {/* Müşteri listesi */}
+            {clients.length === 0 && (
+              <div className="px-3 py-2 text-sm text-gray-500">Hiç müşteri bulunamadı</div>
+            )}
             {clients.map((c) => (
               <button
                 key={c.id}
@@ -144,8 +157,8 @@ export default function AdminSidebar() {
                 className={`flex items-center justify-between w-full text-left px-3 py-2 text-sm rounded-md transition-colors ${
                   selectedCustomer === c.id
                     ? 'bg-accent text-white'
-                    : 'bg-gray-100 text-gray-800'
-                } hover:bg-gray-300 hover:text-gray-900`}
+                    : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700'
+                }`}
               >
                 {displayName(c)}
                 {selectedCustomer === c.id && <Check className="h-4 w-4" />}
@@ -196,7 +209,6 @@ export default function AdminSidebar() {
         </div>
       </nav>
 
-      {/* Footer */}
       <div className="border-t border-gray-200/50 px-4 py-3 text-xs text-gray-500 dark:border-gray-800/50 dark:text-gray-400">
         © {new Date().getFullYear()}{' '}
         <span className="text-accent font-semibold">Piktram</span>

@@ -6,7 +6,8 @@ export const TASK_STATUS_ORDER: TaskStatus[] = [
   'in_review',
   'revision',
   'approved',
-  'published'
+  'published',
+  'tamamlandi' // ✅ artık burada doğru şekilde
 ]
 
 export const TASK_STATUS_LABELS: Record<TaskStatus, string> = {
@@ -16,14 +17,15 @@ export const TASK_STATUS_LABELS: Record<TaskStatus, string> = {
   revision: 'Revize',
   approved: 'Onaylandı',
   published: 'Paylaşıldı',
-  done: 'Tamamlandı'
+  tamamlandi: 'Tamamlandı' // ✅ label eşleşti
 }
 
-export const COMPLETED_STATUSES: TaskStatus[] = ['approved', 'published', 'done']
+export const COMPLETED_STATUSES: TaskStatus[] = ['approved', 'published', 'tamamlandi']
 
 export function normalizeStatus(status: TaskStatus): TaskStatus {
-  if (status === 'done') {
-    return 'approved'
+  if (status === 'completed' || status === 'done') {
+    // DB’den completed/done gelse bile frontend'te "tamamlandi" yapıyoruz
+    return 'tamamlandi'
   }
   if (!TASK_STATUS_ORDER.includes(status)) {
     return 'todo'

@@ -1,19 +1,29 @@
 'use client'
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { Task, Comment, Revision } from '@/lib/types'
+import { Task, Comment } from '@/lib/types'
 import { Button } from '@/components/ui/button'
 import { formatDateTime, formatDate } from '@/lib/utils'
 import { getStatusLabel, normalizeStatus, TASK_STATUS_ORDER } from '@/lib/task-status'
 import { useToast } from '@/components/providers/toast-provider'
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
 import { Database } from '@/lib/supabase-types'
-import { X } from 'lucide-react'
+import { X, Paperclip } from 'lucide-react'
 
 const priorityLabels: Record<Task['priority'], string> = {
   low: 'Düşük',
   medium: 'Orta',
   high: 'Yüksek',
+}
+
+// ✅ dosyanın görsel olup olmadığını kontrol eden helper
+function isImageFile(url: string) {
+  try {
+    const cleanPath = url.split('?')[0]
+    return /\.(jpeg|jpg|png|gif|webp)$/i.test(cleanPath)
+  } catch {
+    return false
+  }
 }
 
 interface TaskDetailsProps {
@@ -25,14 +35,12 @@ interface TaskDetailsProps {
 
 interface CommentResponse {
   comment: Comment
-  revision: Revision | null
 }
 
 function TaskDetails({ task, projects, onClose, onTaskUpdated }: TaskDetailsProps) {
   const supabase = createClientComponentClient<Database>()
   const [currentTask, setCurrentTask] = useState<Task>(task)
   const [comments, setComments] = useState<Comment[]>([])
-  const [revisions, setRevisions] = useState<Revision[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [isCommentLoading, setIsCommentLoading] = useState(false)
   const [commentText, setCommentText] = useState('')
@@ -40,6 +48,8 @@ function TaskDetails({ task, projects, onClose, onTaskUpdated }: TaskDetailsProp
   const [status, setStatus] = useState(normalizeStatus(task.status))
   const [statusLoading, setStatusLoading] = useState(false)
   const [imagePreview, setImagePreview] = useState<string | null>(null)
+  const [previewUrls, setPreviewUrls] = useState<Record<string, string>>({})
+  const [taskFileUrl, setTaskFileUrl] = useState<string | null>(null)
   const { toast } = useToast()
 
   const projectName = useMemo(() => {
@@ -50,19 +60,10 @@ function TaskDetails({ task, projects, onClose, onTaskUpdated }: TaskDetailsProp
   const loadDetails = useCallback(async () => {
     setIsLoading(true)
     try {
-      const [commentsRes, revisionsRes] = await Promise.all([
-        fetch(`/api/tasks/${task.id}/comments`),
-        fetch(`/api/tasks/${task.id}/revisions`),
-      ])
-
+      const commentsRes = await fetch(`/api/tasks/${task.id}/comments`)
       if (commentsRes.ok) {
         const data = (await commentsRes.json()) as Comment[]
         setComments(data)
-      }
-
-      if (revisionsRes.ok) {
-        const data = (await revisionsRes.json()) as Revision[]
-        setRevisions(data)
       }
     } finally {
       setIsLoading(false)
@@ -77,6 +78,44 @@ function TaskDetails({ task, projects, onClose, onTaskUpdated }: TaskDetailsProp
   useEffect(() => {
     loadDetails()
   }, [loadDetails])
+
+  // ✅ Yorum dosyaları için signed URL üret
+  useEffect(() => {
+    async function loadUrls() {
+      const map: Record<string, string> = {}
+      for (const c of comments) {
+        if (c.file_url) {
+          if (c.file_url.startsWith('http')) {
+            map[c.id] = c.file_url
+          } else {
+            const { data } = await supabase.storage
+              .from('task-files')
+              .createSignedUrl(c.file_url, 60 * 60)
+            if (data?.signedUrl) map[c.id] = data.signedUrl
+          }
+        }
+      }
+      setPreviewUrls(map)
+    }
+    if (comments.length > 0) loadUrls()
+  }, [comments, supabase])
+
+  // ✅ Görev dosyası için signed URL üret
+  useEffect(() => {
+    async function loadTaskFile() {
+      if (currentTask.file_url) {
+        if (currentTask.file_url.startsWith('http')) {
+          setTaskFileUrl(currentTask.file_url)
+        } else {
+          const { data } = await supabase.storage
+            .from('task-files')
+            .createSignedUrl(currentTask.file_url, 60 * 60)
+          if (data?.signedUrl) setTaskFileUrl(data.signedUrl)
+        }
+      }
+    }
+    loadTaskFile()
+  }, [currentTask.file_url, supabase])
 
   const handleAddComment = async () => {
     const trimmed = commentText.trim()
@@ -101,11 +140,10 @@ function TaskDetails({ task, projects, onClose, onTaskUpdated }: TaskDetailsProp
 
       const data = (await response.json()) as CommentResponse
       setComments((prev) => [...prev, data.comment])
-      if (data.revision) setRevisions((prev) => [data.revision, ...prev])
 
       setCommentText('')
       setCommentFile(null)
-      toast({ title: 'Yorum paylaşıldı', description: 'Görevin revize geçmişine eklendi.', variant: 'success' })
+      toast({ title: 'Yorum paylaşıldı', variant: 'success' })
     } finally {
       setIsCommentLoading(false)
     }
@@ -145,8 +183,7 @@ function TaskDetails({ task, projects, onClose, onTaskUpdated }: TaskDetailsProp
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-2 sm:px-4">
       <div className="relative flex h-[95vh] w-[95vw] max-w-5xl flex-col rounded-2xl bg-white shadow-2xl sm:h-[80vh] sm:w-[90vw] sm:flex-row">
-        
-        {/* X kapatma butonu */}
+        {/* X kapatma */}
         <button
           onClick={onClose}
           className="absolute top-3 right-3 rounded-full bg-red-500 p-2 text-white hover:bg-red-600 transition"
@@ -154,7 +191,7 @@ function TaskDetails({ task, projects, onClose, onTaskUpdated }: TaskDetailsProp
           <X size={20} />
         </button>
 
-        {/* Sol panel (Task detayları + revizyonlar) */}
+        {/* Sol panel */}
         <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-6">
           <div className="space-y-4">
             <div>
@@ -175,6 +212,29 @@ function TaskDetails({ task, projects, onClose, onTaskUpdated }: TaskDetailsProp
                 <p className="font-medium text-gray-900">{priorityLabels[currentTask.priority]}</p>
               </div>
             </div>
+
+            {/* ✅ Görev dosyası/görseli */}
+            {taskFileUrl && (
+              <div className="mt-3">
+                {isImageFile(taskFileUrl) ? (
+                  <img
+                    src={taskFileUrl}
+                    alt="task-attachment"
+                    className="max-h-64 rounded-lg border cursor-pointer hover:opacity-90"
+                    onClick={() => setImagePreview(taskFileUrl)}
+                  />
+                ) : (
+                  <a
+                    href={taskFileUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-2 text-sm font-medium text-accent hover:text-accent-dark break-all"
+                  >
+                    <Paperclip className="h-4 w-4" /> Ek dosya indir
+                  </a>
+                )}
+              </div>
+            )}
           </div>
 
           {/* Durum */}
@@ -200,36 +260,11 @@ function TaskDetails({ task, projects, onClose, onTaskUpdated }: TaskDetailsProp
               })}
             </div>
           </div>
-
-          {/* Revizyonlar */}
-          <div className="space-y-3">
-            <h4 className="text-sm font-semibold text-gray-900">Revize Geçmişi</h4>
-            {revisions.length === 0 ? (
-              <p className="text-sm text-gray-500">Henüz revize geçmişi bulunmuyor.</p>
-            ) : (
-              <div className="space-y-3">
-                {revisions.map((revision) => (
-                  <div
-                    key={revision.id}
-                    className="rounded-xl border border-gray-200 bg-white p-3 hover:shadow-md transition"
-                  >
-                    <div className="flex items-center justify-between text-xs text-gray-500">
-                      <span>{revision.author?.full_name ?? revision.author?.email ?? 'Kullanıcı'}</span>
-                      <span>{formatDateTime(revision.created_at)}</span>
-                    </div>
-                    <p className="mt-2 text-sm text-gray-700">{revision.description}</p>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
         </div>
 
         {/* Sağ panel (Yorumlar) */}
         <div className="flex flex-col border-t sm:border-t-0 sm:border-l sm:w-96 h-[50vh] sm:h-auto">
           <h4 className="mb-2 p-4 text-sm font-semibold text-gray-900">Yorumlar</h4>
-          
-          {/* Yorum listesi */}
           <div className="flex-1 overflow-y-auto px-4 space-y-3">
             {comments.length === 0 ? (
               <p className="text-sm text-gray-500">Henüz yorum yok.</p>
@@ -244,13 +279,26 @@ function TaskDetails({ task, projects, onClose, onTaskUpdated }: TaskDetailsProp
                     <span>{formatDateTime(comment.created_at)}</span>
                   </div>
                   <p className="mt-2 text-sm text-gray-700">{comment.content}</p>
-                  {comment.file_url && (
-                    <img
-                      src={comment.file_url}
-                      alt="comment-attachment"
-                      className="mt-2 max-h-32 rounded-lg border cursor-pointer hover:opacity-90"
-                      onClick={() => setImagePreview(comment.file_url)}
-                    />
+
+                  {/* ✅ Yorum dosyası/görseli */}
+                  {comment.file_url && previewUrls[comment.id] && (
+                    isImageFile(previewUrls[comment.id]) ? (
+                      <img
+                        src={previewUrls[comment.id]}
+                        alt="comment-attachment"
+                        className="mt-2 max-h-32 rounded-lg border cursor-pointer hover:opacity-90"
+                        onClick={() => setImagePreview(previewUrls[comment.id])}
+                      />
+                    ) : (
+                      <a
+                        href={previewUrls[comment.id]}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="mt-2 inline-flex items-center gap-2 text-xs font-medium text-accent hover:text-accent-dark break-all"
+                      >
+                        <Paperclip className="h-3.5 w-3.5" /> Ek dosya indir
+                      </a>
+                    )
                   )}
                 </div>
               ))
@@ -272,7 +320,6 @@ function TaskDetails({ task, projects, onClose, onTaskUpdated }: TaskDetailsProp
                 Dosya Seç
                 <input
                   type="file"
-                  accept="image/*"
                   onChange={(e) => setCommentFile(e.target.files?.[0] || null)}
                   className="hidden"
                 />
