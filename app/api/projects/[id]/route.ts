@@ -1,52 +1,61 @@
 import { NextResponse } from 'next/server'
-import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
-import { cookies } from 'next/headers'
 import { Database } from '@/lib/supabase-types'
+import { getSessionAndRole } from '@/lib/checkrole'
 
+// PUT: Proje güncelle
 export async function PUT(request: Request, { params }: { params: { id: string } }) {
-  const supabase = createRouteHandlerClient<Database>({ cookies })
+  const { error, session, role, supabase } = await getSessionAndRole()
+  if (error || !session) {
+    return NextResponse.json({ error }, { status: 401 })
+  }
+
   const body = await request.json()
+  const updates: Database['public']['Tables']['projects']['Update'] = {}
 
-  const {
-    data: { session }
-  } = await supabase.auth.getSession()
+  if ('title' in body) updates.title = body.title
+  if ('description' in body) updates.description = body.description ?? null
+  if ('progress' in body && body.progress !== undefined) {
+    updates.progress = Number(body.progress)
+  }
+  if ('due_date' in body) updates.due_date = body.due_date ?? null
+  if ('client_id' in body) updates.client_id = body.client_id ?? null // 🔑 müşteri bağlama/güncelleme
+  if ('type' in body) updates.type = body.type ?? 'project'           // 🔑 proje/campaign seçimi
 
-  if (!session) {
-    return NextResponse.json({ error: 'Yetkisiz erişim' }, { status: 401 })
+  if (Object.keys(updates).length === 0) {
+    return NextResponse.json({ error: 'Güncellenecek alan bulunamadı' }, { status: 400 })
   }
 
-  const { error } = await supabase
-    .from('projects')
-    .update({
-      title: body.title,
-      description: body.description,
-      progress: body.progress,
-      due_date: body.due_date
-    })
-    .eq('id', params.id)
-    .eq('user_id', session.user.id)
+  let query = supabase.from('projects').update(updates).eq('id', params.id)
 
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 })
+  if (role !== 'admin') {
+    query = query.eq('user_id', session.user.id)
   }
 
-  return NextResponse.json({ success: true })
+  const { data, error: updateError } = await query.select('*').single()
+
+  if (updateError) {
+    return NextResponse.json({ error: updateError.message }, { status: 500 })
+  }
+
+  return NextResponse.json(data)
 }
 
+// DELETE: Proje sil
 export async function DELETE(_: Request, { params }: { params: { id: string } }) {
-  const supabase = createRouteHandlerClient<Database>({ cookies })
-  const {
-    data: { session }
-  } = await supabase.auth.getSession()
-
-  if (!session) {
-    return NextResponse.json({ error: 'Yetkisiz erişim' }, { status: 401 })
+  const { error, session, role, supabase } = await getSessionAndRole()
+  if (error || !session) {
+    return NextResponse.json({ error }, { status: 401 })
   }
 
-  const { error } = await supabase.from('projects').delete().eq('id', params.id).eq('user_id', session.user.id)
+  let query = supabase.from('projects').delete().eq('id', params.id)
 
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 })
+  if (role !== 'admin') {
+    query = query.eq('user_id', session.user.id)
+  }
+
+  const { error: deleteError } = await query
+  if (deleteError) {
+    return NextResponse.json({ error: deleteError.message }, { status: 500 })
   }
 
   return NextResponse.json({ success: true })

@@ -1,9 +1,14 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useCallback } from 'react'
 import { Profile } from '@/lib/types'
 import { Button } from '@/components/ui/button'
+import { Switch } from '@/components/ui/switch'
 import { useTheme } from '@/components/providers/theme-provider'
+import { useToast } from '@/components/providers/toast-provider'
+import { useSupabaseClient } from '@supabase/auth-helpers-react'
+import { useRouter } from 'next/navigation'
+import { LogOut } from 'lucide-react'
 
 interface SettingsClientProps {
   profile: Profile
@@ -15,142 +20,189 @@ export function SettingsClient({ profile }: SettingsClientProps) {
   const [emailNotifications, setEmailNotifications] = useState(profile.email_notifications ?? true)
   const [pushNotifications, setPushNotifications] = useState(profile.push_notifications ?? false)
   const [weeklySummary, setWeeklySummary] = useState(profile.weekly_summary ?? true)
-  const [feedback, setFeedback] = useState<string | null>(null)
+
   const { theme, setTheme } = useTheme()
+  const { toast } = useToast()
+  const supabase = useSupabaseClient()
+  const router = useRouter()
 
-  const updateProfile = async () => {
-    const response = await fetch('/api/profile', {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ full_name: fullName, email })
-    })
-    const data = await response.json()
-    if (!response.ok) {
-      setFeedback(data.error ?? 'Profil güncellenemedi')
-      return
-    }
-    setFeedback('Profil bilgileri başarıyla güncellendi.')
+  // ✅ Logout
+  const handleLogout = async () => {
+    await supabase.auth.signOut()
+    router.replace('/auth/login')
   }
 
-  const updateNotifications = async () => {
-    const response = await fetch('/api/profile/preferences', {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        email_notifications: emailNotifications,
-        push_notifications: pushNotifications,
-        weekly_summary: weeklySummary
+  // ✅ Profil güncelleme
+  const updateProfile = useCallback(async (e?: React.FormEvent) => {
+    e?.preventDefault()
+    try {
+      const response = await fetch('/api/profile', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ full_name: fullName, email })
       })
-    })
-    const data = await response.json()
-    if (!response.ok) {
-      setFeedback(data.error ?? 'Bildirim tercihleri kaydedilemedi')
-      return
-    }
-    setFeedback('Bildirim tercihleri güncellendi.')
-  }
 
-  const handleThemeChange = async (nextTheme: 'light' | 'dark') => {
-    setTheme(nextTheme)
-    const response = await fetch('/api/profile/preferences', {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ theme: nextTheme })
-    })
-    if (!response.ok) {
-      setFeedback('Tema güncellenemedi')
-    } else {
-      setFeedback(`Tema ${nextTheme === 'dark' ? 'koyu' : 'açık'} moda alındı.`)
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}))
+        toast({
+          title: 'Profil kaydedilemedi',
+          description: data.error ?? 'Bir hata oluştu.',
+          variant: 'error'
+        })
+        return
+      }
+
+      toast({
+        title: 'Profil güncellendi',
+        description: 'Bilgileriniz başarıyla kaydedildi.',
+        variant: 'success'
+      })
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Profil güncellenemedi.'
+      toast({ title: 'Profil kaydedilemedi', description: message, variant: 'error' })
     }
-  }
+  }, [fullName, email, toast])
+
+  // ✅ Bildirim toggle
+  const handleNotificationChange = useCallback(
+    async (field: 'email_notifications' | 'push_notifications' | 'weekly_summary', value: boolean) => {
+      if (field === 'email_notifications') setEmailNotifications(value)
+      if (field === 'push_notifications') setPushNotifications(value)
+      if (field === 'weekly_summary') setWeeklySummary(value)
+
+      try {
+        await fetch('/api/profile/preferences', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ [field]: value })
+        })
+
+        toast({
+          title: 'Tercih kaydedildi',
+          description: `${field} ${value ? 'açıldı' : 'kapandı'}.`,
+          variant: 'success'
+        })
+      } catch {
+        toast({
+          title: 'Tercih kaydedilemedi',
+          description: 'Bağlantı hatası.',
+          variant: 'error'
+        })
+      }
+    },
+    [toast]
+  )
+
+  // ✅ Tema değiştirme
+  const handleThemeChange = useCallback(
+    async (nextTheme: 'light' | 'dark') => {
+      setTheme(nextTheme)
+      try {
+        await fetch('/api/profile/preferences', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ theme: nextTheme })
+        })
+
+        toast({
+          title: 'Tema güncellendi',
+          description: `Arayüz ${nextTheme === 'dark' ? 'koyu' : 'açık'} moda taşındı.`,
+          variant: 'success'
+        })
+      } catch {
+        toast({
+          title: 'Tema kaydedilemedi',
+          description: 'Yalnızca lokal olarak değiştirildi.',
+          variant: 'warning'
+        })
+      }
+    },
+    [setTheme, toast]
+  )
 
   return (
     <div className="space-y-8">
-      <div className="rounded-3xl bg-white p-8 shadow-sm">
-        <h1 className="text-2xl font-semibold text-gray-900">Ayarlar</h1>
-        <p className="mt-2 text-sm text-gray-500">Profil bilgilerinizi ve çalışma alışkanlıklarınızı yönetin.</p>
-      </div>
-
-      {feedback && <div className="rounded-xl bg-emerald-50 p-4 text-sm text-emerald-700">{feedback}</div>}
-
-      <section className="rounded-3xl border border-gray-200 bg-white p-6">
-        <div className="mb-6">
-          <h2 className="text-lg font-semibold text-gray-900">Profil</h2>
-          <p className="text-sm text-gray-500">Adınızı ve iletişim bilgilerinizi güncelleyin.</p>
-        </div>
+      {/* Profile Section */}
+      <form
+        onSubmit={updateProfile}
+        className="rounded-3xl border border-gray-200 bg-surface p-6 dark:border-gray-700 dark:bg-surface-dark"
+      >
+        <h2 className="mb-4 text-lg font-semibold text-gray-900 dark:text-white">Profil</h2>
         <div className="grid gap-4 sm:grid-cols-2">
           <div>
-            <label className="text-sm font-medium text-gray-700">Ad Soyad</label>
-            <input value={fullName} onChange={(e) => setFullName(e.target.value)} placeholder="Örn. Elif Aksoy" />
+            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Ad Soyad</label>
+            <input
+              value={fullName}
+              onChange={(e) => setFullName(e.target.value)}
+              className="mt-1 w-full rounded-md border px-3 py-2 text-sm shadow-sm focus:border-accent dark:border-gray-600"
+              placeholder="Örn. Elif Aksoy"
+            />
           </div>
           <div>
-            <label className="text-sm font-medium text-gray-700">E-posta</label>
-            <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
+            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">E-posta</label>
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="mt-1 w-full rounded-md border px-3 py-2 text-sm shadow-sm focus:border-accent dark:border-gray-600"
+            />
           </div>
         </div>
-        <Button className="mt-6" onClick={updateProfile}>
+        <Button type="submit" className="mt-6">
           Profili Kaydet
         </Button>
-      </section>
+      </form>
 
-      <section className="rounded-3xl border border-gray-200 bg-white p-6">
-        <div className="mb-6">
-          <h2 className="text-lg font-semibold text-gray-900">Bildirimler</h2>
-          <p className="text-sm text-gray-500">Takipte kalmak için tercih ettiğiniz bildirimleri seçin.</p>
-        </div>
+      {/* Notifications Section */}
+      <section className="rounded-3xl border border-gray-200 bg-surface p-6 dark:border-gray-700 dark:bg-surface-dark">
+        <h2 className="mb-4 text-lg font-semibold text-gray-900 dark:text-white">Bildirimler</h2>
         <div className="space-y-4">
-          <label className="flex items-center justify-between rounded-2xl border border-gray-200 p-4">
-            <div>
-              <p className="text-sm font-semibold text-gray-900">E-posta Bildirimleri</p>
-              <p className="text-xs text-gray-500">Önemli gelişmelerde e-posta almak için etkinleştirin.</p>
-            </div>
-            <input type="checkbox" checked={emailNotifications} onChange={(e) => setEmailNotifications(e.target.checked)} />
-          </label>
-          <label className="flex items-center justify-between rounded-2xl border border-gray-200 p-4">
-            <div>
-              <p className="text-sm font-semibold text-gray-900">Anlık Bildirimler</p>
-              <p className="text-xs text-gray-500">Görev güncellemelerinde anında bildirim alın.</p>
-            </div>
-            <input type="checkbox" checked={pushNotifications} onChange={(e) => setPushNotifications(e.target.checked)} />
-          </label>
-          <label className="flex items-center justify-between rounded-2xl border border-gray-200 p-4">
-            <div>
-              <p className="text-sm font-semibold text-gray-900">Haftalık Özet</p>
-              <p className="text-xs text-gray-500">Her pazartesi haftalık rapor alın.</p>
-            </div>
-            <input type="checkbox" checked={weeklySummary} onChange={(e) => setWeeklySummary(e.target.checked)} />
-          </label>
+          <div className="flex items-center justify-between">
+            <span className="text-sm text-gray-900 dark:text-white">E-posta Bildirimleri</span>
+            <Switch
+              checked={emailNotifications}
+              onCheckedChange={(checked) => handleNotificationChange('email_notifications', checked)}
+            />
+          </div>
+          <div className="flex items-center justify-between">
+            <span className="text-sm text-gray-900 dark:text-white">Anlık Bildirimler</span>
+            <Switch
+              checked={pushNotifications}
+              onCheckedChange={(checked) => handleNotificationChange('push_notifications', checked)}
+            />
+          </div>
+          <div className="flex items-center justify-between">
+            <span className="text-sm text-gray-900 dark:text-white">Haftalık Özet</span>
+            <Switch
+              checked={weeklySummary}
+              onCheckedChange={(checked) => handleNotificationChange('weekly_summary', checked)}
+            />
+          </div>
         </div>
-        <Button className="mt-6" variant="secondary" onClick={updateNotifications}>
-          Tercihleri Kaydet
-        </Button>
       </section>
 
-      <section className="rounded-3xl border border-gray-200 bg-white p-6">
-        <div className="mb-6">
-          <h2 className="text-lg font-semibold text-gray-900">Görünüm</h2>
-          <p className="text-sm text-gray-500">Arayüz temasını seçerek çalışma alanınızı kişiselleştirin.</p>
+      {/* Theme Section */}
+      <section className="rounded-3xl border border-gray-200 bg-surface p-6 dark:border-gray-700 dark:bg-surface-dark">
+        <h2 className="mb-4 text-lg font-semibold text-gray-900 dark:text-white">Görünüm</h2>
+        <div className="flex items-center justify-between">
+          <span className="text-sm text-gray-900 dark:text-white">Koyu Tema</span>
+          <Switch
+            checked={theme === 'dark'}
+            onCheckedChange={(checked) => handleThemeChange(checked ? 'dark' : 'light')}
+          />
         </div>
-        <div className="flex flex-wrap gap-4">
-          <button
-            onClick={() => handleThemeChange('light')}
-            className={`flex h-28 w-40 flex-col justify-between rounded-2xl border p-4 text-left transition ${
-              theme === 'light' ? 'border-accent shadow-lg' : 'border-gray-200'
-            }`}
-          >
-            <span className="text-sm font-semibold text-gray-900">Açık Tema</span>
-            <span className="text-xs text-gray-500">Modern ve ferah görünüm</span>
-          </button>
-          <button
-            onClick={() => handleThemeChange('dark')}
-            className={`flex h-28 w-40 flex-col justify-between rounded-2xl border p-4 text-left transition ${
-              theme === 'dark' ? 'border-accent shadow-lg' : 'border-gray-200'
-            }`}
-          >
-            <span className="text-sm font-semibold text-gray-900">Koyu Tema</span>
-            <span className="text-xs text-gray-500">Göz yormayan gece modu</span>
-          </button>
-        </div>
+      </section>
+
+      {/* Logout Section */}
+      <section className="rounded-3xl border border-red-200 bg-red-50 p-6 dark:border-red-700 dark:bg-red-950/30">
+        <h2 className="mb-4 text-lg font-semibold text-red-700 dark:text-red-400">Hesap</h2>
+        <Button
+          variant="destructive"
+          onClick={handleLogout}
+          className="flex items-center gap-2"
+        >
+          <LogOut className="h-4 w-4" /> Çıkış Yap
+        </Button>
       </section>
     </div>
   )

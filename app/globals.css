@@ -2,22 +2,101 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  color-scheme: light;
-}
-
+/* Base Reset */
+html,
 body {
-  @apply bg-muted text-gray-900;
+  @apply bg-background text-foreground dark:bg-background-dark dark:text-foreground-dark;
+  font-family: 'Inter', sans-serif;
 }
 
+/* Links */
 a {
-  @apply text-accent;
+  @apply text-accent hover:underline;
 }
 
-input, textarea, select {
-  @apply bg-white border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-accent;
+/* Headings */
+h1 {
+  @apply text-3xl font-bold tracking-tight;
+}
+h2 {
+  @apply text-2xl font-semibold tracking-tight;
+}
+h3 {
+  @apply text-xl font-semibold;
 }
 
+/* Paragraphs */
+p {
+  @apply leading-relaxed text-sm text-gray-500;
+}
+
+/* Inputs */
+input,
+textarea,
+select {
+  @apply w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm
+         focus:outline-none focus:ring-2 focus:ring-accent;
+}
+
+/* Buttons */
 button {
-  @apply focus:outline-none;
+  @apply inline-flex items-center justify-center rounded-md bg-accent px-4 py-2
+         text-sm font-medium text-white shadow hover:bg-accent-dark
+         focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2 transition;
+}
+
+/* Cards / Panels */
+.card {
+  @apply rounded-xl border border-gray-200 bg-white p-4 shadow-sm
+         dark:bg-background dark:border-gray-800;
+}
+
+/* Sidebar */
+.sidebar-link {
+  @apply flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium
+         text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-800;
+}
+
+/* Tables */
+table {
+  @apply w-full border-collapse text-sm;
+}
+th {
+  @apply border-b px-4 py-2 text-left font-medium text-gray-600 dark:text-gray-400;
+}
+td {
+  @apply border-b px-4 py-2 text-gray-700 dark:text-gray-200;
+}
+
+/* Form Labels */
+label {
+  @apply mb-1 block text-sm font-medium text-gray-600 dark:text-gray-300;
+}
+
+/* Custom Scrollbar - Modern */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  border-radius: 9999px;
+  background: linear-gradient(180deg, #FF5E4A, #FA7C6B);
+  background-clip: padding-box;
+  border: 3px solid transparent;
+  transition: all 0.3s ease;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, #FA7C6B, #FF5E4A);
+}
+
+/* Firefox */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #FF5E4A transparent;
 }
